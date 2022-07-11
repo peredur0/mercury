@@ -10,8 +10,7 @@ import sys
 import os
 import chardet
 import csv
-import unicodedata
-from email import message_from_string
+from email import message_from_binary_file, message_from_string
 from email import policy
 from nettoyage import text_clear
 
@@ -49,8 +48,7 @@ def import_from_file(chemin):
     """
     try:
         with open(chemin, 'rb') as data:
-            brut = convert(data.read())
-            msg = message_from_string(brut, policy=policy.default)
+            msg = message_from_binary_file(data, policy=policy.default)
 
     except FileNotFoundError:
         print("Fichier : '{}' non trouvé".format(chemin), file=sys.stderr)
@@ -76,8 +74,8 @@ def convert(data):
         return ""
 
     # return data.decode(charset)
-    return unicodedata.normalize("NFKD", data.decode(charset))
-    #todo: retirer br \xa0 et \r
+    out = data.decode(charset).encode('utf-8')
+    return out
 
 
 def extract_meta(msg):
