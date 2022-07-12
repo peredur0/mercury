@@ -8,14 +8,17 @@
 # Importations
 import sys
 import os
-import chardet
 import csv
+import platform
 from email import message_from_binary_file, message_from_string
 from email import policy
-from nettoyage import text_clear
+from traitement import text_pre_clear
 
 # Paramètres
-csv.field_size_limit(sys.maxsize)
+current_os = platform.system().lower()
+
+if current_os != 'windows':
+    csv.field_size_limit(sys.maxsize)
 
 # metadata
 __author__ = "Martial GOEHRY"
@@ -34,7 +37,7 @@ def list_files(chemin):
 
     for sd in subdirs:
         for f in os.listdir(sd):
-            x = sd + '/' + f
+            x = "{}{}{}".format(sd, '\\' if current_os == 'windows' else '/', f)
             if os.path.isfile(x):
                 files.append(x)
 
@@ -57,27 +60,6 @@ def import_from_file(chemin):
     return msg
 
 
-def convert(data):
-    """ Détecte l'encodage et retourne le message decodé
-        encodage accepter pour le programme:
-            - ascii
-            - Windows-1252
-            - ISO-8859-1
-            - utf-8
-    :param data: <str>
-    :return: <str>
-    """
-    codings = ['ascii', 'Windows-1252', 'ISO-8859-1', 'utf-8']
-    charset = chardet.detect(data).get('encoding')
-
-    if charset not in codings:
-        return ""
-
-    # return data.decode(charset)
-    out = data.decode(charset).encode('utf-8')
-    return out
-
-
 def extract_meta(msg):
     """ Extrait les metadonnées d'un message
     :param msg: <email.message.EmailMessage>
@@ -85,7 +67,8 @@ def extract_meta(msg):
     """
     sujet = msg.get('Subject')
     expediteur = msg.get('From', 'Inconnu').replace("'", "''")
-    return sujet, expediteur
+    date = msg.get('Date')
+    return sujet, expediteur, date
 
 
 def extract_body(msg):
@@ -115,11 +98,11 @@ def extract_body(msg):
 
     if msg.get_content_subtype() == 'html':
         payload = msg.get_payload(decode=True)
-        body += text_clear.clear_html(payload.decode(errors='ignore'))
+        body += text_pre_clear.clear_html(payload.decode(errors='ignore'))
 
     if msg.get_content_subtype() == 'enriched':
         payload = msg.get_payload(decode=True)
-        body += text_clear.clear_enriched(payload.decode(errors='ignore'))
+        body += text_pre_clear.clear_enriched(payload.decode(errors='ignore'))
 
     return body
 
@@ -129,6 +112,7 @@ def import_from_csv(chemin):
     :param chemin: <str> chemin vers le fichier CSV
     :return: <list> [fichier <str>, message <email.message.EmailMessage>]
     """
+    # todo: vérifier l'encodage des messages.
     data = []
     with open(chemin, newline='') as csvfile:
         lect = csv.reader(csvfile)
@@ -140,6 +124,36 @@ def import_from_csv(chemin):
 
 
 if __name__ == '__main__':
+
+    import warnings
+    warnings.filterwarnings('ignore')
+
+    import langdetect
+    # https://pypi.org/project/langdetect/
+
+    spams_path = list_files('C:\\Users\\martial\\PycharmProjects\\mercury\\dev_dataset\\spam')
+
+    langs = {}
+    spams = {}
+    for spam in spams_path:
+        mess = import_from_file(spam)
+        mess_cs = mess.get_charsets()
+        body = extract_body(mess)
+        if body:
+            spams[spam] = body
+            try:
+                lang = langdetect.detect(body)
+                if lang not in langs:
+                    langs[lang] = 0
+                langs[lang] += 1
+
+            except langdetect.lang_detect_exception.LangDetectException:
+                continue
+    print(langs)
+
+
+    exit(0)
+
     # import from csv
     data = import_from_csv("./data/csv/emails.csv")[1:]
     print(len(data))
@@ -152,13 +166,13 @@ if __name__ == '__main__':
         message = import_from_file(file)
         corp = extract_body(message)
         corp = text_clear.clear_texte(corp)
-        sujet, exp = extract_meta(message)
+        sujet, exp, date = extract_meta(message)
         print(exp)
         exit(0)
 
     for file in list_files("./data/"):
         message = import_from_file(file)
-        sujet, exp = extract_meta(message)
+        sujet, exp, date = extract_meta(message)
         print(exp)
 
     exit(0)

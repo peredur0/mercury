@@ -6,16 +6,22 @@
 """
 
 import os
-import magic
+import platform
+import warnings
+# import magic
+import langdetect
 from importation import mail_load
-from nettoyage import text_clear
-
-ds_ham = "/home/perceval/LicenceIED/01_exercices-en-cours/L3_C1-15_Projet/V2/00_dataset/dev_dataset/easy_ham"
-ds_spam = "/home/perceval/LicenceIED/01_exercices-en-cours/L3_C1-15_Projet/V2/00_dataset/dev_dataset/spam"
+from traitement import text_pre_clear, text_traitement
 
 #######################################################################################################################
 #           Importation des fichiers                                                                                  #
 #######################################################################################################################
+current_os = platform.system().lower()
+root = os.getcwd()
+
+ds_ham = root + "{}".format('\\' if current_os == 'windows' else '/').join(['', 'dev_dataset', 'easy_ham'])
+ds_spam = root + "{}".format('\\' if current_os == 'windows' else '/').join(['', 'dev_dataset', 'spam'])
+
 liste_ham = mail_load.list_files(ds_ham)
 liste_spam = mail_load.list_files(ds_spam)
 
@@ -32,8 +38,8 @@ def importation(chemin):
     if not os.path.exists(chemin):
         return None
 
-    if magic.from_file(chemin, mime=True) == 'application/csv':
-        return mail_load.import_from_csv(chemin)
+    # if magic.from_file(chemin, mime=True) == 'application/csv':
+    #    return mail_load.import_from_csv(chemin)
 
     mail = mail_load.import_from_file(chemin)
     if not mail:
@@ -49,17 +55,26 @@ def pretraitement(data, categorie):
     """
     extraction du message
     récupération des métadonnées
-    nettoyage sommaire du message
+    traitement sommaire du message
     gestion de la catégorie de mail
     ajout de données chiffrées
+    filtrage de la langue
     :param data: (<str>, <email.message.EmailMessage>)
     :param categorie: <str> categorie de mail: ham, spam, ou inconnu
-    :return: <>
+    :return: <dict>
     """
     chemin, mail = data
     corp = mail_load.extract_body(mail)
-    corp, liens = text_clear.clear_texte(corp)
-    sujet, expediteur = mail_load.extract_meta(mail)
+    corp, liens = text_pre_clear.clear_texte(corp)
+    sujet, expediteur, date = mail_load.extract_meta(mail)
+
+    try:
+        lang = langdetect.detect(corp)
+    except langdetect.lang_detect_exception.LangDetectException:
+        return None
+
+    if lang != 'en':
+        return None
 
     mots = [mot for mot in corp.split(' ') if len(mot) > 0]
 
@@ -72,6 +87,7 @@ def pretraitement(data, categorie):
         'sujet': sujet,
         'expediteur': expediteur,
         'message': corp,
+        'langue': lang,
         'liens': liens,
         'nb_mots': len(mots),
         'nb_occurences': len(set(mots))
@@ -83,31 +99,41 @@ def pretraitement(data, categorie):
 #           Dev main                                                                                                  #
 #######################################################################################################################
 if __name__ == '__main__':
+    warnings.filterwarnings('ignore')
+
     print("{} fichiers dans liste_ham".format(len(liste_ham)))
     print("{} fichiers dans liste_spam".format(len(liste_spam)))
 
-    liste_doc = []
-    rejected = []
+    docs_spam = []
+    rej_spam = []
     for fichier in liste_spam:
-        data_imp = importation(fichier)
-        if not data_imp:
-            rejected.append(fichier)
+        messages = importation(fichier)
+        if not messages:
+            rej_spam.append(fichier)
             continue
 
-        for d in data_imp:
-            liste_doc.append(pretraitement(d, 'spam'))
+        for message in messages:
+            m_doc = pretraitement(message, 'spam')
+            docs_spam.append(m_doc) if m_doc else rej_spam.append(fichier)
 
-    print("{} document dans liste_spam".format(len(liste_doc)))
-    print("{} fichier rejeté".format(len(rejected)))
+    print("*" * 80)
+    print("{} document dans liste_spam".format(len(docs_spam)))
+    print("{} fichier spam rejeté".format(len(rej_spam)))
 
-    for doc in liste_doc:
-        print(doc)
+    docs_ham = []
+    rej_ham = []
+    for fichier in liste_ham:
+        messages = importation(fichier)
+        if not messages:
+            rej_ham.append(fichier)
+            continue
+
+        for message in messages:
+            m_doc = pretraitement(message, 'ham')
+            docs_ham.append(m_doc) if m_doc else rej_ham.append(fichier)
+
+    print("*" * 80)
+    print("{} document dans liste_ham".format(len(docs_ham)))
+    print("{} fichier ham rejeté".format(len(rej_ham)))
 
     exit(0)
-
-    # Utiliser pour lister les chardet non anglophone
-    import chardet
-    for file in rejected:
-        with open(file, 'rb') as data:
-            print('{} : {}'.format(chardet.detect(data.read()).get('encoding'), file))
-

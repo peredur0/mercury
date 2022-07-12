@@ -2,15 +2,12 @@
 # coding: utf-8
 
 """
-    Module de nettoyage du texte
+    Module de pré-traitement du texte
         Nettoyage du texte
             - retrait des ponctuations
             - retrait des lignes vides et des espaces
             - retrait des retour à la ligne
             - modification liens, numeros de telephone, nombre et prix, url
-
-
-    Nettoyage complémentaire : "\xa0" et '\r'
 """
 
 # Importations
@@ -30,8 +27,7 @@ def clear_html(texte):
     :param texte: <str>
     :return: <str>
     """
-    brut = BeautifulSoup(texte, "html.parser").text
-    brut = BeautifulSoup(brut, 'html.parser').text
+    brut = BeautifulSoup(texte, "lxml").text
     return brut
 
 
@@ -118,16 +114,8 @@ def change_nombres(texte, liens):
     return temp
 
 
-def clear_non_ascii(texte):
-    """ Nettoyer les char non ascii
-    :param texte: <str>
-    :return: <str>
-    """
-    return texte.encode('ascii', 'ignore').decode()
-
-
 def clear_texte(texte):
-    """ Fonction principale de nettoyage du texte
+    """ Fonction principale de traitement du texte
     :param texte: <str>
     :return: <str>
     """
@@ -136,7 +124,6 @@ def clear_texte(texte):
     temp = change_lien(temp, liens)
     temp = change_nombres(temp, liens)
     temp = clear_ponctuation(temp)
-    # temp = clear_non_ascii(temp)
 
     return temp, liens
 
@@ -169,8 +156,6 @@ Ponctuation : ----## ..
     print(texte)
     print(80*'-')
 
-    exit(0)
-
     message_html = '''
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
@@ -191,7 +176,7 @@ other features
     '''
     print(message_html)
     print(80*'-')
-    print(clear_html(message_html))
+    print(clear_texte(clear_html(message_html)))
     print(80*'-')
 
     message_enriched = '''
