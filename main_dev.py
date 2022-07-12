@@ -66,7 +66,7 @@ def pretraitement(data, categorie):
     chemin, mail = data
     corp = mail_load.extract_body(mail)
     corp, liens = text_pre_clear.clear_texte(corp)
-    sujet, expediteur, date = mail_load.extract_meta(mail)
+    sujet, expediteur = mail_load.extract_meta(mail)
 
     try:
         lang = langdetect.detect(corp)

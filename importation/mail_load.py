@@ -67,8 +67,7 @@ def extract_meta(msg):
     """
     sujet = msg.get('Subject')
     expediteur = msg.get('From', 'Inconnu').replace("'", "''")
-    date = msg.get('Date')
-    return sujet, expediteur, date
+    return sujet, expediteur
 
 
 def extract_body(msg):
@@ -166,13 +165,13 @@ if __name__ == '__main__':
         message = import_from_file(file)
         corp = extract_body(message)
         corp = text_pre_clear.clear_texte(corp)
-        sujet, exp, date = extract_meta(message)
+        sujet, exp = extract_meta(message)
         print(exp)
         exit(0)
 
     for file in list_files("./data/"):
         message = import_from_file(file)
-        sujet, exp, date = extract_meta(message)
+        sujet, exp = extract_meta(message)
         print(exp)
 
     exit(0)
