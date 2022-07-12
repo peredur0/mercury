@@ -165,7 +165,7 @@ if __name__ == '__main__':
         file = './data/spam_2/00959.016c91a5c76f15d7f67b01a24645b624'
         message = import_from_file(file)
         corp = extract_body(message)
-        corp = text_clear.clear_texte(corp)
+        corp = text_pre_clear.clear_texte(corp)
         sujet, exp, date = extract_meta(message)
         print(exp)
         exit(0)
