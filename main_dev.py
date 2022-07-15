@@ -8,10 +8,13 @@
 import os
 import platform
 import warnings
+import hashlib
 # import magic
 import langdetect
+import json
 from importation import mail_load
 from traitement import text_pre_clear, text_traitement
+from databases import elastic_cmd, secrets
 
 #######################################################################################################################
 #           Importation des fichiers                                                                                  #
@@ -83,6 +86,7 @@ def pretraitement(data, categorie):
 
     document = {
         'chemin': chemin,
+        'hash': hashlib.md5(corp.encode()).hexdigest(),
         'categorie': categorie.lower(),
         'sujet': sujet,
         'expediteur': expediteur,
@@ -101,6 +105,7 @@ def pretraitement(data, categorie):
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
 
+    print("*" * 80)
     print("{} fichiers dans liste_ham".format(len(liste_ham)))
     print("{} fichiers dans liste_spam".format(len(liste_spam)))
 
@@ -119,6 +124,28 @@ if __name__ == '__main__':
     print("*" * 80)
     print("{} document dans liste_spam".format(len(docs_spam)))
     print("{} fichier spam rejeté".format(len(rej_spam)))
+
+    print("*" * 80)
+    print("Mise en base")
+
+    ls_id = []
+    es_cli = elastic_cmd.es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), secrets.ca_cert)
+    if not es_cli:
+        exit(1)
+
+    email_mapping = json.load(open('databases/mail_mapping.json', 'r'))
+    index = "test_import_spam0"
+
+    elastic_cmd.es_create_indice(es_cli, index, email_mapping)
+
+    for document in docs_spam:
+        elastic_cmd.es_index_doc(es_cli, index, document, ls_id)
+
+    es_cli.close()
+
+    ##
+    exit(0)
+    ##
 
     docs_ham = []
     rej_ham = []

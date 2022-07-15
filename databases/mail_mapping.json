@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "chemin": {"type": "text"},
+    "hash": {"type": "text"},
+    "categorie": {"type": "keyword"},
+    "sujet": {"type": "text"},
+    "expediteur": {"type": "text"},
+    "message": {"type": "text"},
+    "langue": {"type": "keyword"},
+    "liens": {
+      "properties": {
+        "MAIL": {"type": "integer"},
+        "URL": {"type": "integer"},
+        "TEL": {"type": "integer"},
+        "PRIX": {"type": "integer"},
+        "NOMBRE": {"type": "integer"}
+      }
+    },
+    "nb_mots": {"type": "integer"},
+    "nom_occurences": {"type": "integer"}
+  }
+}

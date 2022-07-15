@@ -1,2 +1,4 @@
 # Project exclude paths
 /dev/
+/databases/ca.crt
+/databases/secrets.py
