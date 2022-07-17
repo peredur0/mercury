@@ -21,7 +21,7 @@
       1. sur l'ensemble du corpus
       2. sur les spams
       3. sur les ham
-4. Traitement des données
+4. Traitement des données - analyse
    1. Calcul du nombre de faute
    2. Nettoyages complémentaires
       1. Retrait des mots non anglais
