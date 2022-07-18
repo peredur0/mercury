@@ -17,6 +17,6 @@
       }
     },
     "nb_mots": {"type": "integer"},
-    "nom_occurences": {"type": "integer"}
+    "nb_mots_uniques": {"type": "integer"}
   }
 }

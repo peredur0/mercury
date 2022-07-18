@@ -7,21 +7,33 @@
 
 ## Todo
 1. Faire une schéma du flux de traitement
-2. Données avant nettoyage
+2. Données avant nettoyage < FICHIER ???
    1. Nombre de mail 
-   2. Nombre de mots
-   3. Nombre d'occurence
+   2. Nombre de mots 
+   3. Nombre de mots uniques < liste des mots 
 3. Données après nettoyage
    1. Nombre de mail
    2. Nombe de mots
-   3. Nombre d'occurences
+   3. Nombre de mots uniques
    4. Nombre de liens
-   5. Distribution du nombre de mot par mail
-   6. Distribution des mots (courbe de Zipf)
-      1. sur l'ensemble du corpus
-      2. sur les spams
-      3. sur les ham
-4. Traitement des données - analyse
+4. Exploitation
+   1. Calcul du nombre de fautes
+   2. Analyse syntaxique Standford NLP
+      1. POS tagger
+      2. Lemmatisation
+      3. Name Entity Recognizier
+   3. Analyse syntaxique NLTK ?
+   4. Analyse sémentique LDA
+5. Analyse (corpus - spam - ham)
+   1. Courbe de zipf - étude distribution des mots
+   2. Dist, avg, med : nombre de mots
+   3. Dist, avg, med : nombre de mots uniques
+   4. Dist, avg, med : liens
+   5. Dist, avg, med : fautes
+   6. Dist, avg, med : Nombre de nom propre
+   7. 
+
+6. Traitement des données - analyse
    1. Calcul du nombre de faute
    2. Nettoyages complémentaires
       1. Retrait des mots non anglais
@@ -31,6 +43,6 @@
    4. Analyse sémantique (LDA clustering) ?
    5. Création bag of word
    6. Vectorisation
-5. Modèles
+7. Modèles
    1. Naive bayes
    2. SOM

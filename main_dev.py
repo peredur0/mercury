@@ -13,7 +13,7 @@ import hashlib
 import langdetect
 import json
 from importation import mail_load
-from traitement import text_pre_clear, text_traitement
+from traitement import text_pre_clear, text_exploitation
 from databases import elastic_cmd, secrets
 
 #######################################################################################################################
@@ -94,7 +94,7 @@ def pretraitement(data, categorie):
         'langue': lang,
         'liens': liens,
         'nb_mots': len(mots),
-        'nb_occurences': len(set(mots))
+        'nb_mots_uniques': len(set(mots))
     }
     return document
 
@@ -128,7 +128,6 @@ if __name__ == '__main__':
     print("*" * 80)
     print("Mise en base")
 
-    ls_id = []
     es_cli = elastic_cmd.es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), secrets.ca_cert)
     if not es_cli:
         exit(1)
@@ -139,7 +138,7 @@ if __name__ == '__main__':
     elastic_cmd.es_create_indice(es_cli, index, email_mapping)
 
     for document in docs_spam:
-        elastic_cmd.es_index_doc(es_cli, index, document, ls_id)
+        elastic_cmd.es_index_doc(es_cli, index, document)
 
     es_cli.close()
 

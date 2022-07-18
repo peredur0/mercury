@@ -2,3 +2,6 @@
 /dev/
 /databases/ca.crt
 /databases/secrets.py
+/databases/certs/
+/databases/elastic/
+/databases/kibana/

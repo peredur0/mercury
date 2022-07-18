@@ -6,6 +6,8 @@ Fonctions utilisées pour la relation avec la base elasticsearch
 """
 
 import sys
+
+import elasticsearch
 from elasticsearch import Elasticsearch
 from elasticsearch import exceptions, AuthenticationException, AuthorizationException
 
@@ -43,11 +45,12 @@ def es_create_indice(es_cli, index, mapping):
     :param es_cli: Client ElasticSearch
     :param index: <str> - nom de l'indice
     :param mapping: <dict> - mapping de l'indice
-    :return: None ou <str> le nom de l'indice
+    :return: None
     """
     indices = es_cli.indices.get(index='*')
     if indices and index in indices:
         print("Warning: Indice {} déjà présent".format(index))
+        return
 
     res = es_cli.indices.create(index=index, mappings=mapping)
 
@@ -55,37 +58,51 @@ def es_create_indice(es_cli, index, mapping):
         print("Error : Echec de la création de l'indice {}".format(index))
 
 
-def es_index_doc(es_cli, index, doc, ls_id):
+def es_index_doc(es_cli, index, doc):
     """ Index un document dans la base ES
     :param es_cli: Client ElasticSearch
     :param index: <str> index ou stocker les donnees
     :param doc: <dict> donnees du document
-    :param ls_id: <list> liste des id de l'index
     :return: <None>
     """
     id_doc = doc['hash']
-    if id_doc in ls_id:
+
+    if es_document_exists(es_cli, index, id_doc):
         print("Warning: {} deja present".format(id_doc), file=sys.stderr)
         return
 
     resp = es_cli.index(index=index, document=doc)
     print("ES:index - ID = {} - STATUS = {}".format(id_doc, resp['result']))
     es_cli.indices.refresh(index=index)
-    ls_id.append(doc['hash'])
+
+
+def es_document_exists(es_cli, index, hash):
+    """
+    Regader dans l'index si le hash du document est déjà présent
+    :param es_cli: client elastic
+    :param index: <str> Index à chercher dedans
+    :param hash: <str> hash du document
+    :return: <bool> True si le hash du document est déjà présent False sinon
+    """
+    try:
+        resp = es_cli.search(index=index, query={"match": {"hash": hash}})
+    except elasticsearch.NotFoundError as err:
+        print("Error : hash", err)
+        return None
+
+    return True if resp['hits']['total']['value'] == 1 else False
 
 
 # todo : Vérifier une fois les données importées - ICI
 def es_get_all(es_cli, index, query):
     """
-    Récupère
-    :param es_cli:
-    :param index:
-    :param query:
+    Récupère tous les documents d'un index selon la query
+    :param es_cli: client elastic
+    :param index: <str> index de recherche
+    :param query: <dict> requete à utilisé
     :return:
     """
     data = []
-
-    # Récupération du nom
 
     return data
 
@@ -94,16 +111,13 @@ if __name__ == '__main__':
     import json
     from databases import secrets
 
-    email_mapping = json.load(open('mail_mapping.json', 'r'))
     cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), secrets.ca_cert)
-    index = "test_mail1"
+    index = "test_import_spam0"
 
-    print(cli)
+    # récupération des hash
+    print(es_document_exists(cli, index, "76346d3f5c2b130c6aad8592da313684"))
+    print(es_document_exists(cli, index, "46d3f5c2b130c6aad8592da313684"))
 
-    outp = cli.indices.create(index=index, mappings=email_mapping)
-    print(cli.indices.get(index='*').keys())
-    print(outp['acknowledged'])
-    print(cli.indices.delete(index=index))
 
     cli.close()
 
