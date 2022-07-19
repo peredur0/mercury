@@ -1,7 +1,8 @@
 # Project exclude paths
 /dev/
 /databases/ca.crt
-/databases/secrets.py
+/databases/elastic_docker/secrets.py
 /databases/certs/
 /databases/elastic/
 /databases/kibana/
+/databases/sqlite_db/test_table.db

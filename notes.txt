@@ -1,0 +1,23 @@
+Notes lors du projets
+
+ == 19/07/22 ==
+
+Brainstorming :
+
+stocker les données des statistiques
+
+ - Etape d'importation :
+    dans le corpus, HAM & SPAM
+        - nombre de mail
+        - nombre de mots
+        - nombre de mots uniques
+
+ - Etape de nettoyage
+    dans le corpus, Ham & Spam
+        - nombe de mail
+        - nombre de mots
+        - nombre de mots uniques
+
+    >>> Dans quoi on stocke un fichier JSON, un index elastic ou une base sqlite ?
+    On se dirige vers une base sqlite. On stock juste des petites données stats.
+

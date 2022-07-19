@@ -108,8 +108,7 @@ def es_get_all(es_cli, index, query):
 
 
 if __name__ == '__main__':
-    import json
-    from databases import secrets
+    from databases.elastic_docker import secrets
 
     cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), secrets.ca_cert)
     index = "test_import_spam0"

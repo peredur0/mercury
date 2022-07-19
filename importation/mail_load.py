@@ -12,7 +12,7 @@ import csv
 import platform
 from email import message_from_binary_file, message_from_string
 from email import policy
-from traitement import text_pre_clear
+from traitement import nettoyage_init
 
 # Paramètres
 current_os = platform.system().lower()

@@ -4,9 +4,9 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/00_dev" />
-      <excludeFolder url="file://$MODULE_DIR$/databases/certs" />
-      <excludeFolder url="file://$MODULE_DIR$/databases/elastic" />
-      <excludeFolder url="file://$MODULE_DIR$/databases/kibana" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic_docker/certs" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic_docker/elastic" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic_docker/kibana" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
