@@ -43,7 +43,7 @@ def importation(chemin):
 
 
 #######################################################################################################################
-#           Prétraitement                                                                                             #
+#           Nettoyage                                                                                                 #
 #######################################################################################################################
 def nettoyage(data, categorie):
     """
@@ -90,30 +90,134 @@ def nettoyage(data, categorie):
     return document
 
 
+def nettoyage_process(categorie, liste):
+    """
+    Porcessus de nettoyage avec une barre de progression nested
+    :param categorie: <str> Catégorie de mail, Ham ou Spam
+    :param liste: <list> liste de
+    :return:
+    """
+    docs = []
+    for fichier in tqdm.tqdm(liste,
+                             desc="-- Importation {} ...".format(categorie.upper()),
+                             leave=False,
+                             ascii=True,
+                             file=sys.stdout):
+        messages = importation(fichier)
+        if messages:
+            for message in tqdm.tqdm(messages,
+                                     desc="Nettoyage {}".format(messages[0][0].split('/')[-1]),
+                                     leave=False,
+                                     ascii=True,
+                                     file=sys.stdout):
+                m_doc = nettoyage(message, categorie)
+                if m_doc:
+                    docs.append(m_doc)
+    print("-- Importation - Nettoyage {}... OK".format(categorie))
+    return docs
+
+#######################################################################################################################
+#           Statistiques                                                                                              #
+#######################################################################################################################
+def print_stats(categorie, etape, cli):
+    """
+    affiche les statistiques pour une étape
+    :param cat: <str> catégorie
+    :param etape: <str> l'étape d'intérêt
+    :param cli: <sqlite.connection> client vers la base sqlite
+    :return: <None>
+    """
+    print('\t{}, '.format(categorie.upper()), end=' ')
+    cursor = cli.execute("SELECT mails, mots, mots_uniques "
+                            "FROM {} "
+                            "WHERE etape LIKE '{}';".format(categorie, etape))
+    ligne1 = cursor.fetchone()
+    if not ligne1 or len(ligne1) != 3:
+        print("Error :", ligne1)
+        return
+
+    print('mails: {} \tmots: {}\t mots uniques: {}'.format(ligne1[0], ligne1[1], ligne1[2]))
+
+
+def stats_recolte(categorie, stats_dict, liste):
+    """
+    Fonction de récupération des données stastiques pour mercury
+    :param categorie: <str> ham, spam
+    :param stats_dict: <dict> au format de "stats_temp"
+    :param liste: <list> des chemins à analyser
+    :return: <list> liste des mots uniques pour fusion avec les autres catégories
+    """
+    m_uniq = []
+    for file in tqdm.tqdm(liste,
+                          desc="-- Stats - étape : Récolte {}...".format(categorie),
+                          leave=False,
+                          file=sys.stdout,
+                          ascii=True):
+        try:
+            mots = open(file, 'r').read().split()
+            stats_dict['mots'] += len(mots)
+            for mot in mots:
+                if mot not in m_uniq:
+                    m_uniq.append(mot)
+        except UnicodeDecodeError:
+            continue
+
+    stats_dict['etape'] = "recolte"
+    stats_dict['mots_uniques'] = len(m_uniq)
+    stats_dict['mails'] = len(liste)
+
+    print("-- Stats - étape : Récolte {}... OK".format(categorie))
+    return m_uniq
+
+
+def stats_nettoyage(categorie, stats_dict, liste):
+    """
+    Récupération des infos statistiques après nettoyage
+    :param categorie: <str> catégorie de mail
+    :param stats_dict: <dict> selon template de "stats_temp"
+    :param liste: <list> liste des documents nettoyés
+    :return: <list> liste des mots uniques pour fusion avec les autres catégories
+    """
+    m_uniq = []
+    for doc in tqdm.tqdm(liste,
+                         desc="-- Stats - étape : Nettoyage {}...".format(categorie),
+                         leave=False,
+                         file=sys.stdout,
+                         ascii=True):
+        stats_dict["mots"] += doc["nb_mots"]
+
+        for mot in doc["message"].split():
+            if mot not in m_uniq:
+                m_uniq.append(mot)
+
+    stats_dict["mots_uniques"] = len(m_uniq)
+    stats_dict["mails"] = len(liste)
+    stats_dict["etape"] = "nettoyage"
+
+    print("-- Stats - étape : Nettoyage {}... OK".format(categorie))
+    return m_uniq
+
+
 #######################################################################################################################
 #           Dev main                                                                                                  #
 #######################################################################################################################
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
 
-    # Données pour SQLite
-    stats_spam = {
-        'mails': 0,
-        'mots': 0,
-        'mots_uniques': 0
-    }
-    stats_ham = {
-        'mails': 0,
-        'mots': 0,
-        'mots_uniques': 0
-    }
-    stats_globales = {
+    print("-- Création de la base SQLITE")
+    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
+    sqlite_cmd.sl_create_tables(sl_cli, './databases/sqlite_db/table_stats_conf.json')
+    sl_cli.close()
+
+    stats_temp = {
+        'etape': 'template',
         'mails': 0,
         'mots': 0,
         'mots_uniques': 0
     }
 
     # == Récolte ==
+    print("== Recolte ==")
     current_os = platform.system().lower()
     root = os.getcwd()
 
@@ -125,52 +229,22 @@ if __name__ == '__main__':
     liste_spam = mail_load.list_files(ds_spam)
     print("OK")
 
-    # - SPAM -
-    uniq_spam = []
-    for file in tqdm.tqdm(liste_spam, desc="-- Récolte mots et uniques dans SPAM...", leave=False, file=sys.stdout):
-        try:
-            mots = open(file, 'r').read().split()
-            stats_spam['mots'] += len(mots)
-            for mot in mots:
-                if mot not in uniq_spam:
-                    uniq_spam.append(mot)
-        except UnicodeDecodeError:
-            continue
-    stats_spam['mots_uniques'] = len(uniq_spam)
+    # - Stats récolte -
+    # Données pour SQLite
+    stats_spam = stats_temp.copy()
+    stats_ham = stats_temp.copy()
+    stats_globales = stats_temp.copy()
 
-    print("-- Récolte mots et uniques dans SPAM... OK")
-
-    # - HAM -
-    uniq_ham = []
-    for file in tqdm.tqdm(liste_ham, desc="-- Récolte mots et uniques dans HAM...", leave=False, file=sys.stdout):
-        try:
-            mots = open(file, 'r').read().split()
-            stats_ham['mots'] += len(mots)
-            for mot in mots:
-                if mot not in uniq_ham:
-                    uniq_ham.append(mot)
-        except UnicodeDecodeError:
-            continue
-    stats_ham['mots_uniques'] = len(uniq_ham)
-
-    print("-- Récolte mots et uniques dans HAM... OK")
-
-    stats_spam['mails'] = len(liste_spam)
-    stats_ham['mails'] = len(liste_ham)
-    uniq = set(uniq_ham + uniq_spam)
+    uniq_spam = stats_recolte('spam', stats_spam, liste_spam)
+    uniq_ham = stats_recolte('ham', stats_ham, liste_ham)
 
     stats_globales['mails'] = stats_spam.get('mails', 0) + stats_ham.get('mails', 0)
     stats_globales['mots'] = stats_spam.get('mots', 0) + stats_ham.get('mots', 0)
-    stats_globales['mots_uniques'] = len(uniq)
+    stats_globales['mots_uniques'] = len(set(uniq_ham + uniq_spam))
+    stats_globales['etape'] = "recolte"
 
-    print("-- Création de la base SQLITE")
     # - Mise en base : statistiques de la récolte
     sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
-    sqlite_cmd.sl_create_tables(sl_cli, './databases/sqlite_db/table_stats_conf.json')
-
-    stats_globales['etape'] = 'recolte'
-    stats_ham['etape'] = 'recolte'
-    stats_spam['etape'] = 'recolte'
 
     print("--- Mise en base des stats de récolte...", end=' ')
     sqlite_cmd.sl_insert(sl_cli, 'globales', stats_globales)
@@ -178,40 +252,59 @@ if __name__ == '__main__':
     sqlite_cmd.sl_insert(sl_cli, 'spam', stats_spam)
     print('OK')
 
-    print("Données de la récolte:")
+    print("Données stats de la récolte:")
     for cat in ['ham', 'spam', 'globales']:
-        print('\t{}:'.format(cat.upper()))
-        cursor = sl_cli.execute("SELECT mails, mots, mots_uniques "
-                                "FROM {} "
-                                "WHERE etape LIKE '{}';".format(cat, 'recolte'))
-        ligne1 = cursor.fetchone()
-        if len(ligne1) != 3 or not ligne1:
-            print("Error :", ligne1)
-
-        print('mails: {} \tmots: {}\t mots uniques: {}'.format(ligne1[0], ligne1[1], ligne1[2]))
+        print_stats(cat, "recolte", sl_cli)
 
     sl_cli.close()
 
-    exit(0)
 
     # == Nettoyage ==
-    docs_spam = []
-    rej_spam = []
+    stats_spam = stats_temp.copy()
+    stats_ham = stats_temp.copy()
+    stats_globales = stats_temp.copy()
 
-    # - SPAM -
-    for fichier in liste_spam:
-        messages = importation(fichier)
-        if not messages:
-            rej_spam.append(fichier)
-            continue
+    print("== Nettoyage ==")
+    docs_spam = nettoyage_process('spam', liste_spam)
+    docs_ham = nettoyage_process('ham', liste_ham)
 
-        for message in messages:
-            m_doc = nettoyage(message, 'spam')
-            docs_spam.append(m_doc) if m_doc else rej_spam.append(fichier)
 
-    print("*" * 80)
-    print("{} document dans liste_spam".format(len(docs_spam)))
-    print("{} fichier spam rejeté".format(len(rej_spam)))
+    # - Mise en base : statistiques de la récolte
+    # Données pour SQLite
+    uniq_spam = stats_nettoyage('spam', stats_spam, docs_spam)
+    uniq_ham = stats_nettoyage('ham', stats_ham, docs_ham)
+
+    stats_globales['mails'] = stats_spam.get('mails', 0) + stats_ham.get('mails', 0)
+    stats_globales['mots'] = stats_spam.get('mots', 0) + stats_ham.get('mots', 0)
+    stats_globales['mots_uniques'] = len(set(uniq_ham + uniq_spam))
+    stats_globales['etape'] = "nettoyage"
+
+    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
+    print("--- Mise en base des stats de récolte...", end=' ')
+    sqlite_cmd.sl_insert(sl_cli, 'spam', stats_spam)
+    sqlite_cmd.sl_insert(sl_cli, 'ham', stats_ham)
+    sqlite_cmd.sl_insert(sl_cli, 'globales', stats_globales)
+    print('OK')
+
+    print("Données stats du nettoyage:")
+    for cat in ['ham', 'spam', 'globales']:
+        print_stats(cat, "nettoyage", sl_cli)
+
+    sl_cli.close()
+    exit(0)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     print("*" * 80)
     print("Mise en base")

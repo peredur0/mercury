@@ -97,11 +97,11 @@ def extract_body(msg):
 
     if msg.get_content_subtype() == 'html':
         payload = msg.get_payload(decode=True)
-        body += text_pre_clear.clear_html(payload.decode(errors='ignore'))
+        body += nettoyage_init.clear_html(payload.decode(errors='ignore'))
 
     if msg.get_content_subtype() == 'enriched':
         payload = msg.get_payload(decode=True)
-        body += text_pre_clear.clear_enriched(payload.decode(errors='ignore'))
+        body += nettoyage_init.clear_enriched(payload.decode(errors='ignore'))
 
     return body
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         file = './data/spam_2/00959.016c91a5c76f15d7f67b01a24645b624'
         message = import_from_file(file)
         corp = extract_body(message)
-        corp = text_pre_clear.clear_texte(corp)
+        corp = nettoyage_init.clear_texte(corp)
         sujet, exp = extract_meta(message)
         print(exp)
         exit(0)

@@ -6,3 +6,4 @@
 /databases/elastic/
 /databases/kibana/
 /databases/sqlite_db/test_table.db
+/databases/sqlite_db/stats_dev.db

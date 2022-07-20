@@ -93,7 +93,6 @@ def es_document_exists(es_cli, index, hash):
     return True if resp['hits']['total']['value'] == 1 else False
 
 
-# todo : Vérifier une fois les données importées - ICI
 def es_get_all(es_cli, index, query):
     """
     Récupère tous les documents d'un index selon la query
