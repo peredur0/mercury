@@ -91,6 +91,18 @@ def es_document_exists(es_cli, index, hash):
     return True if resp['hits']['total']['value'] == 1 else False
 
 
+def es_get_doc_nb(es_cli, index, query):
+    """
+    Retourne le nombre de documents qui matchent la query dans un index elasticsearch
+    :param es_cli: client elastic
+    :param index: <str> index de recherche
+    :param query: <dict> corp de la requête
+    :return: <int> nombre de documents qui matchent la requête
+    """
+
+    return es_cli.count(index=index, query=query)['count']
+
+
 def es_get_all(es_cli, index, query):
     """
     Récupère tous les documents d'un index selon la query
@@ -107,13 +119,48 @@ def es_get_all(es_cli, index, query):
 if __name__ == '__main__':
     from databases.elastic_docker import secrets
 
-    cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), secrets.ca_cert)
-    index = "test_import_spam0"
+    cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), 'ca.crt')
+    if not cli:
+        exit(1)
 
-    # récupération des hash
-    print(es_document_exists(cli, index, "76346d3f5c2b130c6aad8592da313684"))
-    print(es_document_exists(cli, index, "46d3f5c2b130c6aad8592da313684"))
+    index = "test_import_all0"
+    query_all = {"match_all": {}}
+    query_spam = {"match": {"categorie": "spam"}}
+    print(es_get_doc_nb(cli, index, query_all))
+    print(es_get_doc_nb(cli, index, query={"match": {"categorie": "spam"}}))
+    print(es_get_doc_nb(cli, index, query={"match": {"categorie": "ham"}}))
 
+    # --- get_all_document dev
+    SORT = "hash"
+    SIZE = 100
+    count = 0
+    nb_all = es_get_doc_nb(cli, index, query_all)
+    nb_spam = es_get_doc_nb(cli, index, query_spam)
+
+    p1 = cli.search(index=index, size=SIZE, sort={SORT: "asc"}, query=query_spam)
+    signet = p1['hits']['hits'][-1]['sort']
+    for hit in p1['hits']['hits']:
+        count += 1
+
+    p2 = cli.search(index=index, size=SIZE, sort={SORT: "asc"}, query=query_spam, search_after=signet)
+    signet = p2['hits']['hits'][-1]['sort']
+    for hit in p2['hits']['hits']:
+        count += 1
+
+    while count < nb_all:
+        pn = cli.search(index=index, size=SIZE, sort={SORT: "asc"}, query=query_spam, search_after=signet)
+        try:
+            signet = pn['hits']['hits'][-1]['sort']
+        except IndexError:
+            print("WARNING", pn, signet)
+            break
+
+        for hit in pn['hits']['hits']:
+            count += 1
+
+    print("FINAL", count)
+
+    # ---
 
     cli.close()
 

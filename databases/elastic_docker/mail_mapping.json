@@ -1,7 +1,7 @@
 {
   "properties": {
     "chemin": {"type": "text"},
-    "hash": {"type": "text"},
+    "hash": {"type": "keyword"},
     "categorie": {"type": "keyword"},
     "sujet": {"type": "text"},
     "expediteur": {"type": "text"},
