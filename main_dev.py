@@ -116,21 +116,22 @@ def nettoyage_process(categorie, liste):
     print("-- Importation - Nettoyage {}... OK".format(categorie))
     return docs
 
+
 #######################################################################################################################
 #           Statistiques                                                                                              #
 #######################################################################################################################
 def print_stats(categorie, etape, cli):
     """
     affiche les statistiques pour une étape
-    :param cat: <str> catégorie
+    :param categorie: <str> catégorie
     :param etape: <str> l'étape d'intérêt
     :param cli: <sqlite.connection> client vers la base sqlite
     :return: <None>
     """
     print('\t{}, '.format(categorie.upper()), end=' ')
     cursor = cli.execute("SELECT mails, mots, mots_uniques "
-                            "FROM {} "
-                            "WHERE etape LIKE '{}';".format(categorie, etape))
+                         "FROM {} "
+                         "WHERE etape LIKE '{}';".format(categorie, etape))
     ligne1 = cursor.fetchone()
     if not ligne1 or len(ligne1) != 3:
         print("Error :", ligne1)
@@ -204,7 +205,7 @@ def stats_nettoyage(categorie, stats_dict, liste):
 if __name__ == '__main__':
     warnings.filterwarnings('ignore')
 
-    print("-- Création de la base SQLITE")
+    print("== Création de la base SQLITE")
     sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
     sqlite_cmd.sl_create_tables(sl_cli, './databases/sqlite_db/table_stats_conf.json')
     sl_cli.close()
@@ -246,7 +247,7 @@ if __name__ == '__main__':
     # - Mise en base : statistiques de la récolte
     sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
 
-    print("--- Mise en base des stats de récolte...", end=' ')
+    print("--- Sauvegarde des stats de la récolte...", end=' ')
     sqlite_cmd.sl_insert(sl_cli, 'globales', stats_globales)
     sqlite_cmd.sl_insert(sl_cli, 'ham', stats_ham)
     sqlite_cmd.sl_insert(sl_cli, 'spam', stats_spam)
@@ -258,7 +259,6 @@ if __name__ == '__main__':
 
     sl_cli.close()
 
-
     # == Nettoyage ==
     stats_spam = stats_temp.copy()
     stats_ham = stats_temp.copy()
@@ -267,7 +267,6 @@ if __name__ == '__main__':
     print("== Nettoyage ==")
     docs_spam = nettoyage_process('spam', liste_spam)
     docs_ham = nettoyage_process('ham', liste_ham)
-
 
     # - Mise en base : statistiques de la récolte
     # Données pour SQLite
@@ -280,7 +279,7 @@ if __name__ == '__main__':
     stats_globales['etape'] = "nettoyage"
 
     sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
-    print("--- Mise en base des stats de récolte...", end=' ')
+    print("--- Sauvegarde des stats du nettoyage...", end=' ')
     sqlite_cmd.sl_insert(sl_cli, 'spam', stats_spam)
     sqlite_cmd.sl_insert(sl_cli, 'ham', stats_ham)
     sqlite_cmd.sl_insert(sl_cli, 'globales', stats_globales)
@@ -291,56 +290,36 @@ if __name__ == '__main__':
         print_stats(cat, "nettoyage", sl_cli)
 
     sl_cli.close()
-    exit(0)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    print("*" * 80)
-    print("Mise en base")
-
+    # == Mise en base des documents ==
+    print("== Mise en base des documents ==")
+    print("-- Création de l'index ElasticSearch...", end=' ')
     es_cli = elastic_cmd.es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), secrets.ca_cert)
     if not es_cli:
+        print("ECHEC")
         exit(1)
 
     email_mapping = json.load(open('databases/elastic_docker/mail_mapping.json', 'r'))
-    index = "test_import_spam0"
-
+    index = "test_import_all0"
     elastic_cmd.es_create_indice(es_cli, index, email_mapping)
+    print("OK")
 
-    for document in docs_spam:
+    # - Mise en base
+    for document in tqdm.tqdm(docs_spam, desc="-- Mise en base SPAM...", leave=False, file=sys.stdout, ascii=True):
         elastic_cmd.es_index_doc(es_cli, index, document)
+    print("-- Mise en base SPAM... OK")
+
+    for document in tqdm.tqdm(docs_ham, desc="-- Mise en base HAM...", leave=False, file=sys.stdout, ascii=True):
+        elastic_cmd.es_index_doc(es_cli, index, document)
+    print("-- Mise en base HAM... OK")
 
     es_cli.close()
 
-    ##
-    exit(0)
-    ##
+    # Récupération des statistiques après mise en base
 
-    docs_ham = []
-    rej_ham = []
-    for fichier in liste_ham:
-        messages = importation(fichier)
-        if not messages:
-            rej_ham.append(fichier)
-            continue
 
-        for message in messages:
-            m_doc = nettoyage(message, 'ham')
-            docs_ham.append(m_doc) if m_doc else rej_ham.append(fichier)
 
-    print("*" * 80)
-    print("{} document dans liste_ham".format(len(docs_ham)))
-    print("{} fichier ham rejeté".format(len(rej_ham)))
+
+    print("== FIN ==")
 
     exit(0)

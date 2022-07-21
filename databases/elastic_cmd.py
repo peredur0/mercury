@@ -68,11 +68,9 @@ def es_index_doc(es_cli, index, doc):
     id_doc = doc['hash']
 
     if es_document_exists(es_cli, index, id_doc):
-        print("Warning: {} deja present".format(id_doc), file=sys.stderr)
         return
 
-    resp = es_cli.index(index=index, document=doc)
-    print("ES:index - ID = {} - STATUS = {}".format(id_doc, resp['result']))
+    es_cli.index(index=index, document=doc)
     es_cli.indices.refresh(index=index)
 
 
@@ -87,7 +85,7 @@ def es_document_exists(es_cli, index, hash):
     try:
         resp = es_cli.search(index=index, query={"match": {"hash": hash}})
     except elasticsearch.NotFoundError as err:
-        print("Error : hash", err)
+        print("Error : hash", err, file=sys.stderr)
         return None
 
     return True if resp['hits']['total']['value'] == 1 else False
@@ -101,9 +99,9 @@ def es_get_all(es_cli, index, query):
     :param query: <dict> requete à utilisé
     :return:
     """
-    data = []
+    documents = []
 
-    return data
+    return documents
 
 
 if __name__ == '__main__':
