@@ -2,7 +2,15 @@
 # coding: utf-8
 
 """
-    Main de développement avec peu de mail à charger
+Phase 1: collecte et mise en base
+    1. Importation des fichiers mail (récolte)
+    2. Récupération du corps, préparation pour la mise en base (nettoyage)
+    3. Stockage des informations importantes dans la base ElasticSearch (mise en base)
+
+    A chaque étape on calcule par catégorie (Spam et Ham) et globalement:
+        - le nombre de document
+        - le nombre de mots
+        - le nombre de mots unqiues
 """
 
 import os
@@ -283,10 +291,10 @@ def stats_process(etape, data):
 
 
 #######################################################################################################################
-#           Dev main                                                                                                  #
+#          Phase 1: collecte et mise en base                                                                          #
 #######################################################################################################################
 if __name__ == '__main__':
-
+    print("=== Phase 1 : collecte & mise en base ===")
     print("== Création de la base SQLITE")
     sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
     sqlite_cmd.sl_create_tables(sl_cli, './databases/sqlite_db/table_stats_conf.json')
