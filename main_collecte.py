@@ -20,6 +20,9 @@ from databases import elastic_cmd, sqlite_cmd
 from databases.elastic_docker import secrets
 
 
+warnings.filterwarnings('ignore')
+
+
 #######################################################################################################################
 #           Importation des fichiers                                                                                  #
 #######################################################################################################################
@@ -199,23 +202,95 @@ def stats_nettoyage(categorie, stats_dict, liste):
     return m_uniq
 
 
-#######################################################################################################################
-#           Dev main                                                                                                  #
-#######################################################################################################################
-if __name__ == '__main__':
-    warnings.filterwarnings('ignore')
+def stats_mise_en_base(categorie, stats_dict, liste):
+    """
+    Récupération des statistiques après la mise en base.
+    ! Car les mails déjà présent en base sont rejetés.
+    :param categorie: <str> categorie de mail
+    :param stats_dict: <dict> selon template de "stats_temp"
+    :param liste: <list> liste des documents extraits de la base ES
+    :return: <list> liste des mots uniques pour fusion avec les autres catégories
+    """
+    m_uniq = []
+    for doc in tqdm.tqdm(liste,
+                         desc="-- Stats - étape : Mise en base {}...".format(categorie),
+                         leave=False,
+                         file=sys.stdout,
+                         ascii=True):
+        stats_dict["mots"] += doc["_source"]["nb_mots"]
+        for mot in doc["_source"]["message"].split():
+            if mot not in m_uniq:
+                m_uniq.append(mot)
 
-    print("== Création de la base SQLITE")
-    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
-    sqlite_cmd.sl_create_tables(sl_cli, './databases/sqlite_db/table_stats_conf.json')
-    sl_cli.close()
+    stats_dict["mots_uniques"] = len(m_uniq)
+    stats_dict["mails"] = len(liste)
+    stats_dict["etape"] = "mise en base"
 
+    print("-- Stats - étape : Mise en base {}... OK".format(categorie))
+    return m_uniq
+
+
+def stats_process(etape, data):
+    """
+    Gère le processus de récolte et d'affichage des statistique pour chaque étape
+    :param etape: <str> intitulé de l'étape
+    :param data: <dict> données à traiter {'ham': <list>, 'spam': <list>}
+    :return: <None>
+    """
+    fonctions = {'recolte': stats_recolte,
+                 'nettoyage': stats_nettoyage,
+                 'mise en base': stats_mise_en_base}
+
+    func = fonctions.get(etape.lower(), None)
+    if not func:
+        print("Erreur : étape {} inconnue, dispo - {}".format(etape, fonctions.keys()), sys.stderr)
+        return
+
+    # Données pour SQLite
     stats_temp = {
         'etape': 'template',
         'mails': 0,
         'mots': 0,
         'mots_uniques': 0
     }
+    stats_spam = stats_temp.copy()
+    stats_ham = stats_temp.copy()
+    stats_globales = stats_temp.copy()
+
+    uniq_spam = func('spam', stats_spam, data.get('spam', []))
+    uniq_ham = func('ham', stats_ham, data.get('ham', []))
+
+    stats_globales['mails'] = stats_spam.get('mails', 0) + stats_ham.get('mails', 0)
+    stats_globales['mots'] = stats_spam.get('mots', 0) + stats_ham.get('mots', 0)
+    stats_globales['mots_uniques'] = len(set(uniq_ham + uniq_spam))
+    stats_globales['etape'] = etape
+
+    # - Mise en base des statistiques
+    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
+
+    print("--- Sauvegarde des stats de l'étape: {}...".format(etape), end=' ')
+    sqlite_cmd.sl_insert(sl_cli, 'globales', stats_globales)
+    sqlite_cmd.sl_insert(sl_cli, 'ham', stats_ham)
+    sqlite_cmd.sl_insert(sl_cli, 'spam', stats_spam)
+    print('OK')
+
+    print("Données stats de l'étape: {}:".format(etape))
+    for cat in ['ham', 'spam', 'globales']:
+        print_stats(cat, etape, sl_cli)
+
+    sl_cli.close()
+    return
+
+
+#######################################################################################################################
+#           Dev main                                                                                                  #
+#######################################################################################################################
+if __name__ == '__main__':
+
+    print("== Création de la base SQLITE")
+    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
+    sqlite_cmd.sl_create_tables(sl_cli, './databases/sqlite_db/table_stats_conf.json')
+    sl_cli.close()
 
     # == Récolte ==
     print("== Recolte ==")
@@ -226,70 +301,22 @@ if __name__ == '__main__':
     ds_spam = root + "{}".format('\\' if current_os == 'windows' else '/').join(['', 'dev_dataset', 'spam'])
 
     print("-- Création de la liste des fichiers...", end=' ')
-    liste_ham = mail_load.list_files(ds_ham)
-    liste_spam = mail_load.list_files(ds_spam)
+    r_data = {'ham': mail_load.list_files(ds_ham),
+              'spam': mail_load.list_files(ds_spam)}
     print("OK")
 
     # - Stats récolte -
-    # Données pour SQLite
-    stats_spam = stats_temp.copy()
-    stats_ham = stats_temp.copy()
-    stats_globales = stats_temp.copy()
-
-    uniq_spam = stats_recolte('spam', stats_spam, liste_spam)
-    uniq_ham = stats_recolte('ham', stats_ham, liste_ham)
-
-    stats_globales['mails'] = stats_spam.get('mails', 0) + stats_ham.get('mails', 0)
-    stats_globales['mots'] = stats_spam.get('mots', 0) + stats_ham.get('mots', 0)
-    stats_globales['mots_uniques'] = len(set(uniq_ham + uniq_spam))
-    stats_globales['etape'] = "recolte"
-
-    # - Mise en base : statistiques de la récolte
-    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
-
-    print("--- Sauvegarde des stats de la récolte...", end=' ')
-    sqlite_cmd.sl_insert(sl_cli, 'globales', stats_globales)
-    sqlite_cmd.sl_insert(sl_cli, 'ham', stats_ham)
-    sqlite_cmd.sl_insert(sl_cli, 'spam', stats_spam)
-    print('OK')
-
-    print("Données stats de la récolte:")
-    for cat in ['ham', 'spam', 'globales']:
-        print_stats(cat, "recolte", sl_cli)
-
-    sl_cli.close()
+    print("--- Process de statistiques après la récole")
+    stats_process('recolte', r_data)
 
     # == Nettoyage ==
-    stats_spam = stats_temp.copy()
-    stats_ham = stats_temp.copy()
-    stats_globales = stats_temp.copy()
-
     print("== Nettoyage ==")
-    docs_spam = nettoyage_process('spam', liste_spam)
-    docs_ham = nettoyage_process('ham', liste_ham)
+    n_data = {'spam': nettoyage_process('spam', r_data.get('spam', [])),
+              'ham': nettoyage_process('ham', r_data.get('ham', []))}
 
-    # - Mise en base : statistiques de la récolte
-    # Données pour SQLite
-    uniq_spam = stats_nettoyage('spam', stats_spam, docs_spam)
-    uniq_ham = stats_nettoyage('ham', stats_ham, docs_ham)
-
-    stats_globales['mails'] = stats_spam.get('mails', 0) + stats_ham.get('mails', 0)
-    stats_globales['mots'] = stats_spam.get('mots', 0) + stats_ham.get('mots', 0)
-    stats_globales['mots_uniques'] = len(set(uniq_ham + uniq_spam))
-    stats_globales['etape'] = "nettoyage"
-
-    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
-    print("--- Sauvegarde des stats du nettoyage...", end=' ')
-    sqlite_cmd.sl_insert(sl_cli, 'spam', stats_spam)
-    sqlite_cmd.sl_insert(sl_cli, 'ham', stats_ham)
-    sqlite_cmd.sl_insert(sl_cli, 'globales', stats_globales)
-    print('OK')
-
-    print("Données stats du nettoyage:")
-    for cat in ['ham', 'spam', 'globales']:
-        print_stats(cat, "nettoyage", sl_cli)
-
-    sl_cli.close()
+    # - Stats nettoyage
+    print("--- Process de statistiques après le nettoyage")
+    stats_process('nettoyage', n_data)
 
     # == Mise en base des documents ==
     print("== Mise en base des documents ==")
@@ -305,20 +332,29 @@ if __name__ == '__main__':
     print("OK")
 
     # - Mise en base
-    for document in tqdm.tqdm(docs_spam, desc="-- Mise en base SPAM...", leave=False, file=sys.stdout, ascii=True):
-        elastic_cmd.es_index_doc(es_cli, index, document)
-    print("-- Mise en base SPAM... OK")
+    for cat in ['spam', 'ham']:
+        for document in tqdm.tqdm(n_data.get(cat, []),
+                                  desc="-- Mise en base des {}...".format(cat),
+                                  leave=False,
+                                  file=sys.stdout,
+                                  ascii=True):
+            elastic_cmd.es_index_doc(es_cli, index, document)
+        print("-- Mise en base des {}... OK".format(cat))
 
-    for document in tqdm.tqdm(docs_ham, desc="-- Mise en base HAM...", leave=False, file=sys.stdout, ascii=True):
-        elastic_cmd.es_index_doc(es_cli, index, document)
-    print("-- Mise en base HAM... OK")
+    m_data = {}
+    for cat in ['spam', 'ham']:
+        print("-- Récupération des {}...".format(cat), end=' ')
+        m_data[cat] = elastic_cmd.es_get_all(es_cli,
+                                             index,
+                                             sort={'hash': 'asc'},
+                                             query={"match": {'categorie': cat}})
+        print('OK')
+
+    # - Stats mise en base
+    print("--- Process de statistiques après la mise en base")
+    stats_process('mise en base', m_data)
 
     es_cli.close()
-
-    # Récupération des statistiques après mise en base
-
-
-
 
     print("== FIN ==")
 

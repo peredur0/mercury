@@ -4,7 +4,6 @@
 """
 Fonctions utilisées pour la relation avec la base elasticsearch
 """
-
 import sys
 
 import elasticsearch
@@ -103,65 +102,72 @@ def es_get_doc_nb(es_cli, index, query):
     return es_cli.count(index=index, query=query)['count']
 
 
-def es_get_all(es_cli, index, query):
+def es_get_all(es_cli, index, sort, query):
     """
     Récupère tous les documents d'un index selon la query
     :param es_cli: client elastic
     :param index: <str> index de recherche
+    :param sort: <dict> informations pour le sort
     :param query: <dict> requete à utilisé
     :return:
     """
     documents = []
+    size = 1000
+    count = 0
+    expected = es_get_doc_nb(es_cli, index, query)
+
+    # Page 1
+    page = es_cli.search(index=index, size=size, sort=sort, query=query)["hits"]["hits"]
+    signet = page[-1]["sort"]
+    for hit in page:
+        documents.append(hit)
+        count += 1
+
+    # Page 2
+    page = es_cli.search(index=index, size=size, sort=sort, query=query, search_after=signet)["hits"]["hits"]
+    try:
+        signet = page[-1]["sort"]
+    except IndexError:
+        pass
+
+    for hit in page:
+        documents.append(hit)
+        count += 1
+
+    # Page N
+    while count < expected:
+        page = es_cli.search(index=index, size=size, sort=sort, query=query, search_after=signet)["hits"]["hits"]
+        try:
+            signet = page[-1]['sort']
+        except IndexError:
+            break
+        for hit in page:
+            documents.append(hit)
+            count += 1
 
     return documents
 
 
 if __name__ == '__main__':
     from databases.elastic_docker import secrets
-
-    cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), 'ca.crt')
-    if not cli:
+    dev_cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), 'ca.crt')
+    if not dev_cli:
         exit(1)
 
     index = "test_import_all0"
+    sort_dev = {"hash": "asc"}
     query_all = {"match_all": {}}
     query_spam = {"match": {"categorie": "spam"}}
-    print(es_get_doc_nb(cli, index, query_all))
-    print(es_get_doc_nb(cli, index, query={"match": {"categorie": "spam"}}))
-    print(es_get_doc_nb(cli, index, query={"match": {"categorie": "ham"}}))
+    query_ham = {"match": {"categorie": "ham"}}
 
-    # --- get_all_document dev
-    SORT = "hash"
-    SIZE = 100
-    count = 0
-    nb_all = es_get_doc_nb(cli, index, query_all)
-    nb_spam = es_get_doc_nb(cli, index, query_spam)
+    print("all :", len(es_get_all(dev_cli, index, sort_dev, query_all)))
+    print("spam :", len(es_get_all(dev_cli, index, sort_dev, query_spam)))
+    print("ham :", len(es_get_all(dev_cli, index, sort_dev, query_ham)))
 
-    p1 = cli.search(index=index, size=SIZE, sort={SORT: "asc"}, query=query_spam)
-    signet = p1['hits']['hits'][-1]['sort']
-    for hit in p1['hits']['hits']:
-        count += 1
+    spam = es_get_all(dev_cli, index, sort_dev, query_spam)
+    print(spam[0]["_source"]["message"])
+    print(spam[0]["_source"]["nb_mots"])
 
-    p2 = cli.search(index=index, size=SIZE, sort={SORT: "asc"}, query=query_spam, search_after=signet)
-    signet = p2['hits']['hits'][-1]['sort']
-    for hit in p2['hits']['hits']:
-        count += 1
-
-    while count < nb_all:
-        pn = cli.search(index=index, size=SIZE, sort={SORT: "asc"}, query=query_spam, search_after=signet)
-        try:
-            signet = pn['hits']['hits'][-1]['sort']
-        except IndexError:
-            print("WARNING", pn, signet)
-            break
-
-        for hit in pn['hits']['hits']:
-            count += 1
-
-    print("FINAL", count)
-
-    # ---
-
-    cli.close()
+    dev_cli.close()
 
     exit(0)
