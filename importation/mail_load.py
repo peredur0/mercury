@@ -12,7 +12,7 @@ import csv
 import platform
 from email import message_from_binary_file, message_from_string
 from email import policy
-from traitement import nettoyage_init
+from traitement import nettoyage
 
 # Paramètres
 current_os = platform.system().lower()
@@ -97,11 +97,11 @@ def extract_body(msg):
 
     if msg.get_content_subtype() == 'html':
         payload = msg.get_payload(decode=True)
-        body += nettoyage_init.clear_html(payload.decode(errors='ignore'))
+        body += nettoyage.clear_html(payload.decode(errors='ignore'))
 
     if msg.get_content_subtype() == 'enriched':
         payload = msg.get_payload(decode=True)
-        body += nettoyage_init.clear_enriched(payload.decode(errors='ignore'))
+        body += nettoyage.clear_enriched(payload.decode(errors='ignore'))
 
     return body
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         file = './data/spam_2/00959.016c91a5c76f15d7f67b01a24645b624'
         message = import_from_file(file)
         corp = extract_body(message)
-        corp = nettoyage_init.clear_texte(corp)
+        corp = nettoyage.clear_texte_init(corp)
         sujet, exp = extract_meta(message)
         print(exp)
         exit(0)

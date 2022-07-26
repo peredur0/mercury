@@ -4,7 +4,7 @@
 """
 Phase 1: collecte et mise en base
     1. Importation des fichiers mail (récolte)
-    2. Récupération du corps, préparation pour la mise en base (nettoyage)
+    2. Récupération du corps, préparation pour la mise en base (create_document)
     3. Stockage des informations importantes dans la base ElasticSearch (mise en base)
 
     A chaque étape on calcule par catégorie (Spam et Ham) et globalement:
@@ -23,7 +23,7 @@ import langdetect
 import json
 import tqdm
 from importation import mail_load
-from traitement import nettoyage_init
+from traitement import nettoyage
 from databases import elastic_cmd, sqlite_cmd
 from databases.elastic_docker import secrets
 
@@ -54,9 +54,9 @@ def importation(chemin):
 
 
 #######################################################################################################################
-#           Nettoyage                                                                                                 #
+#           Création du document                                                                                      #
 #######################################################################################################################
-def nettoyage(data, categorie):
+def create_document(data, categorie):
     """
     extraction du message
     récupération des métadonnées
@@ -70,7 +70,7 @@ def nettoyage(data, categorie):
     """
     chemin, mail = data
     corp = mail_load.extract_body(mail)
-    corp, liens = nettoyage_init.clear_texte(corp)
+    corp, liens = nettoyage.clear_texte_init(corp)
     sujet, expediteur = mail_load.extract_meta(mail)
 
     try:
@@ -101,9 +101,9 @@ def nettoyage(data, categorie):
     return document
 
 
-def nettoyage_process(categorie, liste):
+def create_doc_process(categorie, liste):
     """
-    Porcessus de nettoyage avec une barre de progression nested
+    Porcessus de création de document avec une barre de progression nested
     :param categorie: <str> Catégorie de mail, Ham ou Spam
     :param liste: <list> liste de
     :return:
@@ -117,14 +117,14 @@ def nettoyage_process(categorie, liste):
         messages = importation(fichier)
         if messages:
             for message in tqdm.tqdm(messages,
-                                     desc="Nettoyage {}".format(messages[0][0].split('/')[-1]),
+                                     desc="Création {}".format(messages[0][0].split('/')[-1]),
                                      leave=False,
                                      ascii=True,
                                      file=sys.stdout):
-                m_doc = nettoyage(message, categorie)
+                m_doc = create_document(message, categorie)
                 if m_doc:
                     docs.append(m_doc)
-    print("-- Importation - Nettoyage {}... OK".format(categorie))
+    print("-- Importation - Création {}... OK".format(categorie))
     return docs
 
 
@@ -182,9 +182,9 @@ def stats_recolte(categorie, stats_dict, liste):
     return m_uniq
 
 
-def stats_nettoyage(categorie, stats_dict, liste):
+def stats_creation_doc(categorie, stats_dict, liste):
     """
-    Récupération des infos statistiques après nettoyage
+    Récupération des infos statistiques après create_document
     :param categorie: <str> catégorie de mail
     :param stats_dict: <dict> selon template de "stats_temp"
     :param liste: <list> liste des documents nettoyés
@@ -204,9 +204,9 @@ def stats_nettoyage(categorie, stats_dict, liste):
 
     stats_dict["mots_uniques"] = len(m_uniq)
     stats_dict["mails"] = len(liste)
-    stats_dict["etape"] = "nettoyage"
+    stats_dict["etape"] = "creation document"
 
-    print("-- Stats - étape : Nettoyage {}... OK".format(categorie))
+    print("-- Stats - étape : création documents {}... OK".format(categorie))
     return m_uniq
 
 
@@ -246,7 +246,7 @@ def stats_process(etape, data):
     :return: <None>
     """
     fonctions = {'recolte': stats_recolte,
-                 'nettoyage': stats_nettoyage,
+                 'creation document': stats_creation_doc,
                  'mise en base': stats_mise_en_base}
 
     func = fonctions.get(etape.lower(), None)
@@ -317,21 +317,21 @@ if __name__ == '__main__':
     print("--- Process de statistiques après la récole")
     stats_process('recolte', r_data)
 
-    # == Nettoyage ==
-    print("== Nettoyage ==")
-    n_data = {'spam': nettoyage_process('spam', r_data.get('spam', [])),
-              'ham': nettoyage_process('ham', r_data.get('ham', []))}
+    # == Création document ==
+    print("== Création document ==")
+    n_data = {'spam': create_doc_process('spam', r_data.get('spam', [])),
+              'ham': create_doc_process('ham', r_data.get('ham', []))}
 
-    # - Stats nettoyage
-    print("--- Process de statistiques après le nettoyage")
-    stats_process('nettoyage', n_data)
+    # - Stats create_document
+    print("--- Process de statistiques après la création de document")
+    stats_process('creation document', n_data)
 
     # == Mise en base des documents ==
     print("== Mise en base des documents ==")
     print("-- Création de l'index ElasticSearch...", end=' ')
     es_cli = elastic_cmd.es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), secrets.ca_cert)
     if not es_cli:
-        print("ECHEC")
+        print("ECHEC connexion ElasticSearch")
         exit(1)
 
     email_mapping = json.load(open('databases/elastic_docker/mail_mapping.json', 'r'))
@@ -341,13 +341,14 @@ if __name__ == '__main__':
 
     # - Mise en base
     for cat in ['spam', 'ham']:
+        doublons = 0
         for document in tqdm.tqdm(n_data.get(cat, []),
                                   desc="-- Mise en base des {}...".format(cat),
                                   leave=False,
                                   file=sys.stdout,
                                   ascii=True):
-            elastic_cmd.es_index_doc(es_cli, index, document)
-        print("-- Mise en base des {}... OK".format(cat))
+            doublons += elastic_cmd.es_index_doc(es_cli, index, document)
+        print("-- Mise en base des {}... OK ({} doublons)".format(cat, doublons))
 
     m_data = {}
     for cat in ['spam', 'ham']:

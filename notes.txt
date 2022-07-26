@@ -12,7 +12,7 @@ stocker les données des statistiques
         - nombre de mots
         - nombre de mots uniques
 
- - Etape de nettoyage
+ - Etape de create_document
     dans le corpus, Ham & Spam
         - nombe de mail
         - nombre de mots

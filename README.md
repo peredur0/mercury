@@ -7,11 +7,11 @@
 
 ## Todo
 1. Faire une schéma du flux de traitement
-2. Données avant nettoyage > ok
+2. Données avant create_document > ok
    1. Nombre de mail 
    2. Nombre de mots 
    3. Nombre de mots uniques  
-3. Données après nettoyage > ok
+3. Données après create_document > ok
    1. Nombre de mail
    2. Nombe de mots
    3. Nombre de mots uniques

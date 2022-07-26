@@ -12,6 +12,7 @@
 
 # Importations
 import re
+import nltk
 from bs4 import BeautifulSoup
 
 # metadata
@@ -20,7 +21,12 @@ __licence__ = "GNU GPL v3"
 __version__ = "0.0.0"
 __status__ = "development"
 
+nltk.download("words")
+nltk.download("punkt")
 
+########################################################################################################################
+#             Nettoyage Initial                                                                                        #
+########################################################################################################################
 def clear_html(texte):
     """ Supprime les balises des textes.
             - html
@@ -114,7 +120,7 @@ def change_nombres(texte, liens):
     return temp
 
 
-def clear_texte(texte):
+def clear_texte_init(texte):
     """ Fonction principale de traitement du texte
     :param texte: <str>
     :return: <str>
@@ -126,6 +132,28 @@ def clear_texte(texte):
     temp = clear_ponctuation(temp)
 
     return temp, liens
+
+
+########################################################################################################################
+#             Nettoyage Complémentaire                                                                                 #
+########################################################################################################################
+def clear_non_ascii(texte):
+    """ Nettoyer les char non ascii
+    :param texte: <str> texte à traiter
+    :return: <str> texte nettoyé
+    """
+    return texte.encode('ascii', 'ignore').decode()
+
+
+def clear_non_eng(texte):
+    """
+    Retire les mots non anglais d'un texte
+    :param texte: <str> texte à traiter
+    :return: <str> texte nettoyé
+    """
+    words = set(nltk.corpus.words.words())
+    return " ".join(mot for mot in nltk.word_tokenize(texte)
+                    if mot.lower() in words or not mot.isalpha())
 
 
 if __name__ == '__main__':
@@ -151,9 +179,9 @@ Ponctuation : ----## ..
     '''
     print(message)
     print(80*'-')
-    texte, liens = clear_texte(message)
+    text, liens = clear_texte_init(message)
     print(liens)
-    print(texte)
+    print(text)
     print(80*'-')
 
     message_html = '''
@@ -176,7 +204,7 @@ other features
     '''
     print(message_html)
     print(80*'-')
-    print(clear_texte(clear_html(message_html)))
+    print(clear_texte_init(clear_html(message_html)))
     print(80*'-')
 
     message_enriched = '''
@@ -187,5 +215,24 @@ advantage of the trusted zone file transfer option.</smaller>
     print(80*'-')
     print(clear_enriched(message_enriched))
     print(80*'-')
+
+    txt = "Hello,This is Chinese Traditional oЧʽ    ׌ fͬһr֪ďV᣿뷽ݵI᣿    ̘IвșC᣿ һΓЎ׃ ̘I͑᣿    ԽԽ W·ֱNɠδINʽE " \
+           "mailǾWϠINҲõĹߡ cVrЧߣr͡eMarketerӋ еҎģ˾ MРINӡ ֏Výwƽؑʱ^ Average Response Rate Ranges ͨ banner ads ͨż direct " \
+           "mail Email һ ُIȫ ַ ÿ f HK ُIȫ f HK ُI ַ ÿ f HK   ُIȫ f HK  free download ُI ַ ÿ f HK   ُI ȫ f HK  free " \
+           "download     l V lͣ ÿ f HK fl ʴ ϣ Ⱥl         һ f HK               " \
+           "     һ f HK CWվL ϣ Ⱥl         һ f HK CWվL ϣ     ܛw NȺlW·lܛw HK ׌ԼһƵ ȺlW·lϵy ϵ " \
+           "Ե ֵգػ݃r HK y֮ǎȫ Ӣ棬M 档׌ľWվuȫ e mailַڸ؅^ķցє ۡ  free download the sample  free download the sample ȫ򡪡 f " \
+           "  y֮ǓЇσ ЧemailλַYώ죬Ը͑Ҫָĵط^,ИIeȌͶ V档 磺׌ĳ fһ֮֪ĮaƷYӍV ͶžõĽQărЂúrͣ ЧġCÿrÿ̶ȴ㣬ҲS ӵĂúֶΣеĸ֡sЄӰɣ׌I ˾̘Iý Ve mail " \
+           "ͨNIܱȔMġ Mʽ ˾¾W·V꣬λЇĴW·V֮һ ҂ЌTļgˆT͸ٌIķϵy´헹،IṩѸݡЧMķա ͑Ոc YM ՈעҪķcMʽ҂؏ ۡġ ؅^ʽκ·Ҿɵy늅R 쵽 赽yk늅R English" \
+           " BENIFICIARY CUSTOMER  wangjingjing A C BANK              BANK OF CHINA MIANYANG " \
+           "BRANCH A C NO                 BENIFICIARY S TEL NO Čգ ˣ տyУ Їyоdꖷ    ̖ տԒ 쵽҂ṩMա " \
+           "gӭŁJԃM Ԓ y֮ǾW·YӍ޹˾ ˾ַЇꑾd JԃԒ ˾ՌW·ƏV WվO W· W퓼Ĵ ׃Qg ܛwlչȣrXՃ gӭŁM "
+
+    print(txt)
+    s1 = clear_non_ascii(txt)
+    print(s1)
+    s2 = clear_non_eng(s1)
+
+    print(s2)
 
     exit(0)

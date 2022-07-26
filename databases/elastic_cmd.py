@@ -48,10 +48,14 @@ def es_create_indice(es_cli, index, mapping):
     """
     indices = es_cli.indices.get(index='*')
     if indices and index in indices:
-        print("Warning: Indice {} déjà présent".format(index))
+        print("Warning: Indice {} déjà présent".format(index), end=' ')
         return
 
-    res = es_cli.indices.create(index=index, mappings=mapping)
+    try:
+        res = es_cli.indices.create(index=index, mappings=mapping)
+    except elasticsearch.ApiError as err:
+        print(err)
+        return
 
     if not res['acknowledged']:
         print("Error : Echec de la création de l'indice {}".format(index))
@@ -67,10 +71,11 @@ def es_index_doc(es_cli, index, doc):
     id_doc = doc['hash']
 
     if es_document_exists(es_cli, index, id_doc):
-        return
+        return 1
 
     es_cli.index(index=index, document=doc)
     es_cli.indices.refresh(index=index)
+    return 0
 
 
 def es_document_exists(es_cli, index, hash):
@@ -149,24 +154,27 @@ def es_get_all(es_cli, index, sort, query):
 
 
 if __name__ == '__main__':
+    import json
     from databases.elastic_docker import secrets
     dev_cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), 'ca.crt')
     if not dev_cli:
         exit(1)
 
-    index = "test_import_all0"
-    sort_dev = {"hash": "asc"}
-    query_all = {"match_all": {}}
-    query_spam = {"match": {"categorie": "spam"}}
-    query_ham = {"match": {"categorie": "ham"}}
+    index = "test_phase_2"
+    mapp = json.load(open("./elastic_docker/exploit_mapping.json"))
+    es_create_indice(dev_cli, index, mapp)
 
-    print("all :", len(es_get_all(dev_cli, index, sort_dev, query_all)))
-    print("spam :", len(es_get_all(dev_cli, index, sort_dev, query_spam)))
-    print("ham :", len(es_get_all(dev_cli, index, sort_dev, query_ham)))
+    dev_doc = {"hash": "rfiherifuheqiufhieuqrhf",
+               "nlp_methodes": {
+                   "maison": [
+                       {"rang": 1, "mot": "foo", "occurences": 10},
+                       {"rang": 2, "mot": "bar", "occurences": 5},
+                       {"rang": 3, "mot": "coco", "occurences": 2},
+                       {"rang": 3, "mot": "nuts", "occurences": 2}
+                   ]
+               }}
 
-    spam = es_get_all(dev_cli, index, sort_dev, query_spam)
-    print(spam[0]["_source"]["message"])
-    print(spam[0]["_source"]["nb_mots"])
+    es_index_doc(dev_cli, index, dev_doc)
 
     dev_cli.close()
 
