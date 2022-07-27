@@ -25,11 +25,11 @@
 
 
 ########################################################################################################################
-#             Travail sur la fréquence des mots                                                                        #
+#             Statistiques / Probabilités                                                                              #
 ########################################################################################################################
 def frequence_mot(bag):
     """
-    calcul la fréquence de chaque mot dans un sac de mot
+    calcule la fréquence de chaque mot dans un sac de mot
     :param bag: <list> - liste de tous les mots d'un texte
     :return: <dict> - dictionnaire avec la fréquence par mot
     """
@@ -43,17 +43,35 @@ def frequence_mot(bag):
     return freq
 
 
-def sort_rang(dictionnaire):
+def classement_freq(dico):
     """
     Trie un dictionnaire de mots : occurence et leur assigne un rang en fonction du nombre d'occurence
-    :param dictionnaire: <dict> dictionnaire de mot: occurences
-    :return: <dictionnaire
+    :param dico: <dict> dictionnaire de mot: occurences
+    :return: <list> {"rang": <int>, "mot": <str>, "occurences": <int>}
     """
-    ranked = {}
-    rang = 1
-    for couple in sorted(dictionnaire.items(), key=lambda item: item[1], reverse=True):
-        pass
+    ranked = []
+    for rang, couple in enumerate(sorted(dico.items(), key=lambda item: item[1], reverse=True), start=1):
+        ranked.append({"rang": rang, "mot": couple[0], "occurences": couple[1]})
 
+    return ranked
+
+
+def freq_zipf(nb_mots, rang, s):
+    """
+    Retourne la fréquence théorique d'un mot selon la loi de distribution de zipf
+    # help : https://iq.opengenus.org/zipfs-law/
+    # help : https://www.youtube.com/watch?v=WYO8Rc4JB_Y
+    # todo: développer encore
+    :param nb_mots: <int> nombre d'occurence du mot le plus fréquent
+    :param rang: <int> rang du mot à déterminer
+    :param s: <float> environ 1
+    :return: <float> nombre d'occurence estimée
+    """
+    h = 0
+    for x in range(1, nb_mots+1):
+        h += 1/(x**s)
+
+    return 1/(rang**s) / h
 
 
 ########################################################################################################################
@@ -70,6 +88,8 @@ def nlp_process(texte, method):
 
 
 if __name__ == '__main__':
+    import traitement.graphs as graphs
+
     ex_spam = "A POWERHOUSE GIFTING PROGRAM You Don t Want To Miss! GET IN WITH THE FOUNDERS! The MAJOR PLAYERS are " \
               "on This ONE For ONCE be where the PlayerS are This is YOUR Private Invitation EXPERTS ARE CALLING THIS" \
               " THE FASTEST WAY TO HUGE CASH FLOW EVER CONCEIVED Leverage into Over and Over Again THE QUESTION HERE" \
@@ -137,10 +157,24 @@ if __name__ == '__main__':
 
     fq_spam = frequence_mot(ex_spam.lower().split())
     fq_ham = frequence_mot(ex_ham.lower().split())
-    print(fq_ham)
-    print(fq_spam)
 
-    sort_fqs = sort_rang(fq_spam)
-    print(sort_fqs)
+    sort_fqs = classement_freq(fq_spam)
+    sort_fqh = classement_freq(fq_ham)
+    # print(sort_fqs)
+    print(sort_fqh[:3])
+
+    s = 1.55
+    print(len(ex_ham.split()))
+    print(freq_zipf(len(ex_ham.split()), 1, s), end='\t')
+    print(freq_zipf(len(ex_ham.split()), 2, s), end='\t')
+    print(freq_zipf(len(ex_ham.split()), 3, s))
+
+    print(len(sort_fqh))
+    print(freq_zipf(len(sort_fqh), 1, s), end='\t')
+    print(freq_zipf(len(sort_fqh), 2, s), end='\t')
+    print(freq_zipf(len(sort_fqh), 3, s))
+
+    graphs.show_zipf('ham', sort_fqh)
+    graphs.show_zipf('spam', sort_fqs)
 
     exit(0)
