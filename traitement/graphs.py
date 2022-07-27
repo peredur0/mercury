@@ -21,7 +21,7 @@ def show_zipf(titre, dico):
     rang, occurences = zip(*[(info['rang'], info['occurences']) for info in dico])
 
     plt.figure('Distribution de Zipf')
-    plt.plot(rang, occurences, label="réel", c='red')
+    plt.scatter(rang, occurences, label="réel", marker='+', c='black')
     plt.title(titre)
     plt.xlabel("rang")
     plt.ylabel("occurences")
