@@ -31,9 +31,10 @@
    4. Dist, avg, med : liens
    5. Dist, avg, med : fautes
    6. Dist, avg, med : Nombre de nom propre
-   7. 
 
-6. Traitement des données - analyse
+afficher des courbes de la recherche de minimum de cout pour justifier les choix. 
+
+7. Traitement des données - analyse
    1. Calcul du nombre de faute
    2. Nettoyages complémentaires
       1. Retrait des mots non anglais
@@ -43,6 +44,15 @@
    4. Analyse sémantique (LDA clustering) ?
    5. Création bag of word
    6. Vectorisation
-7. Modèles
+8. Modèles
    1. Naive bayes
    2. SOM
+
+## Difficultées
+1. Réaliser la distribution de zipf.
+   * Trouver la manière de calculer la coubre théorique. 
+   Réussi en travaillant sur le corpus de Brown (NLTK) qui contient 1161192 mots d'ouvrage en anglais américain contemporain. 
+   Pour déterminer la constante du texte, je fais la moyenne des occurences fois le rang puissance S. la valeur S me sert
+   de variable d'ajustement afin d'avoir le coup (écart absolu entre réel et théorique) le plus réduit. 
+   # help : https://iq.opengenus.org/zipfs-law/
+   # help : https://www.youtube.com/watch?v=WYO8Rc4JB_Y
