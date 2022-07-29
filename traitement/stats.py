@@ -50,25 +50,31 @@ def frequence_mot(bag):
 def cout(l1, l2, methode):
     """
     Calcul le cout de l'écart entre les éléments de l1 et le l2, place par place
+    help: https://www.youtube.com/watch?v=_TE9fDgtOaE
     :param l1: <list> liste d'entier
     :param l2: <liste> liste d'entier
     :param methode: <str> méthode de calcul du cout
     :return: <float> cout selon méthode
     """
-    ls_cout = [abs(x - y) for x, y in zip(l1, l2)]
+    if len(l1) != len(l2):
+        print("Erreur, fonction cout: l1 & l2 de taille différente", file=sys.stderr)
+        return None
 
-    if methode.lower() not in ['moyenne', 'somme']:
+    if len(l1) == 0:
+        print("Erreur, fonction cout: liste vide", file=sys.stderr)
+
+    if methode.lower() not in ['absolue', 'carre', 'racine']:
         print("Erreur, fonction cout - methode '{}' inconnue".format(methode), file=sys.stderr)
         return None
 
-    if methode.lower() == 'moyenne':
-        if len(ls_cout) == 0:
-            print("Erreur, fonction cout - division par zéro pour la moyenne", file=sys.stderr)
-            return None
-        return np.average(ls_cout)
+    if methode.lower() == 'absolue':
+        return np.mean([abs(x-y) for x, y in zip(l1, l2)])
 
-    if methode.lower() == 'somme':
-        return sum(ls_cout)
+    if methode.lower() == 'carre':
+        return np.mean([(x-y)**2 for x, y in zip(l1, l2)])
+
+    if methode.lower() == 'racine':
+        return np.sqrt(np.mean([(x-y)**2 for x, y in zip(l1, l2)]))
 
     return None
 
@@ -108,12 +114,12 @@ def zipf_process(sorted_list):
 
     ls_coef = list(np.arange(0.8, 1.5, 0.01))
     cout_moy = []
-    cout_sum =
+    cout_sum = []
     for coef in ls_coef:
         freq_theo = [zipf_freq_theorique(constante, x, coef) for x in range(1, len(freq_reel)+1)]
         cout_moy.append(cout(freq_reel, freq_theo, 'moyenne'))
 
-    plt.plot(ls_coef, cout_moy, label="moyenne", c='black')
+    plt.plot(ls_coef, cout_moy, label="absolue", c='black')
     plt.xlabel('coef')
     plt.ylabel('cout')
     plt.legend()
