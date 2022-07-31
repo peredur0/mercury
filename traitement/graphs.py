@@ -2,7 +2,7 @@
 # coding: utf-8
 
 """
-Développement des fonction graphiques
+Développement des fonctions graphiques
 """
 
 import matplotlib.pyplot as plt
