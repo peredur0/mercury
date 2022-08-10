@@ -9,6 +9,9 @@ Recherche de la méthode pour trouver les paramètres avec un cout minimum entre
 Corpus utilisés : ntlk brown, stopwords
 utilisation d'un grand dataset préformaté correct avant de l'employer sur mon nettoyage de mail
 
+
+Après analyse j'obtiens de meilleurs résultats sans retirer les stopswords anglais
+et en utilisant une constante moyenne plutôt que médiane
 """
 import re
 import nltk

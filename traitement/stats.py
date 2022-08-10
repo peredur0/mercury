@@ -2,13 +2,8 @@
 # coding: utf-8
 
 """
-    Module d'exploitation:
-        - traitement NLP
-            - nltk - tokenisation, POS tagging,  lemmatisation, stopwords
-            - Standford - tokenisation, POS tagging, lemmatisation, noms propres
-            - calcul de la distribution des tags.
-
-        - travail sur la fréquence des mots
+    Module de données statistiques :
+         - travail sur la fréquence des mots
             * récupération de la fréquence pour les mots d'un texte
             * loi de Zipf
                 - calculer le nombre d'occurences théorique par mot selon son rang
@@ -16,10 +11,6 @@
                     (sur tout le texte ou sur une partie restreinte)
             * Proprotion d'Hapax
                 - calculer le pourcentage de mot n'ayant qu'une seule occurence
-
-        - travail sur le nombre de fautes
-        - travail sur les thèmes
-            (SOM)
 """
 
 
@@ -157,19 +148,6 @@ def hapax(bag):
     }
 
     return hapax_data
-
-
-########################################################################################################################
-#             NLP processing                                                                                           #
-########################################################################################################################
-def nlp_process(texte, method):
-    """
-    Passe un texte à travers une méthode de nlp
-    :param texte: <str> texte à travailler
-    :param method <str> methode à utiliser pour le traitement
-    :return: <list> liste de tous les mots encore présent après le traitement nlp
-    """
-    return
 
 
 if __name__ == '__main__':
