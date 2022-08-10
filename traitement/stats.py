@@ -6,7 +6,7 @@
         - traitement NLP
             - nltk - tokenisation, POS tagging,  lemmatisation, stopwords
             - Standford - tokenisation, POS tagging, lemmatisation, noms propres
-            - calcul de la distribution des tag.
+            - calcul de la distribution des tags.
 
         - travail sur la fréquence des mots
             * récupération de la fréquence pour les mots d'un texte
@@ -14,10 +14,10 @@
                 - calculer le nombre d'occurences théorique par mot selon son rang
                 - calculer l'écart entre le nombre d'occurence théorique et la réalité du texte
                     (sur tout le texte ou sur une partie restreinte)
-            * Proprotion d'Harax
+            * Proprotion d'Hapax
                 - calculer le pourcentage de mot n'ayant qu'une seule occurence
 
-        - travail sur le nombre de faute
+        - travail sur le nombre de fautes
         - travail sur les thèmes
             (SOM)
 """
@@ -25,25 +25,23 @@
 
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
+from graphs import show_zipf_stat
 
 
 ########################################################################################################################
 #             Statistiques / Probabilités                                                                              #
 ########################################################################################################################
-def frequence_mot(bag):
+def frequence_mot(bag, freq=None):
     """
-    calcule la fréquence de chaque mot dans un sac de mot
+    Calcule la fréquence de chaque mot dans un sac de mot
     :param bag: <list> - liste de tous les mots d'un texte
+    :param freq: <dict> - dictionnaire avec {<str> mot: <int> frequence}
     :return: <dict> - dictionnaire avec la fréquence par mot {mot: frequence}
     """
-    freq = {}
+    if freq is None:
+        freq = {}
     for mot in bag:
-        if mot in freq.keys():
-            freq[mot] += 1
-        else:
-            freq[mot] = 1
-
+        freq[mot] = freq.get(mot, 0) + 1
     return freq
 
 
@@ -94,42 +92,48 @@ def classement_zipf(dico):
     return ranked
 
 
-def zipf_process(sorted_list):
+def zipf_process(bag, print_stats=False):
     """
-
-    :param sorted_list: <list> liste ordonnée des mots selon leur rang
-                        {"rang": <int>, "mot": <str>, "frequence": <int>
-    :return: <tuple> (<float> - coef, <int?> cout)
+    Récupère une liste de mot et applique les traitements pour l'analyse de la distribution de zipf
+    1. calcul de la fréquence
+    2. trier les mots par fréquence
+    3. calculer la constante moyenne
+    4. calculer la fréquence théorique moyenne
+    5. déterminer le coefficient avec le cout absolu moyen le plus bas
+    :param bag: <list> liste de <str>
+    :param print_stats: <bool> Affiche les statistiques et les graph
+    :return: <dict>
     """
-    # Calcul de la moyenne(frequence x rang) = constante
-    constante = np.average([elem['rang'] * elem['frequence'] for elem in sorted_list])
+    # Trie du sac de mot
+    classement = classement_zipf(frequence_mot(bag))
+    rang, freq_reel = zip(*[(e['rang'], e['frequence']) for e in classement])
 
-    # Déterminer le meilleur coeficiant
-    rang = [elem['rang'] for elem in sorted_list]              # dev recherche minimum
-    freq_reel = [elem['frequence'] for elem in sorted_list]
+    # Déterminer la constante moyenne
+    const_moy = np.mean([e['rang'] * e['frequence'] for e in classement])
 
+    # Déterminer le coefficiant avec le cout minimum
+    coefs = list(np.arange(0.86, 1.3, 0.01))
+    freq_theorique = {coef: [zipf_freq_theorique(const_moy, rg, coef) for rg in rang] for coef in coefs}
+    cout_p_coef = {coef: cout(freq_reel, freq_theorique[coef], 'absolue') for coef in coefs}
+    cout_min = min(cout_p_coef.values())
+    coef_min = list(cout_p_coef.keys())[list(cout_p_coef.values()).index(cout_min)]
 
-    # plt développement
-    plt.figure("recherche minimum", figsize=(10, 10))
+    z_data = {
+        'const_moy': const_moy,
+        'cout_min': cout_min,
+        'coef_min': coef_min
+    }
 
-    ls_coef = list(np.arange(0.8, 1.5, 0.01))
-    cout_moy = []
-    cout_sum = []
-    for coef in ls_coef:
-        freq_theo = [zipf_freq_theorique(constante, x, coef) for x in range(1, len(freq_reel)+1)]
-        cout_moy.append(cout(freq_reel, freq_theo, 'moyenne'))
+    if print_stats:
+        show_zipf_stat(z_data, rang, freq_reel, cout_p_coef, freq_theorique[coef_min])
 
-    plt.plot(ls_coef, cout_moy, label="absolue", c='black')
-    plt.xlabel('coef')
-    plt.ylabel('cout')
-    plt.legend()
-    plt.show()
+    return z_data
 
 
 def zipf_freq_theorique(constante, rang, coef):
     """
     Calcul la fréquence théorique d'un mot selon son rang, la constante du texte et un coeficiant d'ajustement
-    :param constante: <int> constante déterminer par la distribution de Zipf
+    :param constante: <int> constante détéminé par la distribution de Zipf
     :param rang: <int> rang du mot selon sa fréquence
     :param coef: <float> variable d'ajustement
     :return: <float> fréquence théorique zipfienne
@@ -137,12 +141,30 @@ def zipf_freq_theorique(constante, rang, coef):
     return constante / (rang ** coef)
 
 
+def hapax(bag):
+    """
+    Compte le nombre de mots n'ayant qu'une seule occurence
+    :param bag: <list> liste des mots
+    :return: <dict> Nombre d'hapax et ratio par rapport à tout le texte et tous les mots
+    """
+    classement = classement_zipf(frequence_mot(bag))
+    nb_hapax = len([e['mot'] for e in classement if e['frequence'] == 1])
+
+    hapax_data = {
+        'nombres': nb_hapax,
+        'ratio_mots': nb_hapax/len(classement),
+        'ration_text': nb_hapax/len(bag)
+    }
+
+    return hapax_data
+
+
 ########################################################################################################################
 #             NLP processing                                                                                           #
 ########################################################################################################################
 def nlp_process(texte, method):
     """
-    Passe un texte à travers travers une méthode de nlp
+    Passe un texte à travers une méthode de nlp
     :param texte: <str> texte à travailler
     :param method <str> methode à utiliser pour le traitement
     :return: <list> liste de tous les mots encore présent après le traitement nlp
@@ -157,32 +179,13 @@ if __name__ == '__main__':
 
     # Développement de la fonction zipf
     nltk.download("brown")
-    nltk.download("stopwords")
+
     stopsw = set(stopwords.words('english'))
 
-    # Nettoyage basic
-    print("longeur brown.words() :", len(brown.words()))
-    freq_b = frequence_mot([mot.lower() for mot in brown.words() if re.match(r'\w+', mot)])
+    data_brown = [mot.lower() for mot in brown.words() if re.match(r'\w+', mot)]
 
-    print("nombres de mots", len(freq_b.keys()))
-    sort_b = classement_zipf(freq_b)
+    print(zipf_process(data_brown, print_stats=False))
+    print(hapax(data_brown))
 
-    zipf_process(sort_b)
-
-    exit(0)
-
-    for info in sort_b[:5]:
-        print(info)
-
-    r, f = zip(*[(i['rang'], i["frequence"]) for i in sort_b])
-
-    plt.figure("Distribution", figsize=(5, 5))
-    plt.scatter(r, f, label="réel", marker='+', c='black')
-    plt.xlabel('rang')
-    plt.ylabel('fréquence')
-    plt.xscale('log')
-    plt.yscale('log')
-    plt.legend()
-    plt.show()
 
     exit(0)

@@ -73,7 +73,6 @@ if __name__ == '__main__':
     zbsmeth_cmoy = [stats.cout(zbs_freq, zbsme_th[coef], 'absolue') for coef in ls_coef]
     print("ok")
 
-    # todo: faire l'algorithme de descente de gradiant
     print(f"cout min brown moyenne: {min(zbmoth_cmoy)}, median: {min(zbmeth_cmoy)}")
     print(f"cout min brown (- stopwords) moyenne: {min(zbsmoth_cmoy)}, median: {min(zbsmeth_cmoy)}")
     zbmot_coef_cmin = list(zbmo_th.keys())[zbmoth_cmoy.index(min(zbmoth_cmoy))]
@@ -81,6 +80,11 @@ if __name__ == '__main__':
 
     zbsmot_coef_cmin = list(zbsmo_th.keys())[zbsmoth_cmoy.index(min(zbsmoth_cmoy))]
     zbsmet_coef_cmin = list(zbsme_th.keys())[zbsmeth_cmoy.index(min(zbsmeth_cmoy))]
+
+    print(f"Coefficient min brown moyenne: {zbmot_coef_cmin}, median: {zbmet_coef_cmin}")
+    print(f"Coefficient min brown (- stopwords) moyenne: {zbsmot_coef_cmin}, median: {zbsmet_coef_cmin}")
+
+    exit(0)
 
     # Process graphique
     ligne = 2
