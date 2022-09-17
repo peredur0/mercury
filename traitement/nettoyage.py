@@ -6,7 +6,7 @@
         Nettoyage du texte
             - retrait des ponctuations
             - retrait des lignes vides et des espaces
-            - retrait des retour à la ligne
+            - retrait des retours à la ligne
             - modification liens, numeros de telephone, nombre et prix, url
 """
 
@@ -23,6 +23,7 @@ __status__ = "development"
 
 nltk.download("words")
 nltk.download("punkt")
+
 
 ########################################################################################################################
 #             Nettoyage Initial                                                                                        #
@@ -56,7 +57,7 @@ def clear_enriched(texte):
 
 
 def clear_ponctuation(texte):
-    """ Supprime les ponctualtion et les lignes vide
+    """ Supprimer les ponctuations et les lignes vides
     :param texte: <str>
     :return: <str>
     """
