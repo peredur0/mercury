@@ -25,7 +25,7 @@ import tqdm
 from importation import mail_load
 from traitement import nettoyage
 from databases import elastic_cmd, sqlite_cmd
-from databases.elastic_docker import secrets
+from databases.elastic import secrets
 
 
 warnings.filterwarnings('ignore')
@@ -334,7 +334,7 @@ if __name__ == '__main__':
         print("ECHEC connexion ElasticSearch")
         exit(1)
 
-    email_mapping = json.load(open('databases/elastic_docker/mail_mapping.json', 'r'))
+    email_mapping = json.load(open('databases/elastic/mail_mapping.json', 'r'))
     index = "test_import_all0"
     elastic_cmd.es_create_indice(es_cli, index, email_mapping)
     print("OK")

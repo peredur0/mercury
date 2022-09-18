@@ -1,9 +1,17 @@
 # Project exclude paths
 /dev/
-/databases/ca.crt
-/databases/elastic_docker/secrets.py
-/databases/certs/
-/databases/elastic/
-/databases/kibana/
+/databases/elastic/secrets.py
 /databases/sqlite_db/test_table.db
 /databases/sqlite_db/stats_dev.db
+/databases/elastic/docker/elastic/data/_state/
+/databases/elastic/docker/elastic/data/indices/
+/databases/elastic/docker/elastic/data/snapshot_cache/
+/databases/elastic/docker/elastic/data/node.lock
+/databases/elastic/docker/elastic/data/nodes
+/databases/elastic/docker/kibana/data/chromium-nNd7pJ/
+/databases/elastic/docker/kibana/data/uuid
+/databases/elastic/docker/certs/ca/
+/databases/elastic/docker/certs/es01/
+/databases/elastic/docker/certs/ca.zip
+/databases/elastic/docker/certs/certs.zip
+/databases/elastic/docker/certs/instances.yml

@@ -155,13 +155,13 @@ def es_get_all(es_cli, index, sort, query):
 
 if __name__ == '__main__':
     import json
-    from databases.elastic_docker import secrets
-    dev_cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), 'ca.crt')
+    from databases.elastic import secrets
+    dev_cli = es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), 'elastic/docker/certs/ca/ca.crt')
     if not dev_cli:
         exit(1)
 
     index = "test_phase_2"
-    mapp = json.load(open("./elastic_docker/exploit_mapping.json"))
+    mapp = json.load(open("elastic/exploit_mapping.json"))
     es_create_indice(dev_cli, index, mapp)
 
     dev_doc = {"hash": "rfiherifuheqiufhieuqrhf",
