@@ -7,6 +7,12 @@
       <excludeFolder url="file://$MODULE_DIR$/databases/elastic/elastic" />
       <excludeFolder url="file://$MODULE_DIR$/databases/elastic/certs" />
       <excludeFolder url="file://$MODULE_DIR$/databases/elastic/kibana" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic/docker/certs/ca" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic/docker/certs/es01" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic/docker/elastic/data/_state" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic/docker/elastic/data/indices" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic/docker/elastic/data/snapshot_cache" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/elastic/docker/kibana/data/chromium-nNd7pJ" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.8" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

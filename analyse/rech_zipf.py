@@ -18,7 +18,7 @@ import nltk
 import matplotlib.pyplot as plt
 import numpy as np
 from nltk.corpus import brown, stopwords
-from traitement import stats
+from traitement.stats import frequence_mot, classement_zipf, zipf_freq_theorique, cout
 
 
 if __name__ == '__main__':
@@ -31,8 +31,8 @@ if __name__ == '__main__':
 
     # Nettoyage + frequence
     print("-- Récupération du dataset...", end=' ')
-    brown_freq = stats.frequence_mot([w.lower() for w in datas_brown if re.match(r'\w+', w)])
-    brown_stop_freq = stats.frequence_mot([w.lower() for w in datas_brown if (re.match(r'\w+', w) and w not in stopw)])
+    brown_freq = frequence_mot([w.lower() for w in datas_brown if re.match(r'\w+', w)])
+    brown_stop_freq = frequence_mot([w.lower() for w in datas_brown if (re.match(r'\w+', w) and w not in stopw)])
     print("ok")
 
     print(f"Nombre de mots dans brown:\t"
@@ -44,8 +44,8 @@ if __name__ == '__main__':
 
     # Classement zipf
     print("-- Classement selon fréquence...", end=' ')
-    zipf_brown = stats.classement_zipf(brown_freq)
-    zipf_brown_s = stats.classement_zipf(brown_stop_freq)
+    zipf_brown = classement_zipf(brown_freq)
+    zipf_brown_s = classement_zipf(brown_stop_freq)
 
     zb_rang, zb_freq = zip(*[(e['rang'], e['frequence']) for e in zipf_brown])
     zbs_rang, zbs_freq = zip(*[(e['rang'], e['frequence']) for e in zipf_brown_s])
@@ -65,15 +65,15 @@ if __name__ == '__main__':
     # Recherche du coefficiant
     print("-- Recherche du coefficiant...", end=' ')
     ls_coef = list(np.arange(0.86, 1.3, 0.01))
-    zbmo_th = {coef: [stats.zipf_freq_theorique(zb_const_moyen, r, coef) for r in zb_rang] for coef in ls_coef}
-    zbme_th = {coef: [stats.zipf_freq_theorique(zb_const_median, r, coef) for r in zb_rang] for coef in ls_coef}
-    zbmoth_cmoy = [stats.cout(zb_freq, zbmo_th[coef], 'absolue') for coef in ls_coef]
-    zbmeth_cmoy = [stats.cout(zb_freq, zbme_th[coef], 'absolue') for coef in ls_coef]
+    zbmo_th = {coef: [zipf_freq_theorique(zb_const_moyen, r, coef) for r in zb_rang] for coef in ls_coef}
+    zbme_th = {coef: [zipf_freq_theorique(zb_const_median, r, coef) for r in zb_rang] for coef in ls_coef}
+    zbmoth_cmoy = [cout(zb_freq, zbmo_th[coef], 'absolue') for coef in ls_coef]
+    zbmeth_cmoy = [cout(zb_freq, zbme_th[coef], 'absolue') for coef in ls_coef]
 
-    zbsmo_th = {coef: [stats.zipf_freq_theorique(zbs_const_moyen, r, coef) for r in zbs_rang] for coef in ls_coef}
-    zbsme_th = {coef: [stats.zipf_freq_theorique(zbs_const_median, r, coef) for r in zbs_rang] for coef in ls_coef}
-    zbsmoth_cmoy = [stats.cout(zbs_freq, zbsmo_th[coef], 'absolue') for coef in ls_coef]
-    zbsmeth_cmoy = [stats.cout(zbs_freq, zbsme_th[coef], 'absolue') for coef in ls_coef]
+    zbsmo_th = {coef: [zipf_freq_theorique(zbs_const_moyen, r, coef) for r in zbs_rang] for coef in ls_coef}
+    zbsme_th = {coef: [zipf_freq_theorique(zbs_const_median, r, coef) for r in zbs_rang] for coef in ls_coef}
+    zbsmoth_cmoy = [cout(zbs_freq, zbsmo_th[coef], 'absolue') for coef in ls_coef]
+    zbsmeth_cmoy = [cout(zbs_freq, zbsme_th[coef], 'absolue') for coef in ls_coef]
     print("ok")
 
     print(f"cout min brown moyenne: {min(zbmoth_cmoy)}, median: {min(zbmeth_cmoy)}")
@@ -86,8 +86,6 @@ if __name__ == '__main__':
 
     print(f"Coefficient min brown moyenne: {zbmot_coef_cmin}, median: {zbmet_coef_cmin}")
     print(f"Coefficient min brown (- stopwords) moyenne: {zbsmot_coef_cmin}, median: {zbsmet_coef_cmin}")
-
-    exit(0)
 
     # Process graphique
     ligne = 2

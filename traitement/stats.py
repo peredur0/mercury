@@ -16,7 +16,7 @@
 
 import sys
 import numpy as np
-from graphs import show_zipf_stat
+from traitement.graphs import show_zipf_stat
 
 
 ########################################################################################################################
@@ -162,8 +162,7 @@ if __name__ == '__main__':
 
     data_brown = [mot.lower() for mot in brown.words() if re.match(r'\w+', mot)]
 
-    print(zipf_process(data_brown, print_stats=False))
-    print(hapax(data_brown))
-
+    print("Données ZIPF :", zipf_process(data_brown, print_stats=False))
+    print("Donnes d'Hapax :", hapax(data_brown))
 
     exit(0)
