@@ -1,0 +1,316 @@
+\documentclass[a4paper,12pt]{article}
+
+% Module de base utf, français
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+% gestion des marges
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+
+% quote
+% \usepackage{csquotes}
+
+% Packages math
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{mathrsfs}
+
+% Package tableau
+%\usepackage{multirow}
+
+% Package insertion d'image
+%\usepackage{graphicx}
+%\usepackage{float}
+%\usepackage{subcaption} %image multiple
+
+% Package url
+%\usepackage{url}	
+
+% Package de couleur
+%\usepackage{color}
+%\usepackage[colorlinks,linkcolor=blue,urlcolor=blue]{hyperref}
+
+% Package pour le code, nécessite package color
+%\usepackage{listings}
+%\lstset{ % General setup for the package
+%	language=Python,
+%	basicstyle=\small\sffamily,
+%	numbers=left,
+% 	numberstyle=\tiny,
+%	frame=tb,
+%	tabsize=4,
+%	columns=fixed,
+%	showstringspaces=false,
+%	showtabs=false,
+%	keepspaces,
+%	commentstyle=\color{red},
+%	keywordstyle=\color{blue}
+%}
+
+% Packages Verbatim
+%\usepackage{moreverb}
+
+% nouvelle commande pour ~
+%\newcommand{\tidle}{\char`\~}
+
+\title{Projet L3\\Ingénierie des langues\\Fouille de données}
+\author{GOEHRY Martial\\16711476}
+
+\begin{document}
+	\maketitle
+	\tableofcontents
+	\newpage
+	
+\section{Introduction}
+	Ce projet à pour but de permettre de détecter les mails comme étant spam ou ham.
+	La définition d'un spam dans le dictionnaire \emph{Larousse} est:
+	
+	\begin{quote}
+	"Courrier électronique non sollicité envoyé en grand nombre à des boîtes aux lettres électroniques ou à des forums, dans un but publicitaire ou commercial."
+	\end{quote}
+	
+	Il est possible d'ajouter à cette catégorie tous les mails indésirables comme les tentatives d'hameçonnage permettant	de soutirer des informations personnelles à une cible.\\ 
+	
+	L'objectif est de travailler uniquement sur les données textuelles issues du corps du mail.
+	Nous avons donc en point de départ les éléments suivants:
+	\begin{itemize}
+		\item langue: anglais
+		\item corpus: monolingue écrit
+		\item type: e-mail
+	\end{itemize}
+	
+	Le schéma ci-dessous donne une vue synthétique des étapes du projet:
+	% Schéma des étapes
+		 
+	
+
+\section{Récolte des données}
+	\subsection{Recherche de dataset}
+		% Enron company,
+		% SpamAssassin
+	
+	\subsection{Téléchargement des données}
+		% Utilisation du dataset de SpamAssassin déjà pré-trié.
+			
+
+\section{Pré-traitement}
+	\subsection{Extraction des corps des mails}
+		% Utilisation du module email natif de python
+		
+	\subsection{Nettoyage}
+		\paragraph{Par regex}
+			% Suppression des réponses
+			% Suppression des ponctuations autres que .!?,)
+			% Suppression des balises pour les enriched text			
+			% Modification des liens (URL, MAIL et TELEPHONE)
+			% Modification des nombes (NOMBRE et PRIX)
+		
+		\paragraph{Par module}
+			% Suppression balise HTML avec BeautifulSoup
+			% Retrait des mails en langue non anglaise
+	
+	\subsection{Mise en base}
+		\paragraph{Stockage des données: ElasticSearch}
+			% fonction de hashage
+			% Schéma de la base
+		
+		\paragraph{Stockage des données statistiques du traitement: SQLite}
+			% Informations pour la soutenance
+
+	
+	\subsection{Recherche de caractéristiques}
+		\paragraph{Références}
+			% LIENS, Nombres
+						
+			
+	\subsection{Analyse préliminaire}
+		% Etudes statistiques
+		% Etudes des distributions
+		% Travail sur la distribution de zipf
+	
+\appendix
+\section{Développement visualisation distribution de Zipf}
+	\paragraph{Présentation}
+		La loi de distribution de Zipf est une loi empirique (basée sur l'observation) qui veut que le mot le plus fréquent est, à peu de chose près, 2 fois plus fréquent que le $2^{eme}$, 3 fois plus fréquent que le $3^{eme}$ etc.\\
+		La formulation finale de la $1^{ere}$ loi de Zipf est la suivante :
+		
+		\begin{eqnarray*}
+				|mot| = constante \times rang(mot)^{k \approx 1}
+		\end{eqnarray*}
+		
+		avec \emph{$|mot|$} la fréquence d'apparition d'un mot, \emph{constante} une valeur propre à chaque texte, \emph{rang(mot)} la place du mot dans le tri décroissant par fréquence d'apparition et \emph{k} un coefficient proche de 1 permettant d'ajuster l'équation. 
+		
+	\paragraph{Développement}
+		Afin de pouvoir utiliser les résultats de cette distribution dans mon analyse, j'ai du développé un ensemble de fonction 
+		
+
+
+\section{Tableau des choix technologiques}
+	\begin{tabular}{|p{3cm}|c|p{4cm}|p{6cm}|}
+		\hline
+		Élément & Retenu & Raisons & Observations \\
+		\hline
+		
+		\multicolumn{4}{|c|}{Datasets} \\
+		\hline
+		Mail de la compagnie Enron & Non & Mails non classés & Non retenu pour la phase de développement car pas de moyen fiable de contrôler la sortie automatiquement \\
+		\hline
+		Mail du projet SpamAssassin & Oui & Mails déjà pré-triés & Mails principalement en Anglais déjà pré-trié en catégorie Spam et Ham \\
+		\hline
+		Brown dataset & Oui & Corpus d'un million de texte en Anglais publié depuis 1961 & Dataset utilisé pour le développement de la visualisation de la distribution de Zipf \\
+		\hline
+		
+		\multicolumn{4}{|c|}{Langage et Modules} \\
+		\hline
+		Python & Oui & Langage polyvalent pour le traitement des données & \\		
+		\hline
+		Module email & Oui & Module natif pour le traitement des mails & Grande flexibilité pour la lecture des mails \\
+		\hline
+				
+		\multicolumn{4}{|c|}{Bases de données} \\
+		\hline
+		ElasticSearch & Oui & Technologie utilisée dans mon entreprise. Présence d'une interface de visualisation des données Kibana. & Application dockerisée. \\
+		\hline
+		SQLite & Oui & Base de données légère pour stocker uniquement les données statistiques des étapes & Rapide à mettre en place et déjà intégrée \\
+		\hline		
+		
+		\hline
+	\end{tabular}
+	
+	\section{Bibliographie}
+	
+	\section{Sitotec}
+
+
+
+\end{document}
+
+
+
+
+	\section{math}
+		\paragraph{Equation avec fraction}
+			\begin{eqnarray*}
+				x\cdot\left(1-\frac{75}{100}\right) &=& 50\\
+				x \cdot \frac{25}{100} &=& 50\\
+				x &=& 50 \cdot \frac{100}{25}\\
+				x &=& \sqrt{200}
+			\end{eqnarray*}
+		\paragraph{Equation dans texte}
+			Sur ce dessin, on dispose un point M tel que $AM = BM$
+	
+	\section{Image}
+		On peut aussi montrer les choses en image. Dans ce cas, il ne faut jamais oublier de mettre une légende et de citer ses sources si on a piqué l'image quelque part (cf: Figure \textcolor{blue}{1}) :
+		\begin{figure}[h]
+			\begin{center}
+				\includegraphics[scale=0.2]{ProblemSolving.eps} % Le scale est peut être un peu petit.
+			\end{center}
+			\caption{Un graphe amusant sur la résolution de problème proposé comme exemple par le logiciel YeD.}
+		\end{figure}
+		
+		\begin{figure}[H]
+  			\includegraphics[width=\linewidth]{boat.jpg}
+  			\caption{A boat.}
+  			\label{fig:boat1}
+		\end{figure}
+		
+		Figure \ref{fig:boat1} shows a boat.
+		
+		\begin{figure}[h!]
+  			\centering
+  				\begin{subfigure}[b]{0.4\linewidth}
+    				\includegraphics[width=\linewidth]{coffee.jpg}
+    				\caption{Coffee.}
+  				\end{subfigure}
+  				\begin{subfigure}[b]{0.4\linewidth}
+    				\includegraphics[width=\linewidth]{coffee.jpg}
+    				\caption{More coffee.}
+  				\end{subfigure}
+  				\caption{The same cup of coffee. Two times.}
+  				\label{fig:coffee}
+		\end{figure}	
+		
+		
+	
+	\section{Tableau}
+		\begin{itemize}
+			\item on énumère différents éléments,
+			\item chacun sur une ligne,
+			\item séparés par des virgules,
+			\item et précédés d'une puce mettant en valeur l'énumération.
+		\end{itemize}
+	
+		\begin{tabular}{|c|l|c|c|}
+			\hline
+			\multicolumn{4}{|c|}{Résolution de problème} \\
+			\hline
+			étape & description & si oui aller à & sinon aller à \\
+			\hline
+			A & Est-ce que ça marche  & B & C \\
+			\hline
+			B & N'y touche pas !! & \multicolumn{2}{|c|}{K} \\
+			\hline
+			C & Est-ce que tu y as touché ? & D & H \\
+			\hline
+			D & Espèce d'idiot !!! & \multicolumn{2}{|c|}{E} \\
+			\hline
+			E & Est-ce que quelqu'un le sait ? & F & G \\
+			\hline
+			F & T'es vraiment un pauvre idiot ! & \multicolumn{2}{|c|}{G} \\
+			\hline
+			G & Est-que tu peux imputer la faute à quelqu'un d'autre ? & K & F \\
+			\hline
+			H & Est-ce que ça va te pourrir la vie ? & F & I \\
+			\hline
+			I & Jette le et n'y pense plus !! & \multicolumn{2}{|c|}{K} \\
+			\hline
+			J & Cache le !! & \multicolumn{2}{|c|}{K} \\
+			\hline
+			K & Y'a pas de problème !! & & \\
+			\hline
+		\end{tabular}
+		
+		\section{Liste à puces}
+
+	Une liste à puce se présente de cette manière :
+
+	\begin{itemize}
+		\item on énumère différents éléments,
+		\item chacun sur une ligne,
+		\item séparés par des virgules,
+		\item et précédés d'une puce mettant en valeur l'énumération.
+	\end{itemize}
+
+\section{Liste numérotée}
+
+	Une énumération est assez similaire :
+	
+	\begin{enumerate}
+		\item une fois de plus,
+		\item les éléments sont isolés chacun sur une ligne.
+		\item La différence notable est que chaque élément est numéroté,
+		\item ce qui permet de mettre en valeur sont rang,
+		\item ou bien de faciliter le compte du nombre total d'éléments.
+	\end{enumerate}
+	
+\section{Code}
+	\begin{verbatim}
+	
+	\end{verbatim}
+	
+	\begin{verbatimtab}[2]
+	
+	\end{verbatimtab}
+		
+	\begin{lstlisting}
+#!/usr/bin/perl
+print S(@ARGV);sub S{$r=(@_[0]%4==0&&@_[0]%100!=0)||@_[0]%400=0;}
+	\end{lstlisting}
+	
+	\lstinputlisting[caption={TITRE}, language=c]{script.pl}
+	
+\section{quote}
+	\begin{displayquote}
+Sé que tengo un ego del tamaño de un planeta pequeño, pero incluso yo a 
+veces me equivoco
+	\end{displayquote}
