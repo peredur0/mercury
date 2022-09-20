@@ -21,3 +21,9 @@ stocker les données des statistiques
     >>> Dans quoi on stocke un fichier JSON, un index elastic ou une base sqlite ?
     On se dirige vers une base sqlite. On stock juste des petites données stats.
 
+
+
+Packages python :
+    - nltk
+    - matplotlib
+    - numpy

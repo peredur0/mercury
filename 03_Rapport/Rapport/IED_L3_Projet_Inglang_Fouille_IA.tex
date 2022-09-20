@@ -16,7 +16,7 @@
 %\usepackage{mathrsfs}
 
 % Package tableau
-%\usepackage{multirow}
+\usepackage{multirow}
 
 % Package insertion d'image
 %\usepackage{graphicx}
@@ -24,28 +24,30 @@
 %\usepackage{subcaption} %image multiple
 
 % Package url
-%\usepackage{url}	
+\usepackage{url}	
 
 % Package de couleur
-%\usepackage{color}
-%\usepackage[colorlinks,linkcolor=blue,urlcolor=blue]{hyperref}
+\usepackage{color}
+\usepackage[colorlinks,linkcolor=black,urlcolor=blue]{hyperref}
 
 % Package pour le code, nécessite package color
-%\usepackage{listings}
-%\lstset{ % General setup for the package
-%	language=Python,
-%	basicstyle=\small\sffamily,
-%	numbers=left,
-% 	numberstyle=\tiny,
-%	frame=tb,
-%	tabsize=4,
-%	columns=fixed,
-%	showstringspaces=false,
-%	showtabs=false,
-%	keepspaces,
-%	commentstyle=\color{red},
-%	keywordstyle=\color{blue}
-%}
+\usepackage{listings}
+\usepackage{amsmath}
+\lstset{ % General setup for the package
+	language=Python,
+	basicstyle=\small\sffamily,
+	numbers=left,
+ 	numberstyle=\tiny,
+	frame=tb,
+	tabsize=4,
+	columns=fixed,
+	showstringspaces=false,
+	showtabs=false,
+	keepspaces,
+	commentstyle=\color{red},
+	keywordstyle=\color{blue},
+	breaklines=true
+}
 
 % Packages Verbatim
 %\usepackage{moreverb}
@@ -127,24 +129,83 @@
 		% Etudes statistiques
 		% Etudes des distributions
 		% Travail sur la distribution de zipf
-	
+
+\newpage	
 \appendix
 \section{Développement visualisation distribution de Zipf}
 	\paragraph{Présentation}
 		La loi de distribution de Zipf est une loi empirique (basée sur l'observation) qui veut que le mot le plus fréquent est, à peu de chose près, 2 fois plus fréquent que le $2^{eme}$, 3 fois plus fréquent que le $3^{eme}$ etc.\\
+		
 		La formulation finale de la $1^{ere}$ loi de Zipf est la suivante :
 		
-		\begin{eqnarray*}
+		\begin{align*}
 				|mot| = constante \times rang(mot)^{k \approx 1}
-		\end{eqnarray*}
+		\end{align*}
 		
-		avec \emph{$|mot|$} la fréquence d'apparition d'un mot, \emph{constante} une valeur propre à chaque texte, \emph{rang(mot)} la place du mot dans le tri décroissant par fréquence d'apparition et \emph{k} un coefficient proche de 1 permettant d'ajuster l'équation. 
+		avec \emph{$|mot|$} la fréquence d'apparition d'un mot, \emph{constante} une valeur propre à chaque texte, \emph{rang(mot)} la place du mot dans le tri décroissant par fréquence d'apparition et \emph{k} un coefficient proche de 1. 
 		
 	\paragraph{Développement}
-		Afin de pouvoir utiliser les résultats de cette distribution dans mon analyse, j'ai du développé un ensemble de fonction 
+		Afin de pouvoir utiliser les résultats de cette distribution dans mon analyse, j'ai développé un ensemble de fonctions sur un corpus "\emph{reconnu}". Mon choix s'est porté sur le corpus \emph{Brown} présent de la libraire \emph{nltk}. Ce corpus contient environ 500 documents contenant 1 millions de mot en anglais.\\
 		
+		Le processus d'analyse se fait sur 2 versions de ce corpus.
+		\begin{itemize}
+			\item la première version contient tous les mots sans modifications
+			\item le seconde version contient tous les mots sans les \emph{stopwords}
+		\end{itemize}
+		Les \emph{stopwords} sont des mots qui n'ont pas ou peu de signification dans un texte. Ces mots sont retirés dans la $2^e$ version pour voir l'effet d'une réduction sur la distribution de Zipf. \\
+		
+		Les paragraphes ci-dessous détaillent les étapes du développement :
+		
+		\subparagraph{Étape 1 - calcul de fréquence}
+			La première étape est de compter les occurrences de tous les mots des 2 corpus. 
+			\begin{lstlisting}
+def frequence_mot(bag, freq=None):
+    """
+    Calcule la frequence de chaque mot dans un sac de mot
+    :param bag: <list> - liste de tous les mots d'un texte
+    :param freq: <dict> - dictionnaire avec {<str> mot: <int> frequence}
+    :return: <dict> - dictionnaire avec la frequence par mot {mot: frequence}
+    """
+    if freq is None:
+        freq = {}
+    for mot in bag:
+        freq[mot] = freq.get(mot, 0) + 1
+    return freq \end{lstlisting}
+		
+		\subparagraph{Étape 2 - classement}
+			La deuxième étape a pour objectif de classer les mots en fonction de leur fréquence
+			\begin{lstlisting}
+def classement_zipf(dico):
+    """
+    Trie un dictionnaire de mots : occurence et leur assigne un rang en fonction du nombre d'occurence
+    :param dico: <dict> dictionnaire de mot: occurences
+    :return: <list> {"rang": <int>, "mot": <str>, "frequence": <int>}
+    """
+    ranked = []
+    for rang, couple in enumerate(sorted(dico.items(), key=lambda item: item[1], reverse=True), start=1):
+        ranked.append({"rang": rang,
+                       "mot": couple[0],
+                       "frequence": couple[1]})
+
+    return ranked
+			\end{lstlisting}
+			
+		\subparagraph{Etape 3 - choix de la constante}
+			
+			\begin{lstlisting}
+
+			\end{lstlisting}
 
 
+		\subparagraph{Etape 4 - recherche du coefficiant}
+			\begin{lstlisting}
+
+			\end{lstlisting}
+		
+	\paragraph{Résultats}
+
+
+\newpage
 \section{Tableau des choix technologiques}
 	\begin{tabular}{|p{3cm}|c|p{4cm}|p{6cm}|}
 		\hline
@@ -157,7 +218,9 @@
 		\hline
 		Mail du projet SpamAssassin & Oui & Mails déjà pré-triés & Mails principalement en Anglais déjà pré-trié en catégorie Spam et Ham \\
 		\hline
-		Brown dataset & Oui & Corpus d'un million de texte en Anglais publié depuis 1961 & Dataset utilisé pour le développement de la visualisation de la distribution de Zipf \\
+		Brown dataset (nltk) & Oui & Corpus d'un million de mots en Anglais publié en 1961 & Dataset utilisé pour le développement de la visualisation de la distribution de Zipf\\
+		\hline
+		Stopwords (nltk) & Oui & Corpus de mots commun non significatif dans un texte & Utilisation dans le développement de la visualisation de la distribution de Zipf\\
 		\hline
 		
 		\multicolumn{4}{|c|}{Langage et Modules} \\
@@ -180,7 +243,7 @@
 	\section{Bibliographie}
 	
 	\section{Sitotec}
-
+		% Brown corpus : https://www.nltk.org/book/ch02.html
 
 
 \end{document}
