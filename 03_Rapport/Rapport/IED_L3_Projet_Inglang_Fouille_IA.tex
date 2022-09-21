@@ -191,6 +191,13 @@ def classement_zipf(dico):
 			\end{lstlisting}
 			
 		\subparagraph{Etape 3 - choix de la constante}
+			Le premier paramètre a déterminer est la \emph{constante}. Pour ce faire j'effectue le calcul suivant pour tous les mots :
+			
+			\begin{align*}
+				constante = |mot| \times rang(mot)
+			\end{align*}
+			
+			J'obtiens une liste de toutes les constantes théoriques. 
 			
 			\begin{lstlisting}
 

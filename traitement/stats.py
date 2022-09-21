@@ -22,6 +22,25 @@ from traitement.graphs import show_zipf_stat
 ########################################################################################################################
 #             Statistiques / Probabilités                                                                              #
 ########################################################################################################################
+def distribution(data):
+    """
+    Calcul la distribution des valeurs d'une liste
+    :param data: <list> Liste des valeurs
+    :return: <dict> {'x': [valeurs], 'y': [occurences]
+    """
+    dist = {'x': [], 'y': []}
+    liste = data.copy()
+    liste.sort()
+
+    for val in liste:
+        if val not in dist['x']:
+            dist['x'].append(val)
+            dist['y'].append(1)
+        else:
+            dist['y'][-1] +=1
+
+    return dist
+
 def frequence_mot(bag, freq=None):
     """
     Calcule la fréquence de chaque mot dans un sac de mot
