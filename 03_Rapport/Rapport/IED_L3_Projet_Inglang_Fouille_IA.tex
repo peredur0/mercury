@@ -44,7 +44,7 @@
 	showstringspaces=false,
 	showtabs=false,
 	keepspaces,
-	commentstyle=\color{red},
+	commentstyle=\color{green},
 	keywordstyle=\color{blue},
 	breaklines=true
 }
@@ -158,7 +158,7 @@
 		
 		\subparagraph{Étape 1 - calcul de fréquence}
 			La première étape est de compter les occurrences de tous les mots des 2 corpus. 
-			\begin{lstlisting}
+			\begin{lstlisting}[label={lst:Fonction de calcul de la fréquence}]
 def frequence_mot(bag, freq=None):
     """
     Calcule la frequence de chaque mot dans un sac de mot
@@ -174,7 +174,7 @@ def frequence_mot(bag, freq=None):
 		
 		\subparagraph{Étape 2 - classement}
 			La deuxième étape a pour objectif de classer les mots en fonction de leur fréquence
-			\begin{lstlisting}
+			\begin{lstlisting}[label={lst:Fonction de trie pour Zipf}]
 def classement_zipf(dico):
     """
     Trie un dictionnaire de mots : occurence et leur assigne un rang en fonction du nombre d'occurence

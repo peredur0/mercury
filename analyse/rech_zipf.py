@@ -56,14 +56,12 @@ if __name__ == '__main__':
     zb_const = [e['rang'] * e['frequence'] for e in zipf_brown]
 
     # Stats
-    zb_const_dist = stats.distribution(zb_const)
     zb_const_moyen = np.mean(zb_const)
     zb_const_median = np.median(zb_const)
 
     zbs_const = [e['rang'] * e['frequence'] for e in zipf_brown_s]
 
     # Stats
-    zbs_const_dist = stats.distribution(zbs_const)
     zbs_const_moyen = np.mean(zbs_const)
     zbs_const_median = np.median(zbs_const)
     print("ok")
@@ -109,20 +107,10 @@ if __name__ == '__main__':
     # Estimation de la constante
     pos += 1
     plt.subplot(ligne, colonne, pos, title="Distribution constante estimée")
-    plt.bar(zb_const_dist['x'], zb_const_dist['y'], label='distribution')
+    plt.hist(zb_const, label='distribution', bins=10, color='black')
     plt.axvline(zb_const_moyen, label='moyenne', c="blue")
     plt.axvline(zb_const_median, label='mediane', c="green")
-    plt.xlabel('constante')
-    plt.ylabel('occurences')
     plt.legend()
-    #plt.subplot(ligne, colonne, pos, title="Constante estimée brown")
-    #plt.plot(zb_rang, zb_const, label='rang x frequence', c='black')
-    #plt.plot(zb_rang, [zb_const_moyen] * (len(zb_rang)), label="moyenne", c='blue')
-    #plt.plot(zb_rang, [zb_const_median] * (len(zb_rang)), label="median", c='green')
-    #plt.ylabel('constante')
-    #plt.xscale('log')
-    #plt.yscale('log')
-    #plt.legend()
     # cout
     pos += 1
     plt.subplot(ligne, colonne, pos, title="Moyenne cout brown")
@@ -154,19 +142,11 @@ if __name__ == '__main__':
     # Estimation de la constante
     pos += 1
     plt.subplot(ligne, colonne, pos, title="Distribution constante estimée")
-    plt.bar(zbs_const_dist['x'], zbs_const_dist['y'], label='distribution')
-    plt.xlabel('constante')
-    plt.ylabel('occurences')
+    plt.hist(zbs_const, label='distribution', bins=10, color='black')
+    plt.axvline(zbs_const_moyen, label='moyenne', c="blue")
+    plt.axvline(zbs_const_median, label='mediane', c="green")
+    plt.xlabel('constante theorique')
     plt.legend()
-    #plt.subplot(ligne, colonne, pos, title="Constante estimée brown (-stopwords)")
-    #plt.plot(zb_rang, zb_const, label='rang x frequence', c='black')
-    #plt.plot(zb_rang, [zbs_const_moyen] * (len(zb_rang)), label="moyenne", c='blue')
-    #plt.plot(zb_rang, [zbs_const_median] * (len(zb_rang)), label="median", c='green')
-    #plt.xlabel('rang')
-    #plt.ylabel('constante')
-    #plt.xscale('log')
-    #plt.yscale('log')
-    #plt.legend()
     # cout
     pos += 1
     plt.subplot(ligne, colonne, pos, title="Moyenne cout brown (-stopwords)")
