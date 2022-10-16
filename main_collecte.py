@@ -86,7 +86,7 @@ def create_document(data, categorie):
     if categorie.lower() not in ['spam', 'ham']:
         categorie = 'inconnu'
 
-    document = {
+    doc = {
         'chemin': chemin,
         'hash': hashlib.md5(corp.encode()).hexdigest(),
         'categorie': categorie.lower(),
@@ -98,7 +98,7 @@ def create_document(data, categorie):
         'nb_mots': len(mots),
         'nb_mots_uniques': len(set(mots))
     }
-    return document
+    return doc
 
 
 def create_doc_process(categorie, liste):
@@ -129,7 +129,7 @@ def create_doc_process(categorie, liste):
 
 
 #######################################################################################################################
-#           Statistiques                                                                                              #
+#           Statistiques Récolte                                                                                 #
 #######################################################################################################################
 def print_stats(categorie, etape, cli):
     """
@@ -274,19 +274,19 @@ def stats_process(etape, data):
     stats_globales['etape'] = etape
 
     # - Mise en base des statistiques
-    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
+    sl_client = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
 
     print("--- Sauvegarde des stats de l'étape: {}...".format(etape), end=' ')
-    sqlite_cmd.sl_insert(sl_cli, 'globales', stats_globales)
-    sqlite_cmd.sl_insert(sl_cli, 'ham', stats_ham)
-    sqlite_cmd.sl_insert(sl_cli, 'spam', stats_spam)
+    sqlite_cmd.sl_insert(sl_client, 'globales', stats_globales)
+    sqlite_cmd.sl_insert(sl_client, 'ham', stats_ham)
+    sqlite_cmd.sl_insert(sl_client, 'spam', stats_spam)
     print('OK')
 
     print("Données stats de l'étape: {}:".format(etape))
-    for cat in ['ham', 'spam', 'globales']:
-        print_stats(cat, etape, sl_cli)
+    for elem in ['ham', 'spam', 'globales']:
+        print_stats(elem, etape, sl_client)
 
-    sl_cli.close()
+    sl_client.close()
     return
 
 
@@ -304,7 +304,6 @@ if __name__ == '__main__':
     print("== Recolte ==")
     current_os = platform.system().lower()
     root = os.getcwd()
-
     ds_ham = root + "{}".format('\\' if current_os == 'windows' else '/').join(['', 'dev_dataset', 'easy_ham'])
     ds_spam = root + "{}".format('\\' if current_os == 'windows' else '/').join(['', 'dev_dataset', 'spam'])
 
@@ -335,7 +334,7 @@ if __name__ == '__main__':
         exit(1)
 
     email_mapping = json.load(open('databases/elastic/mail_mapping.json', 'r'))
-    index = "test_import_all0"
+    index = "test_import_dev0"
     elastic_cmd.es_create_indice(es_cli, index, email_mapping)
     print("OK")
 

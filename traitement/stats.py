@@ -144,10 +144,45 @@ def hapax(bag):
     hapax_data = {
         'nombres': nb_hapax,
         'ratio_mots': nb_hapax/len(classement),
-        'ration_text': nb_hapax/len(bag)
+        'ration_texte': nb_hapax/len(bag)
     }
 
     return hapax_data
+
+
+def count_ponct(texte):
+    """
+    Compte le nombre de ponctuation
+    :param texte: <str>
+    :return: <dict> keys[point, virgule, exclam, inter]
+    """
+    data = {"point": '.', "virgule": ',', "exclam": '!', "inter": '?'}
+    for k, v in data.items():
+        data[k] = texte.count(v)
+    return data
+
+
+def count_space(texte):
+    """
+    Compte le nombre d'espace et tabulation dans le texte
+    :param texte: <str>
+    :return: <dict> keys[espace, tabulation]
+    """
+    data = {"espace": ' ', "tabulation": '\t'}
+    for k, v in data.items():
+        data[k] = texte.count(v)
+    return data
+
+
+def count_newline(texte):
+    """
+    Compte les retours à la ligne et les lignes vides
+    :param texte: <str>
+    :return: <dict> keys[ligne, ligne_vide]
+    """
+    data = {"ligne_vide": len(re.findall(r'^\n$', texte, flags=re.MULTILINE))}
+    data["ligne"] = 1 + texte.count('\n') - data["ligne_vide"]
+    return data
 
 
 if __name__ == '__main__':

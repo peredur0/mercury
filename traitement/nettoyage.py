@@ -62,15 +62,30 @@ def clear_ponctuation(texte):
     :return: <str>
     """
     pattern_ponct = re.compile('[*#\\-_=:;<>\\[\\]"\'~)(|/$+}{@%&\\\]', flags=re.MULTILINE)
+    return re.sub(pattern_ponct, ' ', texte)
+
+
+def clear_newline(texte):
+    """
+    Retire les nouvelles lignes
+    :param texte: <str>
+    :return: <str
+    """
     pattern_nl = re.compile('^\n$', flags=re.MULTILINE)
     pattern_nl2 = re.compile('\n', flags=re.MULTILINE)
-    pattern_esp = re.compile('[ \\t]+', flags=re.MULTILINE)
-
-    temp = re.sub(pattern_ponct, ' ', texte)
-    temp = re.sub(pattern_nl, ' ', temp)
+    temp = re.sub(pattern_nl, ' ', texte)
     temp = re.sub(pattern_nl2, ' ', temp)
-    temp = re.sub(pattern_esp, ' ', temp)
     return temp
+
+
+def clear_multi_space(texte):
+    """
+    Retire les espaces en trop
+    :param texte:
+    :return:
+    """
+    pattern_esp = re.compile('[ \\t]+', flags=re.MULTILINE)
+    return re.sub(pattern_esp, ' ', texte)
 
 
 def change_lien(texte, liens):

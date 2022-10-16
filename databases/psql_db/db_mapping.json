@@ -13,26 +13,36 @@
       "nombres": ["INT"],
       "prix": ["INT"]
     },
-    "statistiques": {
+    "stat_mots": {
       "id_message": ["INT", "FOREIGN KEY"],
       "mots_uniques": ["INT"],
-      "nb_mots": ["INT"],
-      "nb_char": ["INT"],
-      "nb_char_maj": ["INT"],
-      "ponct_point": ["INT"],
-      "ponct_virgule": ["INT"],
-      "ponct_exclam": ["INT"],
-      "ponct_inter": ["INT"],
-      "nb_space": ["INT"],
-      "nb_line": ["INT"],
+      "mots": ["INT"],
+      "char": ["INT"],
+      "char_maj": ["INT"],
       "mot_maj": ["INT"],
       "mot_cap": ["INT"]
+    },
+    "stat_ponct": {
+      "id_message": ["INT", "FOREIGN KEY"],
+      "point": ["INT"],
+      "virgule": ["INT"],
+      "exclam": ["INT"],
+      "inter": ["INT"],
+      "espace": ["INT"],
+      "tabulation": ["INT"],
+      "ligne": ["INT"],
+      "ligne_vide": ["INT"]
     },
     "zipf": {
       "id_message": ["INT", "FOREIGN KEY"],
       "constante": ["INT"],
       "coefficient": ["INT"],
       "tx_erreur": ["INT"]
+    },
+    "hapax": {
+      "id_message": ["INT", "FOREIGN KEY"],
+      "ratio_unique": ["INT"],
+      "ratio_texte": ["INT"]
     },
     "mots": {
       "id_mot": ["SERIAL", "PRIMARY KEY"],
