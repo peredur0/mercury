@@ -14,8 +14,10 @@
       <excludeFolder url="file://$MODULE_DIR$/databases/elastic/docker/elastic/data/snapshot_cache" />
       <excludeFolder url="file://$MODULE_DIR$/databases/elastic/docker/kibana/data/chromium-nNd7pJ" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
+      <excludeFolder url="file://$MODULE_DIR$/databases/psql_db/docker/data" />
+      <excludeFolder url="file://$MODULE_DIR$/out" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.8" jdkType="Python SDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

@@ -1,0 +1,52 @@
+{
+  "mail_features": {
+    "messages": {
+      "id_message": ["SERIAL", "PRIMARY KEY"],
+      "hash": ["CHAR(32)", "UNIQUE", "NOT NULL"],
+      "categorie": ["INT", "FOREIGN KEY"]
+    },
+    "liens": {
+      "id_message": ["INT", "FOREIGN KEY"],
+      "url": ["INT"],
+      "mail": ["INT"],
+      "telephone": ["INT"],
+      "nombres": ["INT"],
+      "prix": ["INT"]
+    },
+    "statistiques": {
+      "id_message": ["INT", "FOREIGN KEY"],
+      "mots_uniques": ["INT"],
+      "nb_mots": ["INT"],
+      "nb_char": ["INT"],
+      "nb_char_maj": ["INT"],
+      "ponct_point": ["INT"],
+      "ponct_virgule": ["INT"],
+      "ponct_exclam": ["INT"],
+      "ponct_inter": ["INT"],
+      "nb_space": ["INT"],
+      "nb_line": ["INT"],
+      "mot_maj": ["INT"],
+      "mot_cap": ["INT"]
+    },
+    "zipf": {
+      "id_message": ["INT", "FOREIGN KEY"],
+      "constante": ["INT"],
+      "coefficient": ["INT"],
+      "tx_erreur": ["INT"]
+    },
+    "mots": {
+      "id_mot": ["SERIAL", "PRIMARY KEY"],
+      "mot": ["VARCHAR", "NOT NULL"],
+      "taille": ["INT"]
+    },
+    "mots_occurences": {
+      "id_mot": ["INT", "FOREIGN KEY"],
+      "id_cat": ["INT", "FOREIGN KEY"],
+      "occurences": ["INT"]
+    },
+    "categories": {
+      "id_cat": ["INT", "PRIMARY KEY"],
+      "type": ["VARCHAR", "UNIQUE"]
+    }
+  }
+}

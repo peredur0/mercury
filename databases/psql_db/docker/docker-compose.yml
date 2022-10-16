@@ -1,23 +1,23 @@
 version: "3.3"
 services:
         pgdb:
-                image: postgres
+                image: postgres:${VERSION}
                 restart: always
                 environment:
-                        POSTGRES_PASSWORD: postgres
+                        POSTGRES_PASSWORD: ${PS_PASSWORD}
 
                 volumes:
                         - ./data:/var/lib/postgresql/data
                 ports:
-                        - "5432:5432"
+                        - ${PS_PORT}:5432
 
         pgadmin:
-                image: dpage/pgadmin4
+                image: dpage/pgadmin4:${VERSION}
                 environment:
-                        PGADMIN_DEFAULT_EMAIL: "data@data.org"
-                        PGADMIN_DEFAULT_PASSWORD: "data"
+                        PGADMIN_DEFAULT_EMAIL: ${PGA_MAIL}
+                        PGADMIN_DEFAULT_PASSWORD: ${PGA_PASSWORD}
                 ports:
-                        - "80:80"
+                        - ${PGA_PORT}:80
                 depends_on:
                         - pgdb
 

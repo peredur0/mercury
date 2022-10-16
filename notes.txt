@@ -27,3 +27,19 @@ Packages python :
     - nltk
     - matplotlib
     - numpy
+
+ == 11/10/2022 ==
+
+1. Base de données ELK => Stockage des textes avec le maximum d'information
+    Index mails :
+        - hash
+        - categorie
+        - sujet
+        - expediteur
+        - langue
+        - message
+
+2. Base de données PSQL => Stockage des données numériques
+
+Dérouler :
+    Importation des fichiers,

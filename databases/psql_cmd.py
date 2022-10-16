@@ -99,27 +99,6 @@ def insert_data(conn, table, data):
     exec_query(conn, query)
 
 
-def insert_message(conn, data):
-    """ Insere donnees dans la table messages
-    :param conn: <psycopg2.extension.connection> object connexion vers une base de donnee
-    :param data: <dict> donnees a inserer
-    :return:
-    """
-    val = "'{}', '{}', '{}', {}, {}, {}".format(
-        data['hash'],
-        data['path'],
-        data['expediteur'],
-        data['categorie'],
-        data['mots_uniques'],
-        data['nombre_mots']
-    )
-
-    query = '''INSERT INTO messages(hash, path, expediteur, categorie, mots_uniques, nombre_mots)
-                VALUES ({})'''.format(val)
-
-    exec_query(conn, query)
-
-
 def insert_subst(conn, data):
     """ Insere les donnees de substitutions dans la table
     :param conn: <psycopg2.extension.connection> object connexion vers une base de donnee
@@ -176,24 +155,6 @@ def insert_mots(conn, data):
             data['id_message'],
             result_id,
             data["mots"][mot]
-        )
-        exec_query(conn, query)
-
-
-def insert_cat(conn, data):
-    """
-    ajouter les categories de mail:
-        spam - 0
-        ham - 1
-        csv - 2
-    :param conn: <psycopg2.extension.connection> object connexion vers une base de donnee
-    :param data: <dict> donnees de categories de mail
-    :return:
-    """
-    for key, value in data.items():
-        query = "INSERT INTO categories(id_cat, type) VALUES ({}, '{}')".format(
-            value,
-            key
         )
         exec_query(conn, query)
 
