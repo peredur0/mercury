@@ -47,31 +47,32 @@ def importation(chemin):
     #    return mail_load.import_from_csv(chemin)
 
     mail = mail_load.import_from_file(chemin)
-    if not mail:
-        return None
-
-    return [(chemin, mail)]
+    if mail:
+        return mail
+    return None
 
 
 #######################################################################################################################
 #           Création du document                                                                                      #
 #######################################################################################################################
-def create_document(data, categorie):
+def create_document(mail, categorie):
     """
-    extraction du message
+    Extraction du message
     récupération des métadonnées
     traitement sommaire du message
     gestion de la catégorie de mail
     ajout de données chiffrées
     filtrage de la langue
-    :param data: (<str>, <email.message.EmailMessage>)
+    :param mail: <email.message.EmailMessage>
     :param categorie: <str> categorie de mail: ham, spam, ou inconnu
     :return: <dict>
     """
-    chemin, mail = data
     corp = mail_load.extract_body(mail)
     corp, liens = nettoyage.clear_texte_init(corp)
     sujet, expediteur = mail_load.extract_meta(mail)
+
+    if not corp:
+        return None
 
     try:
         lang = langdetect.detect(corp)
@@ -81,22 +82,17 @@ def create_document(data, categorie):
     if lang != 'en':
         return None
 
-    mots = [mot for mot in corp.split(' ') if len(mot) > 0]
-
     if categorie.lower() not in ['spam', 'ham']:
         categorie = 'inconnu'
 
     doc = {
-        'chemin': chemin,
         'hash': hashlib.md5(corp.encode()).hexdigest(),
         'categorie': categorie.lower(),
         'sujet': sujet,
         'expediteur': expediteur,
         'message': corp,
         'langue': lang,
-        'liens': liens,
-        'nb_mots': len(mots),
-        'nb_mots_uniques': len(set(mots))
+        'liens': liens
     }
     return doc
 
@@ -105,7 +101,7 @@ def create_doc_process(categorie, liste):
     """
     Porcessus de création de document avec une barre de progression nested
     :param categorie: <str> Catégorie de mail, Ham ou Spam
-    :param liste: <list> liste de
+    :param liste: <list>
     :return:
     """
     docs = []
