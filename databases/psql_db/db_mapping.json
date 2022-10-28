@@ -3,7 +3,7 @@
     "messages": {
       "id_message": ["SERIAL", "PRIMARY KEY"],
       "hash": ["CHAR(32)", "UNIQUE", "NOT NULL"],
-      "categorie": ["INT", "FOREIGN KEY"]
+      "id_cat": ["INT", "FOREIGN KEY"]
     },
     "liens": {
       "id_message": ["INT", "FOREIGN KEY"],
@@ -13,7 +13,7 @@
       "nombres": ["INT"],
       "prix": ["INT"]
     },
-    "stat_mots": {
+    "stats_mots": {
       "id_message": ["INT", "FOREIGN KEY"],
       "mots_uniques": ["INT"],
       "mots": ["INT"],
@@ -26,8 +26,8 @@
       "id_message": ["INT", "FOREIGN KEY"],
       "point": ["INT"],
       "virgule": ["INT"],
-      "exclam": ["INT"],
-      "inter": ["INT"],
+      "exclamation": ["INT"],
+      "interrogation": ["INT"],
       "espace": ["INT"],
       "tabulation": ["INT"],
       "ligne": ["INT"],
@@ -36,17 +36,17 @@
     "zipf": {
       "id_message": ["INT", "FOREIGN KEY"],
       "constante": ["INT"],
-      "coefficient": ["INT"],
-      "tx_erreur": ["INT"]
+      "coefficient": ["REAL"],
+      "tx_erreur": ["REAL"]
     },
     "hapax": {
       "id_message": ["INT", "FOREIGN KEY"],
-      "ratio_unique": ["INT"],
-      "ratio_texte": ["INT"]
+      "ratio_unique": ["REAL"],
+      "ratio_texte": ["REAL"]
     },
     "mots": {
       "id_mot": ["SERIAL", "PRIMARY KEY"],
-      "mot": ["VARCHAR", "NOT NULL"],
+      "mot": ["VARCHAR", "UNIQUE", "NOT NULL"],
       "taille": ["INT"]
     },
     "mots_occurences": {
@@ -55,8 +55,8 @@
       "occurences": ["INT"]
     },
     "categories": {
-      "id_cat": ["INT", "PRIMARY KEY"],
-      "type": ["VARCHAR", "UNIQUE"]
+      "id_cat": ["SERIAL", "PRIMARY KEY"],
+      "type": ["VARCHAR", "UNIQUE", "NOT NULL"]
     }
   }
 }
