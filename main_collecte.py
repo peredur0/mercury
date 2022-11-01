@@ -24,8 +24,9 @@ import json
 import tqdm
 from importation import mail_load
 from traitement import nettoyage
-from databases import elastic_cmd, sqlite_cmd
-from databases.elastic import secrets
+from databases import elastic_cmd, sqlite_cmd, psql_cmd
+from databases.elastic import secrets as es_secrets
+from databases.psql_db import secrets as psql_secrets
 
 
 warnings.filterwarnings('ignore')
@@ -125,42 +126,16 @@ def create_doc_process(categorie, liste):
 
 
 #######################################################################################################################
-#           Mise en place des bases de données                                                                        #
-#######################################################################################################################
-def bdd_init_es():
-    """
-    Initialisation de l'index ElasticSearch.
-    Stockage des corps des mails avec le minimum de traitement.
-    :return:
-    """
-    pass
-
-
-def bdd_init_psql():
-    """
-    Initialisation de la base de données PostgreSQL
-    Stockage des features et données générées.
-    :return:
-    """
-    pass
-
-
-def bdd_init_sqlite():
-    """
-    Initialisation de base de donnees SQLite
-    Stockage des informations statistiques lors des étapes du traitement.
-    :return:
-    """
-    pass
-
-
-#######################################################################################################################
 #          Phase 1: collecte et mise en base                                                                          #
 #######################################################################################################################
 if __name__ == '__main__':
+    # Globales
+    sqlite_db = './databases/sqlite_db/stats_dev.db'
+
+    # Début
     print("=== Phase 1 : collecte & mise en base ===")
     print("== Création de la base SQLITE")
-    sl_cli = sqlite_cmd.sl_connect('./databases/sqlite_db/stats_dev.db')
+    sl_cli = sqlite_cmd.sl_connect(sqlite_db)
     sqlite_cmd.sl_create_tables(sl_cli, './databases/sqlite_db/table_stats_conf.json')
     sl_cli.close()
 
@@ -178,7 +153,7 @@ if __name__ == '__main__':
 
     # - Stats récolte -
     print("--- Process de statistiques après la récole")
-    stats_process('recolte', r_data)
+    sqlite_cmd.stats_process(sqlite_db, 'recolte', r_data)
 
     # == Création document ==
     print("== Création document ==")
@@ -187,12 +162,13 @@ if __name__ == '__main__':
 
     # - Stats create_document
     print("--- Process de statistiques après la création de document")
-    stats_process('creation document', n_data)
+    sqlite_cmd.stats_process(sqlite_db, 'creation document', n_data)
 
     # == Mise en base des documents ==
     print("== Mise en base des documents ==")
+    # -- ES
     print("-- Création de l'index ElasticSearch...", end=' ')
-    es_cli = elastic_cmd.es_connect(secrets.serveur, (secrets.apiid, secrets.apikey), secrets.ca_cert)
+    es_cli = elastic_cmd.es_connect(es_secrets.serveur, (es_secrets.apiid, es_secrets.apikey), es_secrets.ca_cert)
     if not es_cli:
         print("ECHEC connexion ElasticSearch")
         exit(1)
@@ -202,16 +178,23 @@ if __name__ == '__main__':
     elastic_cmd.es_create_indice(es_cli, index, email_mapping)
     print("OK")
 
-    # - Mise en base
+    # -- PSQL
+    print("-- Création de la base PostgreSQL...", end=' ')
+    psql_conf = json.load(open("./databases/psql_db/db_mapping.json"))
+    psql_db = list(psql_conf.keys())[0]
+    psql_cmd.create_db()
+    print("OK")
+
+    # - Mise en base ES
     for cat in ['spam', 'ham']:
         doublons = 0
         for document in tqdm.tqdm(n_data.get(cat, []),
-                                  desc="-- Mise en base des {}...".format(cat),
+                                  desc="-- Mise en base ES des {}...".format(cat),
                                   leave=False,
                                   file=sys.stdout,
                                   ascii=True):
             doublons += elastic_cmd.es_index_doc(es_cli, index, document)
-        print("-- Mise en base des {}... OK ({} doublons)".format(cat, doublons))
+        print("-- Mise en base ES des {}... OK ({} doublons)".format(cat, doublons))
 
     m_data = {}
     for cat in ['spam', 'ham']:
@@ -224,7 +207,7 @@ if __name__ == '__main__':
 
     # - Stats mise en base
     print("--- Process de statistiques après la mise en base")
-    stats_process('mise en base', m_data)
+    sqlite_cmd.stats_process(sqlite_db, 'mise en base', m_data)
 
     es_cli.close()
 

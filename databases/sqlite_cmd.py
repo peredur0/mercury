@@ -8,6 +8,8 @@ Stockage dans une base SQLlite
 
 import sqlite3
 import json
+import sys
+
 import tqdm
 
 
@@ -181,8 +183,9 @@ def stats_mise_en_base(categorie, stats_dict, liste):
                          leave=False,
                          file=sys.stdout,
                          ascii=True):
-        stats_dict["mots"] += doc["_source"]["nb_mots"]
-        for mot in doc["_source"]["message"].split():
+        message = doc["_source"]["message"].split()
+        stats_dict["mots"] += len(message)
+        for mot in message:
             if mot not in m_uniq:
                 m_uniq.append(mot)
 
@@ -194,9 +197,10 @@ def stats_mise_en_base(categorie, stats_dict, liste):
     return m_uniq
 
 
-def stats_process(etape, data):     # TODO: Mettre le chemin vers le fichier de base de données
+def stats_process(chemin, etape, data):
     """
-    Gère le processus de récolte et d'affichage des statistique pour chaque étape
+    Gère le processus de récolte et d'affichage des statistiques pour chaque étape
+    :param chemin: <str> chemin vers le fichier base de données
     :param etape: <str> intitulé de l'étape
     :param data: <dict> données à traiter {'ham': <list>, 'spam': <list>}
     :return: <None>
@@ -230,7 +234,7 @@ def stats_process(etape, data):     # TODO: Mettre le chemin vers le fichier de 
     stats_globales['etape'] = etape
 
     # - Mise en base des statistiques
-    sl_client = sl_connect('./databases/sqlite_db/stats_dev.db')
+    sl_client = sl_connect(chemin)
 
     print("--- Sauvegarde des stats de l'étape: {}...".format(etape), end=' ')
     sl_insert(sl_client, 'globales', stats_globales)

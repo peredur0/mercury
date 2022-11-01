@@ -111,7 +111,6 @@ def import_from_csv(chemin):
     :param chemin: <str> chemin vers le fichier CSV
     :return: <list> [fichier <str>, message <email.message.EmailMessage>]
     """
-    # todo: vérifier l'encodage des messages.
     data = []
     with open(chemin, newline='') as csvfile:
         lect = csv.reader(csvfile)
