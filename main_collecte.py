@@ -111,16 +111,13 @@ def create_doc_process(categorie, liste):
                              leave=False,
                              ascii=True,
                              file=sys.stdout):
-        messages = importation(fichier)
-        if messages:
-            for message in tqdm.tqdm(messages,
-                                     desc="Création {}".format(messages[0][0].split('/')[-1]),
-                                     leave=False,
-                                     ascii=True,
-                                     file=sys.stdout):
-                m_doc = create_document(message, categorie)
-                if m_doc:
-                    docs.append(m_doc)
+
+        message = importation(fichier)
+        if message:
+            m_doc = create_document(message, categorie)
+            if m_doc:
+                docs.append(m_doc)
+
     print("-- Importation - Création {}... OK".format(categorie))
     return docs
 
@@ -179,11 +176,37 @@ if __name__ == '__main__':
     print("OK")
 
     # -- PSQL
-    print("-- Création de la base PostgreSQL...", end=' ')
+    print("-- Création de la base PostgreSQL")
+    psql_cmd.create_user(admin=psql_secrets.admin,
+                         adm_pass=psql_secrets.admin_pw,
+                         user=psql_secrets.owner,
+                         password=psql_secrets.owner_pw,
+                         host=psql_secrets.host,
+                         port=psql_secrets.port)
+
     psql_conf = json.load(open("./databases/psql_db/db_mapping.json"))
     psql_db = list(psql_conf.keys())[0]
-    psql_cmd.create_db()
+    psql_cmd.create_db(nom=psql_db,
+                       owner=psql_secrets.owner,
+                       user=psql_secrets.admin,
+                       passwd=psql_secrets.admin_pw,
+                       host=psql_secrets.host,
+                       port=psql_secrets.port)
+
+    print("-- Création des tables PostgreSQL...", end=' ')
+    psql_conn = psql_cmd.connect_db(database=psql_db,
+                                    user=psql_secrets.owner,
+                                    passwd=psql_secrets.owner_pw,
+                                    host=psql_secrets.host,
+                                    port=psql_secrets.port)
+    for table in psql_conf[psql_db].keys():
+        psql_cmd.create_table(psql_conn, table, psql_conf[psql_db][table])
     print("OK")
+    psql_conn.close()
+
+    # DEV - STOP avant mise en base
+    print("DEV END")
+    exit(0)
 
     # - Mise en base ES
     for cat in ['spam', 'ham']:

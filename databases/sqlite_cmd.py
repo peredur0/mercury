@@ -154,7 +154,7 @@ def stats_creation_doc(categorie, stats_dict, liste):
                          leave=False,
                          file=sys.stdout,
                          ascii=True):
-        stats_dict["mots"] += doc["nb_mots"]
+        stats_dict["mots"] += len(doc["message"].split())
 
         for mot in doc["message"].split():
             if mot not in m_uniq:

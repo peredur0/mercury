@@ -161,7 +161,6 @@ if __name__ == '__main__':
         exit(1)
 
     index = "test_phase_2"
-    mapp = json.load(open("elastic/exploit_mapping.json"))
     es_create_indice(dev_cli, index, mapp)
 
     dev_doc = {"hash": "rfiherifuheqiufhieuqrhf",

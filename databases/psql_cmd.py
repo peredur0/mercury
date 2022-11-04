@@ -59,18 +59,25 @@ def create_table(client_psql, nom, champs):
     :param champs: <dict> nom : [type, options]
     :return:
     """
+    fk = ""
+    fields = []
+
     curseur = client_psql.cursor()
-    curseur.execute("DROP TABLE IF EXISTS {}".format(nom))
+    curseur.execute(f"DROP TABLE IF EXISTS {nom}")
 
-    expression = "CREATE TABLE {}".format(nom)
-    expression += "("
-    for key in champs:
-        expression += " {} {},".format(str(key), " ".join(champs[key]))
-    expression = expression[:-1]    # Suppression de la virgule finale
-    expression += ")"
+    if 'fk' in champs.keys():
+        ls = champs.pop('fk')
+        fk = f"CONSTRAINT {ls.pop(0)} FOREIGN KEY({ls.pop(0)}) REFERENCES {ls.pop(0)}"
+        if ls:
+            fk += f" ON DELETE {ls.pop(0)}"
 
-    curseur.execute(expression)
+    for key, value in champs.items():
+        fields.append(f"{key} {' '.join(value)}")
 
+    query = f"CREATE TABLE {nom} ({', '.join(fields)})"
+    if fk:
+        query = query[:-1] + f", {fk})"
+    curseur.execute(query)
 
 def create_index(client_psql, nom, table, colonne):
     """ Index sur les hash des messages
@@ -174,7 +181,7 @@ def exec_query(client_psql, query):
         return []
     except psycopg2.Error as e:
         print("Erreur d'execution de la requete : {}".format(e), file=sys.stderr)
-        print("requete : {}".format(query))
+        print("requete : {}".format(query), file=sys.stderr)
         return []
 
 
@@ -189,13 +196,32 @@ def messageid_from_hash(client_psql, mes_hash):
     return -1 if not result else result[0][0]
 
 
+def create_user(admin, adm_pass, user, password, host, port):
+    """
+    Création d'un nouvel utilisateur PSQL
+    :return: None
+    """
+    cli_psql = psycopg2.connect(user=admin, password=adm_pass, host=host, port=port)
+    cli_psql.autocommit = True
+
+    query = f"SELECT 1 FROM pg_roles WHERE rolname='{user}'"
+    result = exec_query(cli_psql, query)
+
+    if not result:
+        query = f"CREATE ROLE {user} LOGIN PASSWORD '{password}'"
+        exec_query(cli_psql, query)
+        print(f"User '{user}' créé")
+        return
+    print(f"User '{user}' déjà existant")
+
+
 if __name__ == '__main__':
 
-    conf = json.load(open("db_mapping.json", 'r'))
+    conf = json.load(open("./psql_db/db_mapping.json", 'r'))
     db = list(conf.keys())[0]
-    create_db(nom=db, owner="data", user="postgres", passwd="postgres", host="localhost", port="5432")
 
-    conn = connect_db(database=db, user="data", passwd="data", host="localhost", port='5432')
+    create_db(nom=db, owner="data", user="postgres", passwd="postgres", host="localhost", port="5433")
+    conn = connect_db(database=db, user="data", passwd="data", host="localhost", port='5433')
     for t in conf[db].keys():
         create_table(conn, t, conf[db][t])
 
