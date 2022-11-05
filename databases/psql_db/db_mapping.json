@@ -14,8 +14,8 @@
       "id_message": ["INT"],
       "url": ["INT"],
       "mail": ["INT"],
-      "telephone": ["INT"],
-      "nombres": ["INT"],
+      "tel": ["INT"],
+      "nombre": ["INT"],
       "prix": ["INT"],
       "fk": ["fk_liens", "id_message", "messages(id_message)", "CASCADE"]
     },

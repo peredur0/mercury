@@ -79,6 +79,7 @@ def create_table(client_psql, nom, champs):
         query = query[:-1] + f", {fk})"
     curseur.execute(query)
 
+
 def create_index(client_psql, nom, table, colonne):
     """ Index sur les hash des messages
     :param client_psql: <psycopg2.extension.connection> object connexion vers une base de donnee
@@ -94,6 +95,7 @@ def create_index(client_psql, nom, table, colonne):
 def insert_data(client_psql, table, data):
     """
     Insere les donnees d'un dictionnaire dans une table de la base de donnees PSQL
+    Les clés du dictionnaire doivent correspondre aux colonnes de la table.
     :param client_psql: <psycopg2.extension.connection> object connexion vers une base de donnee
     :param table: <str> La table dans a remplir
     :param data: <dict> {colonne: valeur}
@@ -106,25 +108,38 @@ def insert_data(client_psql, table, data):
     exec_query(client_psql, query)
 
 
-def insert_subst(client_psql, data):
-    """ Insere les donnees de substitutions dans la table
-    :param client_psql: <psycopg2.extension.connection> object connexion vers une base de donnee
-    :param data: <dict> donnees a inserer
+def get_data(client_psql, table, champs, clause=None):
+    """
+    Récupère les données de la base.
+    :param client_psql: <psycopg2.extension.connection> object connexion vers une base de donnee.
+    :param table: <str> table a scroller.
+    :param champs: <list> champs à récupérer.
+    :param clause: <str> Clause WHERE
+    :return: <dict>
+    """
+    query = f"SELECT {','.join(champs)} FROM {table}"
+    if clause:
+        query += f" WHERE {clause}"
+
+    result = exec_query(client_psql, query)
+    return [dict(zip(champs, ligne)) for ligne in result]
+
+
+def insert_document_init(client_psql, data, id_cat):
+    """
+    Insert un nouveau document dans la base PSQL.
+    Tables impactées : messages, liens
+    :param client_psql:
+    :param data:
+    :param id_cat:
     :return:
     """
-    val = "{}, {}, {}, {}, {}, {}".format(
-        data['id_message'],
-        data['data']['URL'],
-        data['data']['MAIL'],
-        data['data']['TEL'],
-        data['data']['NOMBRE'],
-        data['data']['PRIX']
-    )
+    insert_data(client_psql, 'messages', {'hash': data['hash'], 'id_cat': id_cat})
+    id_message = get_data(client_psql, 'messages', ['id_message'], f"hash LIKE '{data['hash']}'")[0]['id_message']
 
-    query = '''INSERT INTO substitutions(id_message, url, mail, telephone, nombres, prix)
-                VALUES ({})'''.format(val)
-
-    exec_query(client_psql, query)
+    liens = data['liens']
+    liens.update({'id_message': id_message})
+    insert_data(client_psql, 'liens', liens)
 
 
 def insert_mots(client_psql, data):
@@ -216,7 +231,7 @@ def create_user(admin, adm_pass, user, password, host, port):
 
 
 if __name__ == '__main__':
-
+    from hashlib import md5
     conf = json.load(open("./psql_db/db_mapping.json", 'r'))
     db = list(conf.keys())[0]
 
@@ -225,5 +240,13 @@ if __name__ == '__main__':
     for t in conf[db].keys():
         create_table(conn, t, conf[db][t])
 
+    insert_data(conn, "categories", {'type': 'spam'})
+    print(get_data(conn, "categories", ['id_cat'], "type LIKE 'spam'"))
+    insert_data(conn, "messages", {'hash': md5('iju'.encode()).hexdigest(), 'id_cat': 1})
+    insert_data(conn, "messages", {'hash': md5('aza'.encode()).hexdigest(), 'id_cat': 1})
+    out = get_data(conn, "messages", ['id_message', 'hash', 'id_cat'])
+    print(out)
+    insert_data(conn, 'liens', {'id_message': 1, "mail": 3})
+    print(get_data(conn, "liens", ['id_message', 'url', 'mail', 'telephone']))
     conn.close()
     exit(0)

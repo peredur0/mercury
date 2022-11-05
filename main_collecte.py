@@ -24,6 +24,7 @@ import json
 import tqdm
 from importation import mail_load
 from traitement import nettoyage
+from tool import docker_cmd
 from databases import elastic_cmd, sqlite_cmd, psql_cmd
 from databases.elastic import secrets as es_secrets
 from databases.psql_db import secrets as psql_secrets
@@ -129,6 +130,19 @@ if __name__ == '__main__':
     # Globales
     sqlite_db = './databases/sqlite_db/stats_dev.db'
 
+    # Vérification des accès docker
+    print("=== Vérification des conteneurs Docker ===")
+    for cont in ['docker_es01_1', 'docker_kibana_1', 'docker_pgadmin_1', 'docker_pgdb_1']:
+        if not docker_cmd.container_up(cont):
+            print(f"* Conteneur '{cont}' non présent")
+            ques = input("Continuer [O] [N] ? ")
+            if ques.upper() == 'O':
+                continue
+            else:
+                print("Arret")
+                exit(1)
+        print(f"* Conteneur '{cont}'... OK")
+
     # Début
     print("=== Phase 1 : collecte & mise en base ===")
     print("== Création de la base SQLITE")
@@ -202,22 +216,35 @@ if __name__ == '__main__':
     for table in psql_conf[psql_db].keys():
         psql_cmd.create_table(psql_conn, table, psql_conf[psql_db][table])
     print("OK")
-    psql_conn.close()
-
-    # DEV - STOP avant mise en base
-    print("DEV END")
-    exit(0)
 
     # - Mise en base ES
     for cat in ['spam', 'ham']:
         doublons = 0
+
+        # PSQL Mise en base Categorie
+        psql_cmd.insert_data(psql_conn, "categories", {"type": cat})
+        id_cat = psql_cmd.get_data(psql_conn, "categories", ['id_cat'], f"type LIKE '{cat}'")[0]['id_cat']
+
         for document in tqdm.tqdm(n_data.get(cat, []),
-                                  desc="-- Mise en base ES des {}...".format(cat),
+                                  desc="-- Mise en base ES & PSQL des {}...".format(cat),
                                   leave=False,
                                   file=sys.stdout,
                                   ascii=True):
-            doublons += elastic_cmd.es_index_doc(es_cli, index, document)
-        print("-- Mise en base ES des {}... OK ({} doublons)".format(cat, doublons))
+
+            # Séparation des données pour ES et PSQL
+            es_document = {key: val for key, val in document.items() if key != "liens"}
+            psql_document = {key: val for key, val in document.items() if key in ['hash', 'liens']}
+
+            # Mise en base ES
+            if elastic_cmd.es_index_doc(es_cli, index, document):
+                doublons += 1
+                continue
+
+            # Mise en base PSQL
+            psql_cmd.insert_document_init(psql_conn, psql_document, id_cat)
+
+        print("-- Mise en base ES & PSQL des {}... OK ({} doublons)".format(cat, doublons))
+    psql_conn.close()
 
     m_data = {}
     for cat in ['spam', 'ham']:
