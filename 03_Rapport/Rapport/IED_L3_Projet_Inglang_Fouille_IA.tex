@@ -71,7 +71,7 @@
 	"Courrier électronique non sollicité envoyé en grand nombre à des boîtes aux lettres électroniques ou à des forums, dans un but publicitaire ou commercial."
 	\end{quote}
 	
-	Il est possible d'ajouter à cette catégorie tous les mails indésirables comme les tentatives d'hameçonnage permettant	de soutirer des informations personnelles à une cible.\\ 
+	Il est possible d'ajouter à cette catégorie tous les mails indésirables comme les tentatives d'hameçonnage permettant de soutirer des informations personnelles à une cible.\\ 
 	
 	L'objectif est de travailler uniquement sur les données textuelles issues du corps du mail.
 	Nous avons donc en point de départ les éléments suivants:
@@ -81,12 +81,26 @@
 		\item type: e-mail
 	\end{itemize}
 	
-	Le schéma ci-dessous donne une vue synthétique des étapes du projet:
-	% Schéma des étapes
+	Le schéma ci-dessous donne une vue synthétique des étapes du projet
+	\begin{figure}[H]
+		\includegraphics[width=\linewidth]{img/SchemaGeneral.jpg}
+		\caption{Schéma des grandes étapes}
+	\end{figure}
+	La \emph{Phase 1} concerne la récolte des informations et les traitements minimum nécessaire pour la mise en base. Les objectifs de traitement de cette phase sont:
+	\begin{itemize}
+		\item Extraire les corps des mails et éliminer les méta-données superflues
+		\item Eliminer les mails non anglais
+		\item Eliminer les mails en doublons
+		\item Eliminer les parties de textes non pertinente (liens, réponses, certaines ponctuation)
+	\end{itemize}
+	Cette phase se termine avec la mise en base des documents dans un index ElasticSearch.\\
+	
+	La \emph{phase 2} vise à générer les données statistiques et numériques à partir des mails pré-traité. C'est a cette étape que qu'interviennent les 
 		 
 	
-
+\newline
 \section{Récolte des données}
+	
 	\subsection{Recherche de dataset}
 		J'avais dans l'idée de faire la recherche de mails en français. Cependant, je n'ai pas trouvé de dataset dans cette langue. Je me suis donc retourné vers les datasets de mails en anglais. \\
 		J'ai pu alors récupéré deux dataset:
@@ -102,7 +116,7 @@
 			
 
 \section{Pré-traitement}
-	Les étapes de pré-traitement regroupe toutes les étapes et actions réalisées avant la mise en base. 
+	Les étapes de pré-traitement regroupent toutes les étapes et actions réalisées avant la mise en base. 
 	L'objectif de ces étapes est d'extraire le message en retirant les métadonnées du mail.
 	Il va être possible d'effectuer certains traitement de nettoyage et de récupération d'informations sommaires.
 	
@@ -185,8 +199,15 @@ def extract_body(msg):
 		
 		\paragraph{Stockage des données statistiques du traitement: SQLite}
 			% Informations pour la soutenance
+			
+		\paragraph{Stockage des premières informations statistiques: PostgreSQL}
+		
 	
-	\subsection{Recherche de caractéristiques}
+	
+
+\section{Traitement}
+
+\subsection{Recherche de caractéristiques}
 		\paragraph{Références}
 			% LIENS, Nombres
 						
@@ -195,8 +216,6 @@ def extract_body(msg):
 		% Etudes statistiques
 		% Etudes des distributions
 		% Travail sur la distribution de zipf
-
-\section{Traitement}
 	
 \newpage	
 \appendix
