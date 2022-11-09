@@ -1,7 +1,7 @@
 version: "3.3"
 services:
         pgdb:
-                image: postgres:${VERSION}
+                image: postgres:${PS_VERSION}
                 restart: always
                 environment:
                         POSTGRES_PASSWORD: ${PS_PASSWORD}
@@ -12,7 +12,7 @@ services:
                         - ${PS_PORT}:5432
 
         pgadmin:
-                image: dpage/pgadmin4:${VERSION}
+                image: dpage/pgadmin4:${PS_VERSION}
                 environment:
                         PGADMIN_DEFAULT_EMAIL: ${PGA_MAIL}
                         PGADMIN_DEFAULT_PASSWORD: ${PGA_PASSWORD}

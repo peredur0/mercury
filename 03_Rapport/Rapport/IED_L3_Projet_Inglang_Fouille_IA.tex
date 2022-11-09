@@ -81,72 +81,89 @@
 		\item type: e-mail
 	\end{itemize}
 	
+	\paragraph{Déroulé}
 	Le schéma ci-dessous donne une vue synthétique des étapes du projet
 	\begin{figure}[H]
 		\includegraphics[width=\linewidth]{img/SchemaGeneral.jpg}
 		\caption{Schéma des grandes étapes}
 	\end{figure}
-	La \emph{Phase 1} concerne la récolte des informations et les traitements minimum nécessaire pour la mise en base. Les objectifs de traitement de cette phase sont:
+	
+	\subparagraph{La phase 1} concerne la récolte des informations et les traitements minimum nécessaire pour la mise en base. Les objectifs de traitement de cette phase sont:
 	\begin{itemize}
 		\item Extraire les corps des mails et éliminer les méta-données superflues
 		\item Eliminer les mails non anglais
 		\item Eliminer les mails en doublons
-		\item Eliminer les parties de textes non pertinente (liens, réponses, certaines ponctuation)
+		\item Eliminer les parties de textes non pertinente (liens, réponses, certaines ponctuations)
 	\end{itemize}
-	Cette phase se termine avec la mise en base des documents dans un index ElasticSearch.\\
+	Cette phase se termine avec la mise en base des documents dans un index ElasticSearch.
 	
-	La \emph{phase 2} vise à générer les données statistiques et numériques à partir des mails pré-traité. C'est a cette étape que qu'interviennent les 
+	\subparagraph{La phase 2} vise à générer les données statistiques et numériques à partir des corps de mails.
+	% todo : description rapide des actions de la phase 2
+	
+	\subparagraph{La phase 3} regroupe tous les opérations d'exploitation des données et vise à développer et à créer un modèle de classement des mails et à évaluer ses performances.\\
+	
+	Afin de conserver une certaine cohérence dans le déroulé entre les phases et au vu du temps que j'ai pris pour réaliser ce projet l'ensemble des étapes est automatisé en langage Python. Seule la récolte initiale des mails a été réalisée à la main.
 		 
-	
-\newline
-\section{Récolte des données}
-	
-	\subsection{Recherche de dataset}
-		J'avais dans l'idée de faire la recherche de mails en français. Cependant, je n'ai pas trouvé de dataset dans cette langue. Je me suis donc retourné vers les datasets de mails en anglais. \\
-		J'ai pu alors récupéré deux dataset:
-		\begin{itemize}
-			\item Enron company mails (voir: \ref{Enron_dataset})
-			\item Dataset SpamAssassin (voir: \ref{SpamAssassin_dataset})
-		\end{itemize}
-		Les mails de SpamAssassin ont l'avantage d'être pré-trié, contrairement aux mails de la compagnie Enron. Ainsi le développement du moteur se fera uniquement avec les mails du SpamAssasin afin de pouvoir vérifier les résultats de l'analyse.
-		% Les mails Enron seront utilisés après le développement pour ajouter des données complémentaires une fois le développement terminer. 
-	
-	\subsection{Téléchargement des données}
-		Le téléchargement du dataset Enron est possible a partir du moment où l'on possède un compte sur la plateforme Kaggle. Le dataset SpamAssassin est ouvert, il suffit de télécharger les archives de chaque catégorie. 
-			
+\newpage
 
-\section{Pré-traitement}
-	Les étapes de pré-traitement regroupent toutes les étapes et actions réalisées avant la mise en base. 
-	L'objectif de ces étapes est d'extraire le message en retirant les métadonnées du mail.
-	Il va être possible d'effectuer certains traitement de nettoyage et de récupération d'informations sommaires.
+\section{Phase 1}
+	La phase 1 est une pipeline qui vas permettre d'extraire un maximum d'information d'un email en essayant de pas dénaturer le fond ni la forme. Il pourra ensuite être stocké avec sa catégorie d'appartenance. Durant cette phase nous allons également initialiser les bases de données en créant les index (ES) et les tables (PSQL et SQLITE). 
 	
-	\subsection{Extraction des corps des mails}
-		L'extraction du corps du mail se fait avec le module natif de python \emph{email}. \\
+	Ci-dessous le schéma général de cette phase.
+	\begin{figure}[H]
+		\includegraphics[width=\linewidth]{img/SchemaPhase1.jpg}
+		\caption{Schéma des étapes de la phase 1}
+	\end{figure}
+
+
+	\subsection{Récolte des données}
+		\paragraph{Recherche de dataset}
+			J'avais dans l'idée de faire la recherche de mails en français. Cependant, je n'ai pas trouvé de dataset dans cette langue. Je me suis donc retourné vers les datasets de mails en anglais. \\
+			J'ai pu alors récupérer deux dataset:
+			\begin{itemize}
+				\item Enron company mails (voir: \ref{Enron_dataset})
+				\item Dataset SpamAssassin (voir: \ref{SpamAssassin_dataset})
+			\end{itemize}
+			Les mails de SpamAssassin ont l'avantage d'être pré-trié, contrairement aux mails de la compagnie Enron. Ainsi le développement du moteur se fera uniquement avec les mails du SpamAssasin afin de pouvoir vérifier les résultats de l'analyse. 
 		
-		La fonction \emph{email.message\_from\_binary\_file} permet de transformer un fichier mail en objet python manipulable :
-		\begin{lstlisting}[title=Fonction d'importation des fichiers]
+		\paragraph{Téléchargement des données}
+			Le téléchargement du dataset Enron est possible a partir du moment où l'on possède un compte sur la plateforme Kaggle. Le dataset SpamAssassin est ouvert, il suffit de télécharger les archives de chaque catégorie. \\
+			
+			La récolte des données a été réalisée à la main sans automatisation. 
+			Les mails sont alors stockés dans plusieurs répertoires \emph{HAM} et \emph{SPAM} selon leur catégorie
+	
+	\subsection{Pré-traitement}
+		Les étapes de pré-traitement regroupent toutes les étapes et actions réalisées avant la mise en base. 
+		L'objectif de ces étapes est d'extraire le message en retirant les métadonnées du mail.
+		Il va être possible d'effectuer certains traitement de nettoyage et de récupération d'informations sommaires.
+		
+		Les manipulations de messages dans Python se font principalement à l'aide du module \emph{email} natif. 
+		
+		\subsubsection{Importation}
+		
+		
+			La fonction \emph{email.message\_from\_binary\_file} permet de transformer un fichier mail en objet python manipulable :
+			\begin{lstlisting}[title=Fonction d'importation des fichiers]
 def import_from_file(chemin):
-    """ Importe un email contenu dans un fichier
-    :param chemin: <str> - Chemin vers le fichier
-    :return: <email.message.EmailMessage>
-    """
     try:
         with open(chemin, 'rb') as data:
             msg = message_from_binary_file(data, policy=policy.default)
-
+            return msg
+	
     except FileNotFoundError:
         print("Fichier : '{}' non trouve".format(chemin), file=sys.stderr)
-        return None
-
-    return msg \end{lstlisting}
-    
-		Une fois le fichier importé au format \emph{EmailMessage}, il est possible d'en extraire le corps
-	    	\begin{lstlisting}[title=Extraction du corps du mail]
+        return None\end{lstlisting}
+		
+		
+		\subsubsection{Extraction des corps des mails}
+			Une fois le fichier importé au format \emph{EmailMessage}, il est possible d'en extraire le corps.
+			
+			Le corps du mail peut être composé de plusieurs parties qui ne sont pas forcément du texte. Les parties non textuelles ne sont pas conservée. 
+			
+			
+			% Todo : exemple de partie de mails qui ne nous intéressent pas ????			
+		    	\begin{lstlisting}[title=Extraction du corps du mail]
 def extract_body(msg):
-    """ Extraire le corps du mail
-    :param msg: <email.message.EmailMessage> Mail
-    :return: <str> corps du mail
-    """
     refused_charset = ['unknown-8bit', 'default', 'default_charset',
                        'gb2312_charset', 'chinesebig5', 'big5']
     body = ""
@@ -176,47 +193,50 @@ def extract_body(msg):
         body += nettoyage.clear_enriched(payload.decode(errors='ignore'))
 
     return body \end{lstlisting}
-    		
-		\paragraph{Exemple}    		
-    		
-    		
-	\subsection{Nettoyage}
-		\paragraph{Par regex}
-			% Suppression des réponses
-			% Suppression des ponctuations autres que .!?,)
-			% Suppression des balises pour les enriched text			
-			% Modification des liens (URL, MAIL et TELEPHONE)
-			% Modification des nombes (NOMBRE et PRIX)
-		
-		\paragraph{Par module}
-			% Suppression balise HTML avec BeautifulSoup
-			% Retrait des mails en langue non anglaise
-	
-	\subsection{Mise en base}
-		\paragraph{Stockage des données: ElasticSearch}
-			% fonction de hashage
-			% Schéma de la base
-		
-		\paragraph{Stockage des données statistiques du traitement: SQLite}
-			% Informations pour la soutenance
+	    		
+			\paragraph{Exemple}    		
+	    		
+	    		
+		\subsubsection{Nettoyage}
+			\paragraph{Par regex}
+				% Suppression des réponses
+				% Suppression des ponctuations autres que .!?,)
+				% Suppression des balises pour les enriched text			
+				% Modification des liens (URL, MAIL et TELEPHONE)
+				% Modification des nombes (NOMBRE et PRIX)
 			
-		\paragraph{Stockage des premières informations statistiques: PostgreSQL}
+			\paragraph{Par module}
+				% Suppression balise HTML avec BeautifulSoup
+				% Retrait des mails en langue non anglaise
+		
+		\subsubsection{Mise en base}
+			\paragraph{Stockage des données: ElasticSearch}
+				% fonction de hashage
+				% Schéma de la base
+			
+			\paragraph{Stockage des données statistiques du traitement: SQLite}
+				% Informations pour la soutenance
+				
+			\paragraph{Stockage des premières informations statistiques: PostgreSQL}
 		
 	
+\newpage
+\section{Phase 2}
+	\subsection{Traitement}
 	
+		\subsubsection{Recherche de caractéristiques}
+			\paragraph{Références}
+				% LIENS, Nombres
+							
+				
+		\subsubsection{Analyse préliminaire}
+			% Etudes statistiques
+			% Etudes des distributions
+			% Travail sur la distribution de zipf
 
-\section{Traitement}
+\newpage
+\section{Phase 3}
 
-\subsection{Recherche de caractéristiques}
-		\paragraph{Références}
-			% LIENS, Nombres
-						
-			
-	\subsection{Analyse préliminaire}
-		% Etudes statistiques
-		% Etudes des distributions
-		% Travail sur la distribution de zipf
-	
 \newpage	
 \appendix
 \section{Développement visualisation distribution de Zipf}
@@ -464,7 +484,9 @@ def cout(l1, l2, methode):
 		\hline
 		ElasticSearch & Oui & Technologie utilisée dans mon entreprise. Présence d'une interface de visualisation des données Kibana. & Application dockerisée. \\
 		\hline
-		SQLite & Oui & Base de données légère pour stocker uniquement les données statistiques des étapes & Rapide à mettre en place et déjà intégrée \\
+		PostgreSQL & Oui & Moteur de base de données relationnelle plus facilement scalable que ElasticSearch pour l'ajout de nouvelle catégorie de données. Il n'est pas nécessaire de ré-indexer toute la base pour ajouter des champs & Application dockerisée\\
+		\hline
+		SQLite & Oui & Base de données légère pour stocker uniquement les données statistiques des étapes de la phase 1 & Rapide à mettre en place et déjà intégrée \\
 		\hline		
 		
 		\hline

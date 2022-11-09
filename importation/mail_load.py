@@ -52,12 +52,11 @@ def import_from_file(chemin):
     try:
         with open(chemin, 'rb') as data:
             msg = message_from_binary_file(data, policy=policy.default)
+            return msg
 
     except FileNotFoundError:
         print("Fichier : '{}' non trouvé".format(chemin), file=sys.stderr)
         return None
-
-    return msg
 
 
 def extract_meta(msg):
