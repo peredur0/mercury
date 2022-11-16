@@ -209,23 +209,127 @@ def extract_body(msg):
 			\paragraph{Par regex} J'utilise le module python \emph{re} pour générer les suivantes:
 				\subparagraph{Suppression des réponses} Lorsque l'on réponds à un mail, le texte du message précédent est conservé dans le corps du mail. Afin de permettre la distinction avec les mails précédent le caractère '>' est ajouter en début de ligne. Je retire toutes les lignes correspondant à des réponses afin de limiter les doublons.
 				
-					\begin{lstlisting}
+					\begin{lstlisting}[title=Nettoyage des réponses]
 def clear_reply(texte):
     pattern = re.compile('^>.*$', flags=re.MULTILINE)
-    return re.sub(pattern, '', texte)
-					\end{lstlisting}
+    return re.sub(pattern, '', texte) \end{lstlisting}
 					
-				\subparagraph{Suppression des ponctuations superflues} Afin de ne  
-				% Suppression des ponctuations autres que .!?,)
-				% Suppression des balises pour les enriched text			
+				\subparagraph{Suppression des ponctuations} Afin de ne pas surcharger la base de données et pour se concentrer sur le texte, une grande partie des caractères de ponctuation seront retirés. L'idée est de se concentrer sur les ponctuations les plus présentes (.,?!) 
+
+					\begin{lstlisting}[title=Nettoyage des ponctuations]				
+def clear_ponctuation(texte):
+    pattern_ponct = re.compile('[*#\\-_=:;<>\\[\\]"\'~)(|/$+}{@%&\\\]', flags=re.MULTILINE)
+    return re.sub(pattern_ponct, ' ', texte) \end{lstlisting}
+
+				% Suppression des balises pour les enriched text
+				\subparagraph{Suppression des balises pour les enriched text} Certaines parties du corps de mail sont de type \emph{enriched text}. Les balises ne sont pas pertinente dans notre analyse et sont donc retirées.
+						
+					\begin{lstlisting}[title=Nettoyage des balises enriched text]
+def clear_enriched(texte):
+    pattern = re.compile('<.*>')
+    return re.sub(pattern, '', texte) \end{lstlisting}
+						
 				% Modification des liens (URL, MAIL et TELEPHONE)
-				% Modification des nombes (NOMBRE et PRIX)
-			
-			\paragraph{Par module}
-				% Suppression balise HTML avec BeautifulSoup
-				% Retrait des mails en langue non anglaise
+				\subparagraph{Suppression des liens} Certaines informations présentent dans le texte ne peuvent pas être utilisées dans l'analyse textuelle. Cependant il peut être intéressant de conserver une trace de leur présence. Nous allons donc modifier les liens url, mail et les numéros de téléphone qui seront comptabilisé avant d'être retiré du texte.
 				
-			\paragraph{Exemple}
+					\begin{lstlisting}[title=Nettoyage des liens]
+def change_lien(texte, liens):
+    pattern_mail = re.compile('[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+')
+
+    pattern_url1 = re.compile('(http|ftp|https)?:\/\/([\w\-_]+(?:(?:\.[\w\-_]+)+))'
+                             '([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?', flags=re.MULTILINE)
+    pattern_url2 = re.compile('(\\w+\\.)+\\w+', flags=re.MULTILINE)
+    pattern_tel1 = re.compile('\\(\\d{3}\\)\\d+-\\d+')  # (359)1234-1000
+    pattern_tel2 = re.compile('\\+\\d+([ .-]?\\d)+')    # +34 936 00 23 23
+
+    temp, liens['MAIL'] = re.subn(pattern_mail, ' ', texte)
+
+    temp, liens['URL'] = re.subn(pattern_url1, ' ', temp)
+    temp, nb = re.subn(pattern_url2, ' ', temp)
+    liens['URL'] += nb
+
+    temp, liens['TEL'] = re.subn(pattern_tel1, ' ', temp)
+    temp, nb = re.subn(pattern_tel2, ' ', temp)
+    liens['TEL'] += nb
+
+    return temp \end{lstlisting}
+ 
+ 
+				% Modification des nombes (NOMBRE et PRIX)
+				\subparagraph{Suppression des nombres} Comme pour les liens, les nombres sont comptabilisés et retirés. Je fais la distinction entre les nombres seuls et les nombres accompagnés de sigle monétaires. 
+				
+				\begin{verbatim}
+monnaie = '€$£'
+				\end{verbatim}
+					\begin{lstlisting}[title=Nettoyage des nombres]
+def change_nombres(texte, liens):
+    pattern_prix1 = re.compile(f'[{monnaie}]( )?\\d+([.,]\\d+)? ', flags=re.MULTILINE)
+    pattern_prix2 = re.compile(f' \\d+([.,]\\d+)?( )?[{monnaie}]', flags=re.MULTILINE)
+    pattern_nb = re.compile('\\d+')
+
+    temp, liens['PRIX'] = re.subn(pattern_prix1, ' ', texte)
+    temp, nb = re.subn(pattern_prix2, ' ', temp)
+    liens['PRIX'] += nb
+
+    temp, liens['NOMBRE'] = re.subn(pattern_nb, ' ', temp)
+
+    return temp \end{lstlisting}
+ 
+ 
+			\paragraph{Par module}
+				J'ai utilisé deux modules externes plus performant que ce que j'aurais pu faire avec simplement des expressions régulières. 
+				
+				% Suppression balise HTML avec BeautifulSoup
+				\subparagraph{Suppression du code HTML} Certaines parties du corps du mail sont de type HTML. J'utilise le module \emph{BeautifulSoup} pour parser le code et récupérer le texte affiché. 
+		
+					\begin{lstlisting}[title=Nettoyage des nombres]		
+from bs4 import BeautifulSoup
+
+def clear_html(texte):
+    brut = BeautifulSoup(texte, "lxml").text
+    return brut \end{lstlisting}	
+    		
+				% Retrait des mails en langue non anglaise
+				\subparagraph{Sélection des mails en anglais} Lors de mes tests, je me suis rendu compte que certains mails n'étaient pas en anglais. J'ai donc trouvé le module \emph{langdetect} qui permet de détecter le langage utilisé dans un texte en utilisant un modèle Naïve Bayes avec un score de ??\%.\\
+				Je conserve dans les données à mettre en base le langage détecté dans l'idée de pouvoir traité plusieurs langues (en idée d'évolution).\\
+				
+				La détection de la langue se fait dans la fonction s'occupant de créer le document pour la mise en base ElasticSearch.
+				
+				\begin{lstlisting}[title=Création d'un document]	
+import langdetect
+
+def create_document(mail, categorie):
+    corp = mail_load.extract_body(mail)
+    corp, liens = nettoyage.clear_texte_init(corp)
+    sujet, expediteur = mail_load.extract_meta(mail)
+
+    if not corp:
+        return None
+
+    try:
+        lang = langdetect.detect(corp)
+    except langdetect.lang_detect_exception.LangDetectException:
+        return None
+
+    if lang != 'en':
+        return None
+
+    if categorie.lower() not in ['spam', 'ham']:
+        categorie = 'inconnu'
+
+    doc = {
+        'hash': hashlib.md5(corp.encode()).hexdigest(),
+        'categorie': categorie.lower(),
+        'sujet': sujet,
+        'expediteur': expediteur,
+        'message': corp,
+        'langue': lang,
+        'liens': liens
+    }
+    return doc \end{lstlisting}
+ 
+ 
+			\paragraph{Exemples}
 		
 		\subsubsection{Mise en base}
 			\paragraph{Stockage des données: ElasticSearch}

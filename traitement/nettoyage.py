@@ -63,6 +63,7 @@ def clear_ponctuation(texte):
     """
     pattern_ponct = re.compile('[*#\\-_=:;<>\\[\\]"\'~)(|/$+}{@%&\\\]', flags=re.MULTILINE)
     return re.sub(pattern_ponct, ' ', texte)
+    # Todo: tester la capture par exclusion
 
 
 def clear_newline(texte):
@@ -121,8 +122,9 @@ def change_nombres(texte, liens):
     :param liens: <dict> dictonnaire des liens
     :return: <str>
     """
-    pattern_prix1 = re.compile('[$€£]( )?\\d+([.,]\\d+)? ', flags=re.MULTILINE)
-    pattern_prix2 = re.compile(' \\d+([.,]\\d+)?( )?[$€£]', flags=re.MULTILINE)
+    monnaie = '$£€'
+    pattern_prix1 = re.compile(f'[{monnaie}]( )?\\d+([.,]\\d+)? ', flags=re.MULTILINE)
+    pattern_prix2 = re.compile(f' \\d+([.,]\\d+)?( )?[{monnaie}]', flags=re.MULTILINE)
     pattern_nb = re.compile('\\d+')
 
     temp, liens['PRIX'] = re.subn(pattern_prix1, ' ', texte)
