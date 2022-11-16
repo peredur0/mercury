@@ -64,7 +64,7 @@
 	\newpage
 	
 \section{Introduction}
-	Ce projet à pour but de permettre de faire la détection des spam et ham dans des mails.
+	Ce projet a pour but de développer un modèle permettant de catégoriser des emails en spam ou ham.
 	La définition d'un spam dans le dictionnaire \emph{Larousse} est:
 	
 	\begin{quote}
@@ -81,14 +81,15 @@
 		\item type: e-mail
 	\end{itemize}
 	
-	\paragraph{Déroulé}
-	Le schéma ci-dessous donne une vue synthétique des étapes du projet
-	\begin{figure}[H]
-		\includegraphics[width=\linewidth]{img/SchemaGeneral.jpg}
-		\caption{Schéma des grandes étapes}
-	\end{figure}
+	\paragraph{Déroulé} Le développement de ce projet s'articule autour de 3 phases majeurs
+		\begin{itemize}
+			\item Phase 1 : Récupération des données
+			\item Phase 2 : Analyse des caractéristiques
+			\item Phase 3 : Construction du modèle
+		\end{itemize}
+		
 	
-	\subparagraph{La phase 1} concerne la récolte des informations et les traitements minimum nécessaire pour la mise en base. Les objectifs de traitement de cette phase sont:
+	\subparagraph{Phase 1} La phase 1 concerne la récolte des informations et les traitements minimums nécessaires pour la mise en base. Les objectifs de traitement de cette phase sont:
 	\begin{itemize}
 		\item Extraire les corps des mails et éliminer les méta-données superflues
 		\item Eliminer les mails non anglais
@@ -97,16 +98,22 @@
 	\end{itemize}
 	Cette phase se termine avec la mise en base des documents dans un index ElasticSearch.
 	
-	\subparagraph{La phase 2} vise à générer les données statistiques et numériques à partir des corps de mails.
+	\subparagraph{Phase 2} La phase 2 vise à générer les données statistiques et numériques à partir des corps de mails. Lors de cette phase une analyse statistique manuelle des données est réalisée
 	% todo : description rapide des actions de la phase 2
 	
-	\subparagraph{La phase 3} regroupe tous les opérations d'exploitation des données et vise à développer et à créer un modèle de classement des mails et à évaluer ses performances.\\
+	\subparagraph{Phase 3} La phase 3 regroupe tous les opérations d'exploitation des données et vise à développer et à créer un modèle de classement des mails et d'en évaluer les performances.\\
 	
-	Afin de conserver une certaine cohérence dans le déroulé entre les phases et au vu du temps que j'ai pris pour réaliser ce projet l'ensemble des étapes est automatisé en langage Python. Seule la récolte initiale des mails a été réalisée à la main.
+	Afin de conserver une certaine cohérence dans le déroulé entre les phases et au vu du temps que j'ai pris pour réaliser ce projet l'ensemble des étapes est automatisé en langage Python. Seule la récolte initiale des mails a été réalisée à la main.\\
+	
+	Le schéma ci-dessous donne une vue synthétique des étapes du projet
+	\begin{figure}[H]
+		\includegraphics[width=\linewidth]{img/SchemaGeneral.jpg}
+		\caption{Schéma des grandes étapes}
+	\end{figure}
 		 
 \newpage
 
-\section{Phase 1}
+\section{Phase 1 : Récupération des données}
 	La phase 1 est une pipeline qui vas permettre d'extraire un maximum d'information d'un email en essayant de pas dénaturer le fond ni la forme. Il pourra ensuite être stocké avec sa catégorie d'appartenance. Durant cette phase nous allons également initialiser les bases de données en créant les index (ES) et les tables (PSQL et SQLITE). 
 	
 	Ci-dessous le schéma général de cette phase.
@@ -130,18 +137,22 @@
 			Le téléchargement du dataset Enron est possible a partir du moment où l'on possède un compte sur la plateforme Kaggle. Le dataset SpamAssassin est ouvert, il suffit de télécharger les archives de chaque catégorie. \\
 			
 			La récolte des données a été réalisée à la main sans automatisation. 
-			Les mails sont alors stockés dans plusieurs répertoires \emph{HAM} et \emph{SPAM} selon leur catégorie
+			Les mails sont alors stockés dans plusieurs répertoires \emph{HAM} et \emph{SPAM} selon leur catégorie. \\
+			
+			Format:
+			\begin{itemize}
+				\item \emph{Enron} - 1 fichier CSV avec tous les mails
+				\item \emph{SpamAssassin} - 1 fichier texte par mail
+			\end{itemize}
 	
 	\subsection{Pré-traitement}
 		Les étapes de pré-traitement regroupent toutes les étapes et actions réalisées avant la mise en base. 
 		L'objectif de ces étapes est d'extraire le message en retirant les métadonnées du mail.
-		Il va être possible d'effectuer certains traitement de nettoyage et de récupération d'informations sommaires.
+		Il va être possible d'effectuer certain traitement de nettoyage et de récupération d'informations sommaires.
 		
 		Les manipulations de messages dans Python se font principalement à l'aide du module \emph{email} natif. 
 		
-		\subsubsection{Importation}
-		
-		
+		\subsubsection{Importation}		
 			La fonction \emph{email.message\_from\_binary\_file} permet de transformer un fichier mail en objet python manipulable :
 			\begin{lstlisting}[title=Fonction d'importation des fichiers]
 def import_from_file(chemin):
@@ -159,9 +170,7 @@ def import_from_file(chemin):
 			Une fois le fichier importé au format \emph{EmailMessage}, il est possible d'en extraire le corps.
 			
 			Le corps du mail peut être composé de plusieurs parties qui ne sont pas forcément du texte. Les parties non textuelles ne sont pas conservée. 
-			
-			
-			% Todo : exemple de partie de mails qui ne nous intéressent pas ????			
+					
 		    	\begin{lstlisting}[title=Extraction du corps du mail]
 def extract_body(msg):
     refused_charset = ['unknown-8bit', 'default', 'default_charset',
@@ -194,12 +203,19 @@ def extract_body(msg):
 
     return body \end{lstlisting}
 	    		
-			\paragraph{Exemple}    		
-	    		
-	    		
 		\subsubsection{Nettoyage}
-			\paragraph{Par regex}
-				% Suppression des réponses
+			Le nettoyage du texte utilise principalement les expressions régulières pour retirer un maximum d'éléments indésirables dans le texte. J'utilise 2 modules externes afin de traiter le code HTML et faire la détection des mails qui ne sont pas écrit en anglais.
+			
+			\paragraph{Par regex} J'utilise le module python \emph{re} pour générer les suivantes:
+				\subparagraph{Suppression des réponses} Lorsque l'on réponds à un mail, le texte du message précédent est conservé dans le corps du mail. Afin de permettre la distinction avec les mails précédent le caractère '>' est ajouter en début de ligne. Je retire toutes les lignes correspondant à des réponses afin de limiter les doublons.
+				
+					\begin{lstlisting}
+def clear_reply(texte):
+    pattern = re.compile('^>.*$', flags=re.MULTILINE)
+    return re.sub(pattern, '', texte)
+					\end{lstlisting}
+					
+				\subparagraph{Suppression des ponctuations superflues} Afin de ne  
 				% Suppression des ponctuations autres que .!?,)
 				% Suppression des balises pour les enriched text			
 				% Modification des liens (URL, MAIL et TELEPHONE)
@@ -208,6 +224,8 @@ def extract_body(msg):
 			\paragraph{Par module}
 				% Suppression balise HTML avec BeautifulSoup
 				% Retrait des mails en langue non anglaise
+				
+			\paragraph{Exemple}
 		
 		\subsubsection{Mise en base}
 			\paragraph{Stockage des données: ElasticSearch}
