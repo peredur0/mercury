@@ -232,6 +232,7 @@ advantage of the trusted zone file transfer option.</smaller>
     print(clear_enriched(message_enriched))
     print(80*'-')
 
+    exit(0)
     txt = "Hello,This is Chinese Traditional oЧʽ    ׌ fͬһr֪ďV᣿뷽ݵI᣿    ̘IвșC᣿ һΓЎ׃ ̘I͑᣿    ԽԽ W·ֱNɠδINʽE " \
            "mailǾWϠINҲõĹߡ cVrЧߣr͡eMarketerӋ еҎģ˾ MРINӡ ֏Výwƽؑʱ^ Average Response Rate Ranges ͨ banner ads ͨż direct " \
            "mail Email һ ُIȫ ַ ÿ f HK ُIȫ f HK ُI ַ ÿ f HK   ُIȫ f HK  free download ُI ַ ÿ f HK   ُI ȫ f HK  free " \
