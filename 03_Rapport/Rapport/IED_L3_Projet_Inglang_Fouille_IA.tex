@@ -290,7 +290,7 @@ def clear_html(texte):
     return brut \end{lstlisting}	
     		
 				% Retrait des mails en langue non anglaise
-				\subparagraph{Sélection des mails en anglais} Lors de mes tests, je me suis rendu compte que certains mails n'étaient pas en anglais. J'ai donc trouvé le module \emph{langdetect} qui permet de détecter le langage utilisé dans un texte en utilisant un modèle Naïve Bayes avec un score de ??\%.\\
+				\subparagraph{Sélection des mails en anglais} Lors de mes tests, je me suis rendu compte que certains mails n'étaient pas en anglais. J'ai donc trouvé le module \emph{langdetect} qui permet de détecter le langage utilisé dans un texte en utilisant un modèle Naïve Bayes avec une précision de 99\% (voir \ref{langdetect}). \\
 				Je conserve dans les données à mettre en base le langage détecté dans l'idée de pouvoir traité plusieurs langues (en idée d'évolution).\\
 				
 				La détection de la langue se fait dans la fonction s'occupant de créer le document pour la mise en base ElasticSearch.
@@ -330,16 +330,128 @@ def create_document(mail, categorie):
  
  
 			\paragraph{Exemple de traitement}
-		
+				Les sections suivantes présentent des exemples de traitement de la phase 1.
+				
+				\begin{lstlisting}[title=Traitement initial]
+message = '''
+Message dedicated to be a sample to show how the process is clearing the text.
+
+Begin reply :
+> He once said
+>>> that it would be great
+End of reply.
+
+Substitutions :
+spamassassin-talk@example.sourceforge.net
+https://www.inphonic.com/r.asp?r=sourceforge1&refcode1=vs3390
+hello.foo.bar
+between $ 25 and 25,21 $
+
+A number is : 2588,8 588
+Phone type a : (359)1234-1000
+Phone type b : +34 936 00 23 23
+Ponctuation : ----## ..
+~ ~~~~~
+'''
+text, liens = clear_texte_init(message)
+print(liens)
+print(text) 
+				\end{lstlisting}
+
+				Résultat traitement initial :
+				\begin{verbatim}
+{'URL': 2, 'MAIL': 1, 'TEL': 2, 'NOMBRE': 3, 'PRIX': 2}
+
+Message dedicated to be a sample to show how the process is clearing the text.
+
+Begin reply 
+
+
+End of reply.
+
+Substitutions 
+
+
+
+between and
+
+A number is  , 
+Phone type a  
+Phone type b  
+Ponctuation   ..
+				\end{verbatim}
+				
+				\begin{lstlisting}[title=Traitement HTML]
+message_html = '''
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Foobar</title>
+</head>
+<body>
+I actually thought of this kind of active chat at AOL 
+bringing up ads based on what was being discussed and 
+other features
+  <pre wrap="">On 10/2/02 12:00 PM, "Mr. FoRK" 
+  <a class="moz-txt-link-rfc2396E"href="mailto:fork_
+  list@hotmail.com">&lt;fork_list@hotmail.com&gt;</a> 
+  wrote: Hello There, General Kenobi !?
+<br>
+</body>
+</html>
+'''
+print(clear_html(message_html))
+				\end{lstlisting}
+				Résultat traitement HTML :
+				\begin{verbatim}
+
+Foobar
+
+
+I actually thought of this kind of active chat at AOL 
+bringing up ads based on what was being discussed and 
+other features
+  On 10/2/02 12:00 PM, "Mr. FoRK" 
+  <fork_list@hotmail.com> 
+  wrote: Hello There, General Kenobi !?
+
+
+				\end{verbatim}
+
+				\begin{lstlisting}[title=Traitement enriched text]
+message_enriched = '''
+<smaller>I'd like to swap with someone also using Simple DNS to take
+advantage of the trusted zone file transfer option.</smaller>
+'''
+print(clear_enriched(message_enriched))
+				\end{lstlisting}
+				Résultat traitement enriched text :
+				\begin{verbatim}
+I'd like to swap with someone also using Simple DNS to take
+advantage of the trusted zone file transfer option.
+				\end{verbatim}
+
+
 		\subsubsection{Mise en base}
+		
+			\begin{figure}[H]
+				\includegraphics[width=\linewidth]{img/SchemaBdd.jpg}
+				\caption{Schéma des bases de données de l'application}
+			\end{figure}
+		
 			\paragraph{Stockage des données: ElasticSearch}
 				% fonction de hashage
-				% Schéma de la base
+								
+			\paragraph{Stockage des premières informations statistiques: PostgreSQL}
 			
 			\paragraph{Stockage des données statistiques du traitement: SQLite}
 				% Informations pour la soutenance
+				\begin{figure}[H]
+					\includegraphics[width=\linewidth]{img/Schemasqlite.jpg}
+					\caption{Schéma de la base de données pour lors du traitement}
+				\end{figure}
 				
-			\paragraph{Stockage des premières informations statistiques: PostgreSQL}
+			
 			
 	
 	\subsection{Données de la phase 1}
@@ -617,15 +729,26 @@ def cout(l1, l2, methode):
 		\hline
 	\end{tabular}
 	
+	\section{Modèles}	
+		\subsection{Naive Bayes}
+	
 	\section{Bibliographie}
 	
 	\section{Sitotec}
 		\subsection{Corpus}
-		\begin{itemize}
-			\item Enron company mails, fichier CSV contenant l'ensemble des mails d'une entreprise ayant fermée ses portes (33.834.245 mails) [en ligne], \url{https://www.kaggle.com/wcukierski/enron-email-dataset} (consulté le 27/01/2022) \label{Enron_dataset}
-			\item Mails project SpamAssassin, projet opensource de détection de spam (6065 fichiers email déjà trier en ham et spam) [en ligne], \url{https://spamassassin.apache.org/old/publiccorpus/} (consulté le 27/01/2022) \label{SpamAssassin_dataset}
-			\item Brown corpus, ensemble de texte en anglais publié en 1961 qui contient plus d'un million de mots \url{https://www.nltk.org/book/ch02.html} (consulté le 20/08/2022) \label{Brown_corpus}
-		\end{itemize}
+			\begin{itemize}
+				\item Enron company mails, fichier CSV contenant l'ensemble des mails d'une entreprise ayant fermée ses portes (33.834.245 mails) [en ligne], \url{https://www.kaggle.com/wcukierski/enron-email-dataset} (consulté le 27/01/2022) \label{Enron_dataset}
+				\item Mails project SpamAssassin, projet opensource de détection de spam (6065 fichiers email déjà trier en ham et spam) [en ligne], \url{https://spamassassin.apache.org/old/publiccorpus/} (consulté le 27/01/2022) \label{SpamAssassin_dataset}
+				\item Brown corpus, ensemble de texte en anglais publié en 1961 qui contient plus d'un million de mots \url{https://www.nltk.org/book/ch02.html} (consulté le 20/08/2022) \label{Brown_corpus}
+			\end{itemize}
+		
+		\subsection{Sites}
+			\paragraph{Module langdetect}
+			\begin{itemize}
+				\item Page Github du projet \emph{langdetect} capable de différencier 49 langages avec une précision de 99\%, [en ligne] \url{https://github.com/Mimino666/langdetect} (consulté le 04/12/2022) \label{langdetect}
+				\item Language Detection Library, présentation du module (anglais) [en ligne] \url{https://www.slideshare.net/shuyo/language-detection-library-for-java} (consulté le 04/12/2022)
+			\end{itemize}
+		
 		
 
 \end{document}

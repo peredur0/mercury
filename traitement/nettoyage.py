@@ -62,7 +62,7 @@ def clear_ponctuation(texte):
     :return: <str>
     """
     pattern_ponct = re.compile('[*#\\-_=:;<>\\[\\]"\'~)(|/$+}{@%&\\\]', flags=re.MULTILINE)
-    return re.sub(pattern_ponct, ' ', texte)
+    return re.sub(pattern_ponct, '', texte)
     # Todo: tester la capture par exclusion
 
 
@@ -74,7 +74,7 @@ def clear_newline(texte):
     """
     pattern_nl = re.compile('^\n$', flags=re.MULTILINE)
     pattern_nl2 = re.compile('\n', flags=re.MULTILINE)
-    temp = re.sub(pattern_nl, ' ', texte)
+    temp = re.sub(pattern_nl, '', texte)
     temp = re.sub(pattern_nl2, ' ', temp)
     return temp
 
@@ -103,14 +103,14 @@ def change_lien(texte, liens):
     pattern_tel1 = re.compile('\\(\\d{3}\\)\\d+-\\d+')  # (359)1234-1000
     pattern_tel2 = re.compile('\\+\\d+([ .-]?\\d)+')    # +34 936 00 23 23
 
-    temp, liens['MAIL'] = re.subn(pattern_mail, ' ', texte)
+    temp, liens['MAIL'] = re.subn(pattern_mail, '', texte)
 
-    temp, liens['URL'] = re.subn(pattern_url1, ' ', temp)
-    temp, nb = re.subn(pattern_url2, ' ', temp)
+    temp, liens['URL'] = re.subn(pattern_url1, '', temp)
+    temp, nb = re.subn(pattern_url2, '', temp)
     liens['URL'] += nb
 
-    temp, liens['TEL'] = re.subn(pattern_tel1, ' ', temp)
-    temp, nb = re.subn(pattern_tel2, ' ', temp)
+    temp, liens['TEL'] = re.subn(pattern_tel1, '', temp)
+    temp, nb = re.subn(pattern_tel2, '', temp)
     liens['TEL'] += nb
 
     return temp
@@ -127,11 +127,11 @@ def change_nombres(texte, liens):
     pattern_prix2 = re.compile(f' \\d+([.,]\\d+)?( )?[{monnaie}]', flags=re.MULTILINE)
     pattern_nb = re.compile('\\d+')
 
-    temp, liens['PRIX'] = re.subn(pattern_prix1, ' ', texte)
-    temp, nb = re.subn(pattern_prix2, ' ', temp)
+    temp, liens['PRIX'] = re.subn(pattern_prix1, '', texte)
+    temp, nb = re.subn(pattern_prix2, '', temp)
     liens['PRIX'] += nb
 
-    temp, liens['NOMBRE'] = re.subn(pattern_nb, ' ', temp)
+    temp, liens['NOMBRE'] = re.subn(pattern_nb, '', temp)
 
     return temp
 
@@ -193,12 +193,9 @@ Phone type b : +34 936 00 23 23
 Ponctuation : ----## ..
 ~ ~~~~~
     '''
-    print(message)
-    print(80*'-')
     text, liens = clear_texte_init(message)
     print(liens)
     print(text)
-    print(80*'-')
 
     message_html = '''
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -218,17 +215,13 @@ other features
 </body>
 </html>
     '''
-    print(message_html)
-    print(80*'-')
-    print(clear_texte_init(clear_html(message_html)))
+    print(clear_html(message_html))
     print(80*'-')
 
     message_enriched = '''
 <smaller>I'd like to swap with someone also using Simple DNS to take
 advantage of the trusted zone file transfer option.</smaller>
     '''
-    print(message_enriched)
-    print(80*'-')
     print(clear_enriched(message_enriched))
     print(80*'-')
 
