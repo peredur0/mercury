@@ -433,11 +433,24 @@ advantage of the trusted zone file transfer option.
 
 
 		\subsubsection{Mise en base}
-		
+			Cette section détaille les éléments relatifs à la mise en base des informations récoltées. Dans ce projet, j'utilise 2 moteurs de bases de données pour stocker les extractions des mails. 
+			\begin{enumerate}
+				\item un index ElasticSearch pour faire le stockage des données textuelles
+				\item une base PostgreSQL pour le stockage des données numériques
+			\end{enumerate}
+				 
+			J'utilise des conteneurs \emph{docker} pour héberger les services de bases de données. 
+			L'utilisation des conteneurs me permet de partager plus facilement mes configurations et limite les erreurs d'installations.
+			
+			% Déroulé de la mise en base
+			
+			Ci-dessous le schéma des bases de données avec les relations entre elles.			
 			\begin{figure}[H]
 				\includegraphics[width=\linewidth]{img/SchemaBdd.jpg}
 				\caption{Schéma des bases de données de l'application}
 			\end{figure}
+			Le \emph{hash} calculé lors de la phase de traitement est l'identifiant unique du mail dans toute les bases. La catégorie du mail est également présente dans les deux bases. 
+			Les champs en rouge sont des caractéristiques qui ne sont pas calculées lors de la phase 1.
 		
 			\paragraph{Stockage des données: ElasticSearch}
 				% fonction de hashage
