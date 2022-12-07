@@ -103,7 +103,6 @@ def es_get_doc_nb(es_cli, index, query):
     :param query: <dict> corp de la requête
     :return: <int> nombre de documents qui matchent la requête
     """
-
     return es_cli.count(index=index, query=query)['count']
 
 

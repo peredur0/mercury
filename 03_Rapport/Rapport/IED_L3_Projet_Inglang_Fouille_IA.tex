@@ -505,12 +505,119 @@ def create_document(mail, categorie):
 		
 			\paragraph{Stockage des données: ElasticSearch}
 				ElasticSearch est un moteur de base de données NoSQL. Il intègre un moteur d'indexation des documents est assez performant pour stocker des données textuelles de taille aléatoire. 
-				Il est cependant assez compliquer de modifier un index une fois qu'il a été créé. Pour ces raisons, j'utilise cette technologie pour ne stocker les données textuelles après nettoyage car elles n'ont plus vocation à être modifier. \\
-				Les corps de mail mise en base seront récupérés ultérieurement pour réaliser les opérations d'analyse. Les résultats seront stockés dans la base PostgreSQL. 
+				Il est cependant assez compliqué de modifier le schéma d'un index une fois qu'il a été créé. Pour ces raisons, j'utilise cette technologie pour ne stocker les données textuelles après nettoyage car elles n'ont plus vocation à être modifiées. \\
 				
-				% fonction d'insertion
-								
-			\paragraph{Stockage des premières informations statistiques: PostgreSQL}
+				Les corps de mail mise en base seront récupérés ultérieurement pour réaliser les opérations d'analyse. Les résultats seront stockés dans la base PostgreSQL plus souple. \\
+				
+				Ci-dessous les fonctions principale pour l'ajout d'un document dans la base ES.
+				\begin{lstlisting}[title=Fonctions basique pour la liaison ElasticSearch]
+def es_connect(server, creds, crt):
+    """ Connexion au serveur ElasticSearch """
+    client = Elasticsearch(server, api_key=creds, ca_certs=crt)
+
+    try:
+        client.search()
+        client.indices.get(index="*")
+        return client
+
+    except (exceptions.ConnectionError, AuthenticationException, AuthorizationException) as err:
+        print("ES:conn - Informations client ElasticSearch :\n\t", err)
+        client.close()
+        return None
+        
+
+def es_index_doc(es_cli, index, doc):
+    """ Index un document dans la base ES """
+    id_doc = doc['hash']
+
+    if es_document_exists(es_cli, index, id_doc):
+        return 1
+
+    es_cli.index(index=index, document=doc)
+    es_cli.indices.refresh(index=index)
+    return 
+
+
+def es_document_exists(es_cli, index, hash):
+    """ Regader dans l'index si le hash du document est deja present """
+    try:
+        resp = es_cli.search(index=index, query={"match": {"hash": hash}})
+    except elasticsearch.NotFoundError as err:
+        print("Error : hash", err, file=sys.stderr)
+        return None
+
+    return True if resp['hits']['total']['value'] == 1 else False
+				\end{lstlisting}
+				
+				Le déploiement et les configurations de la base ElasticSearch sont disponibles dans l'annexe \ref{ES}.
+				
+				
+			\paragraph{Stockage des premières informations statistiques: PostgreSQL} Pour le stockage des données statiques et d'analyse, j'ai décidé de m'orienter vers le système de gestion de base de données PostgreSQL. Une base de données relationnelle est plus flexible qu'un index ElasticSearch pour l'ajout de nouvelles caractéristiques. 
+			
+			%%%%%%%%%%%%%%%%%%%%% ????????????????????????????? %%%%%%%%%%%%%%%%%%%%%%%%% 
+			
+				\begin{lstlisting}[title=Fonctions basiques pour la liaison PostgreSQL]
+def connect_db(database, user, passwd, host, port):
+    """ Connexion a la base de donnees Postgres """
+    try:
+        client_psql = psycopg2.connect(database=database, user=user, password=passwd, host=host, port=port)
+    except psycopg2.Error as e:
+        print("Erreur de connexion : \n{}".format(e), file=sys.stderr)
+        return None
+
+    client_psql.autocommit = True
+    return client_psql
+    
+    
+def insert_data(client_psql, table, data):
+    """
+    Insere les donnees d'un dictionnaire dans une table de la base de donnees PSQL
+    Les cles du dictionnaire doivent correspondre aux colonnes de la table.
+    """
+    cols = ','.join([str(c) for c in data.keys()])
+    vals = ','.join([str(v) if (type(v) != str) else f"'{v}'" for v in data.values()])
+    query = f"INSERT INTO {table}({cols}) VALUES ({vals})"
+
+    exec_query(client_psql, query)
+
+
+def get_data(client_psql, table, champs, clause=None):
+    """ Recupere les donnees de la base. """
+    query = f"SELECT {','.join(champs)} FROM {table}"
+    if clause:
+        query += f" WHERE {clause}"
+
+    result = exec_query(client_psql, query)
+    return [dict(zip(champs, ligne)) for ligne in result]
+    
+    
+def insert_document_init(client_psql, data, id_cat):
+    """
+    Insere un nouveau document dans la base PSQL.
+    """
+    insert_data(client_psql, 'messages', {'hash': data['hash'], 'id_cat': id_cat})
+    id_message = get_data(client_psql, 'messages', ['id_message'], f"hash LIKE '{data['hash']}'")[0]['id_message']
+
+    liens = data['liens']
+    liens.update({'id_message': id_message})
+    insert_data(client_psql, 'liens', liens)   
+    
+def exec_query(client_psql, query):
+    """ Execute une query dans la base PSQL """
+    cursor = client_psql.cursor()
+
+    try:
+        cursor.execute(query)
+        if query.upper().find("SELECT", 0, 6) >= 0:
+            return cursor.fetchall()
+        return []
+    except psycopg2.Error as e:
+        print("Erreur d'execution de la requete : {}".format(e), file=sys.stderr)
+        print("requete : {}".format(query), file=sys.stderr)
+        return []
+				\end{lstlisting}
+				
+				Le déploiement et les configurations de la base PostgreSQL sont disponibles dans l'annexe \ref{PSQL}.
 			
 			
 			\paragraph{Stockage des données statistiques du traitement: SQLite}
@@ -772,13 +879,13 @@ def cout(l1, l2, methode):
 
 \newpage
 \section{Déploiement des bases de données}	
-	\subsection{ElasticSearch}
+	\subsection{ElasticSearch} \label{ES}
 		\subsubsection{Conteneurisation}
 
 		\subsubsection{Initialisation de l'index}
 
 
-	\subsection{PostgreSQL}
+	\subsection{PostgreSQL} \label{PSQL}
 		\subsubsection{Conteneurisation}
 		
 		\subsubsection{Initialisation de la base de données}
