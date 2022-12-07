@@ -440,34 +440,101 @@ advantage of the trusted zone file transfer option.
 			\end{enumerate}
 				 
 			J'utilise des conteneurs \emph{docker} pour héberger les services de bases de données. 
-			L'utilisation des conteneurs me permet de partager plus facilement mes configurations et limite les erreurs d'installations.
+			L'utilisation des conteneurs me permet de partager plus facilement mes configurations et limite les erreurs d'installations.\\
 			
 			% Déroulé de la mise en base
+			Pour chaque mail récolté le programme de la phase 1 va générer un \emph{document} avec les informations suivantes :
+				\begin{itemize}
+					\item hash - signature md5 du texte nettoyé 
+					\item catégorie - Ham, Spam ou Inconnu
+					\item sujet - correspond à l'objet du mail
+					\item expéditeur - adresse mail
+					\item corps - corps du mail nettoyé
+					\item langue - la langue détectée du mail (en)
+					\item liens - données non textuelles extraites du corps :
+						\begin{itemize}
+							\item[•] URL - liens URL
+							\item[•] Mail - adresses mail
+							\item[•] Téléphone - numéros de téléphone
+							\item[•] Prix - nombres avec un symbole de devise
+							\item[•] Nombres
+						\end{itemize}
+				\end{itemize}
+				
+				Chaque document va générer une entrée dans la base ElasticSearch et une entrée dans la base PostgreSQL. 
+				
+				\begin{lstlisting}[title=Création d'un document]
+def create_document(mail, categorie):
+    corp = mail_load.extract_body(mail)
+    corp, liens = nettoyage.clear_texte_init(corp)
+    sujet, expediteur = mail_load.extract_meta(mail)
+
+    if not corp:
+        return None
+
+    try:
+        lang = langdetect.detect(corp)
+    except langdetect.lang_detect_exception.LangDetectException:
+        return None
+
+    if lang != 'en':
+        return None
+
+    if categorie.lower() not in ['spam', 'ham']:
+        categorie = 'inconnu'
+
+    doc = {
+        'hash': hashlib.md5(corp.encode()).hexdigest(),
+        'categorie': categorie.lower(),
+        'sujet': sujet,
+        'expediteur': expediteur,
+        'message': corp,
+        'langue': lang,
+        'liens': liens
+    }
+    return doc
+				\end{lstlisting}
 			
 			Ci-dessous le schéma des bases de données avec les relations entre elles.			
 			\begin{figure}[H]
 				\includegraphics[width=\linewidth]{img/SchemaBdd.jpg}
 				\caption{Schéma des bases de données de l'application}
 			\end{figure}
-			Le \emph{hash} calculé lors de la phase de traitement est l'identifiant unique du mail dans toute les bases. La catégorie du mail est également présente dans les deux bases. 
+			Le \emph{hash} calculé lors de la phase de traitement est l'identifiant unique du mail dans toutes les bases. La catégorie du mail est également présente dans les deux bases. 
 			Les champs en rouge sont des caractéristiques qui ne sont pas calculées lors de la phase 1.
 		
 			\paragraph{Stockage des données: ElasticSearch}
-				% fonction de hashage
+				ElasticSearch est un moteur de base de données NoSQL. Il intègre un moteur d'indexation des documents est assez performant pour stocker des données textuelles de taille aléatoire. 
+				Il est cependant assez compliquer de modifier un index une fois qu'il a été créé. Pour ces raisons, j'utilise cette technologie pour ne stocker les données textuelles après nettoyage car elles n'ont plus vocation à être modifier. \\
+				Les corps de mail mise en base seront récupérés ultérieurement pour réaliser les opérations d'analyse. Les résultats seront stockés dans la base PostgreSQL. 
+				
+				% fonction d'insertion
 								
 			\paragraph{Stockage des premières informations statistiques: PostgreSQL}
 			
+			
 			\paragraph{Stockage des données statistiques du traitement: SQLite}
-				% Informations pour la soutenance
+				Les données présentent dans cette base permettent de suivre l'évolution du traitement lors des différentes étapes de nettoyage. 
+				A chaque grandes étapes de la phase 1 (Importation, Nettoyage, Mise en base), je calcule pour les HAM, SPAM et (HAM+SPAM) les éléments suivants :
+				\begin{itemize}
+					\item mails - nombre de mails
+					\item mots - nombre de mots 
+					\item mots\_uniques - nombre de mots uniques
+				\end{itemize}
+				
+				Ces données me permettent d'estimer la quantité de données nettoyées durant cette phase.
+				
 				\begin{figure}[H]
 					\includegraphics[width=\linewidth]{img/Schemasqlite.jpg}
 					\caption{Schéma de la base de données pour lors du traitement}
 				\end{figure}
-				
-			
+							
 			
 	
 	\subsection{Données de la phase 1}
+		% Evolution du traitement
+		
+		% Première données statistiques
 		
 	
 \newpage
@@ -702,7 +769,19 @@ def cout(l1, l2, methode):
 				\item[•]./analyse/rech\_zipf.py
 				\item[•] ./traitement/stats.py
 			\end{itemize}
+
+\newpage
+\section{Déploiement des bases de données}	
+	\subsection{ElasticSearch}
+		\subsubsection{Conteneurisation}
+
+		\subsubsection{Initialisation de l'index}
+
+
+	\subsection{PostgreSQL}
+		\subsubsection{Conteneurisation}
 		
+		\subsubsection{Initialisation de la base de données}
 
 
 \newpage
@@ -755,7 +834,7 @@ def cout(l1, l2, methode):
 				\item Brown corpus, ensemble de texte en anglais publié en 1961 qui contient plus d'un million de mots \url{https://www.nltk.org/book/ch02.html} (consulté le 20/08/2022) \label{Brown_corpus}
 			\end{itemize}
 		
-		\subsection{Sites}
+		\subsection{Modules}
 			\paragraph{Module langdetect}
 			\begin{itemize}
 				\item Page Github du projet \emph{langdetect} capable de différencier 49 langages avec une précision de 99\%, [en ligne] \url{https://github.com/Mimino666/langdetect} (consulté le 04/12/2022) \label{langdetect}
