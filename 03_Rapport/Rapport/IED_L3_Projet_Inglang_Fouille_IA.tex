@@ -509,7 +509,7 @@ def create_document(mail, categorie):
 				
 				Les corps de mail mise en base seront récupérés ultérieurement pour réaliser les opérations d'analyse. Les résultats seront stockés dans la base PostgreSQL plus souple. \\
 				
-				Ci-dessous les fonctions principale pour l'ajout d'un document dans la base ES.
+				Ci-dessous les fonctions principales pour l'ajout d'un document dans la base ES.
 				\begin{lstlisting}[title=Fonctions basique pour la liaison ElasticSearch]
 def es_connect(server, creds, crt):
     """ Connexion au serveur ElasticSearch """
@@ -552,9 +552,16 @@ def es_document_exists(es_cli, index, hash):
 				Le déploiement et les configurations de la base ElasticSearch sont disponibles dans l'annexe \ref{ES}.
 				
 				
-			\paragraph{Stockage des premières informations statistiques: PostgreSQL} Pour le stockage des données statiques et d'analyse, j'ai décidé de m'orienter vers le système de gestion de base de données PostgreSQL. Une base de données relationnelle est plus flexible qu'un index ElasticSearch pour l'ajout de nouvelles caractéristiques. 
+			\paragraph{Stockage des premières informations statistiques: PostgreSQL} Pour le stockage des données statiques et d'analyse, j'ai décidé de m'orienter vers le système de gestion de base de données PostgreSQL. Une base de données relationnelle est plus flexible qu'un index ElasticSearch pour l'ajout de nouvelles caractéristiques. \\
 			
-			%%%%%%%%%%%%%%%%%%%%% ????????????????????????????? %%%%%%%%%%%%%%%%%%%%%%%%% 
+				Durant la phase 1, j'utilise que 3 tables :
+				\begin{itemize}
+					\item messages - liste des mails avec le hash permettant de faire le lien avec l'index ES
+					\item categorie - liste des catégories de mails
+					\item liens - chaque ligne contient toutes les nombres de liens retiré lors du nettoyage
+				\end{itemize}
+				
+				Cette base a pour but de stocker les données formatées pour l'analyse, l'exploitation et l'entrainement du modèle.
 			
 				\begin{lstlisting}[title=Fonctions basiques pour la liaison PostgreSQL]
 def connect_db(database, user, passwd, host, port):
