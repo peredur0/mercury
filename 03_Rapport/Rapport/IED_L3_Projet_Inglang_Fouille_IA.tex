@@ -887,21 +887,407 @@ def cout(l1, l2, methode):
 \newpage
 \section{Déploiement des bases de données}	
 	Cette annexe détaille la mise en place de l'infrastructure de base de données pour le projet.
+	J'utilise 2 environnements de base de données en version conteneur (docker):
+		\begin{itemize}
+			\item ElasticSearch
+				\begin{itemize}
+					\item 1 Node Elastic, pour le service de base de données
+					\item 1 Service Kibana, pour la visualisation des données
+					\item 1 Service de certificat, pour sécuriser les échanges
+				\end{itemize}
+			\item PostgreSQL
+				\begin{itemize}
+					\item 1 service PostgreSQL, pour la base de données
+					\item 1 service PgAdmin, pour la visualisation de la base
+				\end{itemize}
+		\end{itemize}
+		
+	Chaque environnement est indépendant, et possède une ouverture sur le PC hôte.
 	
-	% Schéma des containers
+	
+	\begin{figure}[H]
+		\includegraphics[width=\linewidth]{img/SchemaDocker.jpg}
+		\caption{Schéma de l'architecture Docker}
+	\end{figure}
 	
 	\subsection{ElasticSearch} \label{ES}
+		Cet environnement se lance avec la commande suivante :
+		\begin{verbatim}
+docker-compose up -f ./databases/elastic/docker/docker-compose.yml -d		
+		\end{verbatim}
+		
 		\subsubsection{Conteneurisation}
+			\begin{lstlisting}[title=DockerCompose]
+version: "3.2"
+
+services:
+        certsmgr:
+                image: elasticsearch:${VERSION}
+                volumes:
+                        - ./certs:/usr/share/elasticsearch/config/certs
+                user: "0"
+                command: >
+                        bash -c '
+                                if [ x${ELASTIC_PASSWORD} == x ]; then
+                                        echo "Set the ELASTIC_PASSWORD environment variable in the .env file";
+                                        exit 1;
+                                elif [ x${KIBANA_PASSWORD} == x ]; then
+                                        echo "Set the KIBANA_PASSWORD environment variable in the .env file";
+                                        exit 1;
+                                fi;
+                                if [ ! -f certs/ca.zip ]; then
+                                        echo "Creating CA";
+                                        bin/elasticsearch-certutil ca --silent --pem -out config/certs/ca.zip;
+                                        unzip config/certs/ca.zip -d config/certs;
+                                fi;
+                                if [ ! -f certs/certs.zip ]; then
+                                        echo "Creating certs";
+                                        echo -ne \
+                                                "instances:\n"\
+                                                "  - name: es01\n"\
+                                                "    dns:\n"\
+                                                "      - es01\n"\
+                                                "      - localhost\n"\
+                                                "    ip:\n"\
+                                                "      - 127.0.0.1\n"\
+                                                > config/certs/instances.yml;
+                                        bin/elasticsearch-certutil cert --silent --pem -out config/certs/certs.zip --in config/certs/instances.yml --ca-cert config/certs/ca/ca.crt --ca-key config/certs/ca/ca.key;
+                                        unzip config/certs/certs.zip -d config/certs;
+                                fi;
+                                # echo "Setting file permissions"
+                                echo "chown -R root:root config/certs";
+                                echo "find . -type d -exec chmod 750 \{\} \;";
+                                echo "find . -type f -exec chmod 640 \{\} \;";
+                                echo "Waiting for Elasticsearch availability";
+                                until curl -s --cacert config/certs/ca/ca.crt https://es01:9200 | grep -q "missing authentication credentials"; do sleep 30; done;
+                                echo "Setting kibana_system password";
+                                until curl -s -X POST --cacert config/certs/ca/ca.crt -u elastic:${ELASTIC_PASSWORD} -H "Content-Type: application/json" https://es01:9200/_security/user/kibana_system/_password -d "{\"password\":\"${KIBANA_PASSWORD}\"}" | grep -q "^{}"; do sleep 10; done;
+                                echo "All done!";
+                        '
+                healthcheck:
+                        test: ["CMD-SHELL", "[ -f config/certs/es01/es01.crt ]"]
+                        interval: 1s
+                        timeout: 5s
+                        retries: 120
+
+
+        es01:
+                depends_on:
+                        certsmgr:
+                                condition: service_healthy
+                image: elasticsearch:${VERSION}
+                volumes:
+                        - ./certs:/usr/share/elasticsearch/config/certs
+                        - ./elastic/data:/usr/share/elasticsearch/data
+                ports:
+                        - ${ES_PORT}:9200
+                environment:
+                        - discovery.type=single-node
+                        - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+                        - bootstrap.memory_lock=true
+                        - xpack.security.enabled=true
+                        - xpack.security.http.ssl.enabled=true
+                        - xpack.security.http.ssl.key=certs/es01/es01.key
+                        - xpack.security.http.ssl.certificate=certs/es01/es01.crt
+                        - xpack.security.http.ssl.certificate_authorities=certs/ca/ca.crt
+                        - xpack.security.http.ssl.verification_mode=certificate
+                        - xpack.security.transport.ssl.enabled=true
+                        - xpack.security.transport.ssl.key=certs/es01/es01.key
+                        - xpack.security.transport.ssl.certificate=certs/es01/es01.crt
+                        - xpack.security.transport.ssl.certificate_authorities=certs/ca/ca.crt
+                        - xpack.security.transport.ssl.verification_mode=certificate
+                        - xpack.license.self_generated.type=${LICENSE}
+                mem_limit: ${MEM_LIMIT}
+                ulimits:
+                        memlock:
+                                soft: -1
+                                hard: -1
+                healthcheck:
+                        test:
+                                [
+                                        "CMD-SHELL",
+                                        "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
+                                ]
+                        interval: 10s
+                        timeout: 10s
+                        retries: 120
+
+        kibana:
+                depends_on:
+                        es01:
+                                condition: service_healthy
+                image: kibana:${VERSION}
+                volumes:
+                - ./certs:/usr/share/kibana/config/certs
+                - ./kibana/data:/usr/share/kibana/data
+                ports:
+                - ${KIBANA_PORT}:5601
+                environment:
+                        - SERVERNAME=kibana
+                        - ELASTICSEARCH_HOSTS=https://es01:9200
+                        - ELASTICSEARCH_USERNAME=kibana_system
+                        - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+                        - ELASTICSEARCH_SSL_CERTIFICATEAUTHORITIES=config/certs/ca/ca.crt
+                mem_limit: ${MEM_LIMIT}
+                healthcheck:
+                        test:
+                                [
+                                        "CMD-SHELL",
+                                        "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
+                                ]
+                        interval: 10s
+                        timeout: 10s
+                        retries: 120
+			\end{lstlisting}
 			
+			\begin{lstlisting}[title=Fichier d'environnement]
+# Password for elastic user
+ELASTIC_PASSWORD=elastic123
+# Password for kibana_system user
+KIBANA_PASSWORD=kibana123
+# Version elastic product
+VERSION=8.1.2
+# Licence to use
+LICENSE=basic
+# Port for elastic HTTP API
+ES_PORT=9200
+#ES_PORT=127.0.0.1:9200
+# Port for kibana access
+KIBANA_PORT=5601
+# Memory available (bytes)
+MEM_LIMIT=322122547
+			\end{lstlisting}
 
 		\subsubsection{Initialisation de l'index}
+		
+			\begin{lstlisting}[title=Exemples de secrets]
+serveur = "https://localhost:9200"
+apiid = "XXXXXXXXXXXXXXXXXXXXXXX"
+apikey = "XXXXXXXXXXXXXXXXXXXXXX"
+ca_cert = "databases/elastic/docker/certs/ca/ca.crt"
+			\end{lstlisting}
+			Il est possible de généré une clé API via l'interface Kibana.
+			
+			\begin{lstlisting}[title=Mapping]
+{
+  "properties": {
+    "hash": {"type": "keyword"},
+    "categorie": {"type": "keyword"},
+    "sujet": {"type": "text"},
+    "expediteur": {"type": "text"},
+    "message": {"type": "text"},
+    "langue": {"type": "keyword"}
+  }
+}
+			\end{lstlisting}
+			
+			
+				\begin{lstlisting}[title=Fonctions utiles]
+def es_connect(server, creds, crt):
+    """ Connexion au serveur ElasticSearch """
+    client = Elasticsearch(server, api_key=creds, ca_certs=crt)
+
+    try:
+        client.search()
+        client.indices.get(index="*")
+        return client
+
+    except (exceptions.ConnectionError, AuthenticationException, AuthorizationException) as err:
+        print("ES:conn - Informations client ElasticSearch :\n\t", err)
+        client.close()
+        return None
+
+
+def es_create_indice(es_cli, index, mapping):
+    """ Creer un indice s'il n'existe pas deja """
+    indices = es_cli.indices.get(index='*')
+    if indices and index in indices:
+        print("Warning: Indice {} deja present".format(index), end=' ')
+        return
+
+    try:
+        res = es_cli.indices.create(index=index, mappings=mapping)
+    except elasticsearch.ApiError as err:
+        print(err)
+        return
+
+    if not res['acknowledged']:
+        print("Error : Echec de la creation de l'indice {}".format(index))
+				\end{lstlisting}
+				
 
 
 	\subsection{PostgreSQL} \label{PSQL}
-		\subsubsection{Conteneurisation}
+		Cet environnement se lance avec la commande suivante :
+		\begin{verbatim}
+docker-compose up -f ./databases/psql_db/docker/docker-compose.yml -d		
+		\end{verbatim}
 		
-		\subsubsection{Initialisation de la base de données}
+		L'application se charge automatiquement de créer le compte utilisé par l'application pour se connecter à la base.
+				
+		\subsubsection{Conteneurisation}
+			\begin{lstlisting}[title=DockerCompose]
+version: "3.3"
+services:
+        pgdb:
+                image: postgres:${PS_VERSION}
+                restart: always
+                environment:
+                        POSTGRES_PASSWORD: ${PS_PASSWORD}
 
+                volumes:
+                        - ./data:/var/lib/postgresql/data
+                ports:
+                        - ${PS_PORT}:5432
+
+        pgadmin:
+                image: dpage/pgadmin4:${PS_VERSION}
+                environment:
+                        PGADMIN_DEFAULT_EMAIL: ${PGA_MAIL}
+                        PGADMIN_DEFAULT_PASSWORD: ${PGA_PASSWORD}
+                ports:
+                        - ${PGA_PORT}:80
+                depends_on:
+                        - pgdb
+			\end{lstlisting}
+			
+			\begin{lstlisting}[title=Fichier d'environnement]
+PS_VERSION=latest
+
+PS_PASSWORD=postgres
+PS_PORT=5433
+
+PGA_MAIL=data@data.org
+PGA_PASSWORD=data
+PGA_PORT=80
+			\end{lstlisting}
+
+		\subsubsection{Initialisation de la base de données}
+		
+			\begin{lstlisting}[title=Exemples de secrets.py]
+owner = "XXX"
+owner_pw = "XXX"
+admin = "XXXX"
+admin_pw = "XXXX"
+host = "localhost"
+port = "5432"
+			\end{lstlisting}
+			
+			\begin{lstlisting}[title=Mapping]
+{
+  "mail_features": {
+    "categories": {
+      "id_cat": ["SERIAL", "PRIMARY KEY"],
+      "type": ["VARCHAR", "UNIQUE", "NOT NULL"]
+    },
+    "messages": {
+      "id_message": ["SERIAL", "PRIMARY KEY"],
+      "hash": ["CHAR(32)", "UNIQUE", "NOT NULL"],
+      "id_cat": ["INT", "NOT NULL"],
+      "fk": ["fk_message", "id_cat", "categories(id_cat)", "SET NULL"]
+    },
+    "liens": {
+      "id_message": ["INT"],
+      "url": ["INT"],
+      "mail": ["INT"],
+      "tel": ["INT"],
+      "nombre": ["INT"],
+      "prix": ["INT"],
+      "fk": ["fk_liens", "id_message", "messages(id_message)", "CASCADE"]
+    },
+    "stats_mots": {
+      "id_message": ["INT"],
+      "mots_uniques": ["INT"],
+      "mots": ["INT"],
+      "char": ["INT"],
+      "char_maj": ["INT"],
+      "mot_maj": ["INT"],
+      "mot_cap": ["INT"],
+      "fk": ["fk_stats_mot", "id_message", "messages(id_message)", "CASCADE"]
+    },
+    "stat_ponct": {
+      "id_message": ["INT"],
+      "point": ["INT"],
+      "virgule": ["INT"],
+      "exclamation": ["INT"],
+      "interrogation": ["INT"],
+      "espace": ["INT"],
+      "tabulation": ["INT"],
+      "ligne": ["INT"],
+      "ligne_vide": ["INT"],
+      "fk": ["fk_stats_ponct", "id_message", "messages(id_message)", "CASCADE"]
+    },
+    "zipf": {
+      "id_message": ["INT"],
+      "constante": ["INT"],
+      "coefficient": ["REAL"],
+      "tx_erreur": ["REAL"],
+      "fk": ["fk_zipf", "id_message", "messages(id_message)", "CASCADE"]
+    },
+    "hapax": {
+      "id_message": ["INT"],
+      "ratio_unique": ["REAL"],
+      "ratio_texte": ["REAL"],
+      "fk": ["fk_hapax", "id_message", "messages(id_message)", "CASCADE"]
+    }
+  }
+}
+			\end{lstlisting}
+			
+			\begin{lstlisting}[title=Fonctions utiles]
+def create_db(nom, owner, user, passwd, host, port):
+    """ Creer une nouvelle base de donnees """
+    client_psql = psycopg2.connect(user=user, password=passwd, host=host, port=port)
+    client_psql.autocommit = True
+    cursor = client_psql.cursor()
+
+    cursor.execute("DROP DATABASE IF EXISTS {};".format(nom))
+    cursor.execute("CREATE DATABASE {};".format(nom))
+    cursor.execute("ALTER DATABASE {} OWNER TO {};".format(nom, owner))
+    client_psql.close()
+
+
+def connect_db(database, user, passwd, host, port):
+    """ Connexion a la base de donnees Postgres. Penser a fermer la connexion """
+    try:
+        client_psql = psycopg2.connect(database=database, user=user, password=passwd, host=host, port=port)
+    except psycopg2.Error as e:
+        print("Erreur de connexion : \n{}".format(e), file=sys.stderr)
+        return None
+
+    client_psql.autocommit = True
+    return client_psql
+
+
+def create_table(client_psql, nom, champs):
+    """ Creer une nouvelle table dans la base de donnees """
+    fk = ""
+    fields = []
+
+    curseur = client_psql.cursor()
+    curseur.execute(f"DROP TABLE IF EXISTS {nom}")
+
+    if 'fk' in champs.keys():
+        ls = champs.pop('fk')
+        fk = f"CONSTRAINT {ls.pop(0)} FOREIGN KEY({ls.pop(0)}) REFERENCES {ls.pop(0)}"
+        if ls:
+            fk += f" ON DELETE {ls.pop(0)}"
+
+    for key, value in champs.items():
+        fields.append(f"{key} {' '.join(value)}")
+
+    query = f"CREATE TABLE {nom} ({', '.join(fields)})"
+    if fk:
+        query = query[:-1] + f", {fk})"
+    curseur.execute(query)
+
+
+def create_index(client_psql, nom, table, colonne):
+    """ Index sur une colonne """
+    query = "CREATE UNIQUE INDEX {} ON {}({})".format(nom, table, colonne)
+    exec_query(client_psql, query)
+			\end{lstlisting}
+				
 
 \newpage
 \section{Tableau des choix technologiques}
