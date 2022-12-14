@@ -1,8 +1,8 @@
 # coding: utf-8
 
-owner = "XXX"
-owner_pw = "XXX"
-admin = "XXXX"
-admin_pw = "XXXX"
+owner = "mercury"
+owner_pw = "mercury123"
+admin = "postgres"
+admin_pw = "postgres"
 host = "localhost"
-port = "5432"
+port = "5433"

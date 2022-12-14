@@ -646,9 +646,62 @@ def exec_query(client_psql, query):
 			
 	
 	\subsection{Données de la phase 1}
-		% Evolution du traitement
+		Sortie du programme : main\_collecte.py
+		\begin{verbatim}
+=== Vérification des conteneurs Docker ===
+* Conteneur 'docker-es01-1'... OK
+* Conteneur 'docker-kibana-1'... OK
+* Conteneur 'docker-pgadmin-1'... OK
+* Conteneur 'docker-pgdb-1'... OK
+=== Phase 1 : collecte & mise en base ===
+== Création de la base SQLITE
+SQLITE table globales : CREATED
+SQLITE table spam : CREATED
+SQLITE table ham : CREATED
+== Recolte ==
+-- Création de la liste des fichiers... OK
+--- Process de statistiques après la récole
+-- Stats - étape : Récolte spam... OK
+-- Stats - étape : Récolte ham... OK
+--- Sauvegarde des stats de l'étape: recolte... OK
+Données stats de l'étape: recolte:
+	HAM,  mails: 1540 	mots: 760217	 mots uniques: 75572
+	SPAM,  mails: 500 	mots: 292535	 mots uniques: 53881
+	GLOBALES,  mails: 2040 	mots: 1052752	 mots uniques: 120429
+== Création document ==
+-- Importation - Création spam... OK
+-- Importation - Création ham... OK
+--- Process de statistiques après la création de document
+-- Stats - étape : création documents spam... OK
+-- Stats - étape : création documents ham... OK
+--- Sauvegarde des stats de l'étape: creation document... OK
+Données stats de l'étape: creation document:
+	HAM,  mails: 1534 	mots: 276735	 mots uniques: 33781
+	SPAM,  mails: 471 	mots: 151359	 mots uniques: 17961
+	GLOBALES,  mails: 2005 	mots: 428094	 mots uniques: 44444
+== Mise en base des documents ==
+-- Création de l'index ElasticSearch... OK
+-- Création de la base PostgreSQL
+User 'mercury' créé
+-- Création des tables PostgreSQL... OK
+-- Mise en base ES & PSQL des spam... OK (49 doublons)
+-- Mise en base ES & PSQL des ham... OK (4 doublons)
+-- Récupération des spam... OK
+-- Récupération des ham... OK
+--- Process de statistiques après la mise en base
+-- Stats - étape : Mise en base spam... OK
+-- Stats - étape : Mise en base ham... OK
+--- Sauvegarde des stats de l'étape: mise en base... OK
+Données stats de l'étape: mise en base:
+	HAM,  mails: 1530 	mots: 276173	 mots uniques: 33781
+	SPAM,  mails: 422 	mots: 142348	 mots uniques: 17961
+	GLOBALES,  mails: 1952 	mots: 418521	 mots uniques: 44444
+== FIN ==
+		\end{verbatim}
 		
-		% Première données statistiques
+		\paragraph{Évolution lors du traitement}
+		
+		\paragraph{Premières données statistiques}
 		
 	
 \newpage
@@ -913,7 +966,7 @@ def cout(l1, l2, methode):
 	\subsection{ElasticSearch} \label{ES}
 		Cet environnement se lance avec la commande suivante :
 		\begin{verbatim}
-docker-compose up -f ./databases/elastic/docker/docker-compose.yml -d		
+docker-compose -f ./databases/elastic/docker/docker-compose.yml up -d		
 		\end{verbatim}
 		
 		\subsubsection{Conteneurisation}
@@ -1066,7 +1119,7 @@ apiid = "XXXXXXXXXXXXXXXXXXXXXXX"
 apikey = "XXXXXXXXXXXXXXXXXXXXXX"
 ca_cert = "databases/elastic/docker/certs/ca/ca.crt"
 			\end{lstlisting}
-			Il est possible de généré une clé API via l'interface Kibana.
+			Il est possible de générer une clé API via l'interface Kibana > Stack Management > Sécurité > API keys > Create API Key > JSON. 
 			
 			\begin{lstlisting}[title=Mapping]
 {
@@ -1120,7 +1173,7 @@ def es_create_indice(es_cli, index, mapping):
 	\subsection{PostgreSQL} \label{PSQL}
 		Cet environnement se lance avec la commande suivante :
 		\begin{verbatim}
-docker-compose up -f ./databases/psql_db/docker/docker-compose.yml -d		
+docker-compose -f ./databases/psql_db/docker/docker-compose.yml up -d		
 		\end{verbatim}
 		
 		L'application se charge automatiquement de créer le compte utilisé par l'application pour se connecter à la base.

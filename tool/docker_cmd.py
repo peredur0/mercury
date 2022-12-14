@@ -16,8 +16,9 @@ def container_up(name):
     :param name: <str> nom du container
     :return: <bool>
     """
-    docker_socket = "unix://var/run/docker.sock"
-    docker_cli = docker.DockerClient(docker_socket)
+    # docker_socket = "unix://var/run/docker.sock"
+    # docker_cli = docker.DockerClient(docker_socket)
+    docker_cli = docker.DockerClient()
 
     try:
         conteneur = docker_cli.containers.get(name)
@@ -30,6 +31,6 @@ def container_up(name):
 
 
 if __name__ == '__main__':
-    print(container_up('docker_es01_1'))
+    print(container_up('docker-es01-1'))
     print(container_up('docker_es01'))
     exit(0)

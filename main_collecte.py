@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     # Vérification des accès docker
     print("=== Vérification des conteneurs Docker ===")
-    for cont in ['docker_es01_1', 'docker_kibana_1', 'docker_pgadmin_1', 'docker_pgdb_1']:
+    for cont in ['docker-es01-1', 'docker-kibana-1', 'docker-pgadmin-1', 'docker-pgdb-1']:
         if not docker_cmd.container_up(cont):
             print(f"* Conteneur '{cont}' non présent")
             ques = input("Continuer [O] [N] ? ")
