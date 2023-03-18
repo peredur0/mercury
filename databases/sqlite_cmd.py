@@ -38,16 +38,17 @@ def sl_create_tables(client, schema_file):
         print("SQLITE table {} : CREATED".format(table))
 
 
-def sl_select(client, table, champs):
+def sl_select(client, requete):
     """
     Récupère les données des champs
     :param client: <sqlite.connection> client sqlite
-    :param table: <str> table à interrogée
-    :param champs: <list> liste des champs à selectionné
+    :param requete: <str> table à interrogée
     :return: <dict>
     """
+    cursor = client.execute(requete)
+    rows = cursor.fetchall()
 
-    return None
+    return rows
 
 
 def sl_insert(client, table, data):

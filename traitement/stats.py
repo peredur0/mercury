@@ -19,9 +19,9 @@ import numpy as np
 from traitement.graphs import show_zipf_stat
 
 
-########################################################################################################################
-#             Statistiques / Probabilités                                                                              #
-########################################################################################################################
+####################################################################################################
+#             Statistiques / Probabilités                                                          #
+####################################################################################################
 def frequence_mot(bag, freq=None):
     """
     Calcule la fréquence de chaque mot dans un sac de mot
@@ -143,8 +143,8 @@ def hapax(bag):
 
     hapax_data = {
         'nombres': nb_hapax,
-        'ratio_mots': nb_hapax/len(classement),
-        'ration_texte': nb_hapax/len(bag)
+        'ratio_mots_uniques': nb_hapax/len(classement),
+        'ratio_texte': nb_hapax/len(bag)
     }
 
     return hapax_data
@@ -197,7 +197,7 @@ if __name__ == '__main__':
 
     data_brown = [mot.lower() for mot in brown.words() if re.match(r'\w+', mot)]
 
-    print("Données ZIPF :", zipf_process(data_brown, print_stats=False))
+    print("Données ZIPF :", zipf_process(data_brown, print_stats=True))
     print("Donnes d'Hapax :", hapax(data_brown))
 
     exit(0)

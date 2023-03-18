@@ -2,7 +2,7 @@
 <project version="4">
   <component name="DBNavigator.Project.DataEditorManager">
     <record-view-column-sorting-type value="BY_INDEX" />
-    <value-preview-text-wrapping value="true" />
+    <value-preview-text-wrapping value="false" />
     <value-preview-pinned value="false" />
   </component>
   <component name="DBNavigator.Project.DatabaseBrowserManager">
@@ -13,7 +13,14 @@
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
     <connection id="6b4be17c-e1b8-436e-8c57-dd1fec809fe1">
-      <console name="Mecury_etapes" type="STANDARD" schema="main" session="Main"><![CDATA[select * from globales]]></console>
+      <console name="Mecury_etapes" type="STANDARD" schema="main" session="Main"><![CDATA[select * from globales
+select * from spam
+select * from ham
+
+select g.etape, g.mails as global, h.mails as ham, s.mails as spam
+from globales as g 
+join ham as h on g.etape like h.etape
+join spam as s on g.etape like s.etape]]></console>
     </connection>
     <connection id="d2642e74-d971-4fd1-a60b-86e58c2a6ea6">
       <console name="Mercury PSQL" type="STANDARD" schema="mail_features" session="Main" />
@@ -27,6 +34,14 @@
   </component>
   <component name="DBNavigator.Project.ExecutionManager">
     <retain-sticky-names value="false" />
+  </component>
+  <component name="DBNavigator.Project.MethodExecutionManager">
+    <method-browser />
+    <execution-history>
+      <group-entries value="true" />
+      <execution-inputs />
+    </execution-history>
+    <argument-values-cache />
   </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">
     <last-used-operator value="EQUAL" />
@@ -49,7 +64,7 @@
           <port value="" />
           <database value="" />
           <files>
-            <file path="C:\Users\Martial Goehry\Documents\personnel\Licence\V2\mercury\databases\sqlite_db\stats_dev.db" schema="main" />
+            <file path="$PROJECT_DIR$/databases/sqlite_db/stats_dev.db" schema="main" />
           </files>
           <type value="NONE" />
           <user value="" />
@@ -127,7 +142,7 @@
           <description value="" />
           <database-type value="POSTGRES" />
           <config-type value="BASIC" />
-          <database-version value="14.5" />
+          <database-version value="14.2" />
           <driver-source value="BUILTIN" />
           <driver-library value="" />
           <driver value="" />
