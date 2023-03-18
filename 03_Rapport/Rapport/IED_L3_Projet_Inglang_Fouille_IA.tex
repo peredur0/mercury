@@ -599,9 +599,7 @@ def get_data(client_psql, table, champs, clause=None):
     
     
 def insert_document_init(client_psql, data, id_cat):
-    """
-    Insere un nouveau document dans la base PSQL.
-    """
+    """ Insere un nouveau document dans la base PSQL. """
     insert_data(client_psql, 'messages', {'hash': data['hash'], 'id_cat': id_cat})
     id_message = get_data(client_psql, 'messages', ['id_message'], f"hash LIKE '{data['hash']}'")[0]['id_message']
 

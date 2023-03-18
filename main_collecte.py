@@ -33,9 +33,9 @@ from databases.psql_db import secrets as psql_secrets
 warnings.filterwarnings('ignore')
 
 
-#######################################################################################################################
-#           Importation des fichiers                                                                                  #
-#######################################################################################################################
+####################################################################################################
+#           Importation des fichiers                                                               #
+####################################################################################################
 def importation(chemin):
     """
     Importation du fichier mail ou CSV
@@ -54,9 +54,9 @@ def importation(chemin):
     return None
 
 
-#######################################################################################################################
-#           Création du document                                                                                      #
-#######################################################################################################################
+####################################################################################################
+#           Création du document                                                                   #
+####################################################################################################
 def create_document(mail, categorie):
     """
     Extraction du message
@@ -123,9 +123,9 @@ def create_doc_process(categorie, liste):
     return docs
 
 
-#######################################################################################################################
-#          Phase 1: collecte et mise en base                                                                          #
-#######################################################################################################################
+####################################################################################################
+#          Phase 1: collecte et mise en base                                                       #
+####################################################################################################
 if __name__ == '__main__':
     # Globales
     sqlite_db = './databases/sqlite_db/stats_dev.db'
@@ -154,8 +154,12 @@ if __name__ == '__main__':
     print("== Recolte ==")
     current_os = platform.system().lower()
     root = os.getcwd()
-    ds_ham = root + "{}".format('\\' if current_os == 'windows' else '/').join(['', 'dev_dataset', 'easy_ham'])
-    ds_spam = root + "{}".format('\\' if current_os == 'windows' else '/').join(['', 'dev_dataset', 'spam'])
+    ds_ham = root + "{}".format('\\' if current_os == 'windows' else '/').join(['',
+                                                                                'dev_dataset',
+                                                                                'easy_ham'])
+    ds_spam = root + "{}".format('\\' if current_os == 'windows' else '/').join(['',
+                                                                                 'dev_dataset',
+                                                                                 'spam'])
 
     print("-- Création de la liste des fichiers...", end=' ')
     r_data = {'ham': mail_load.list_files(ds_ham),
@@ -179,7 +183,9 @@ if __name__ == '__main__':
     print("== Mise en base des documents ==")
     # -- ES
     print("-- Création de l'index ElasticSearch...", end=' ')
-    es_cli = elastic_cmd.es_connect(es_secrets.serveur, (es_secrets.apiid, es_secrets.apikey), es_secrets.ca_cert)
+    es_cli = elastic_cmd.es_connect(es_secrets.serveur,
+                                    (es_secrets.apiid, es_secrets.apikey),
+                                    es_secrets.ca_cert)
     if not es_cli:
         print("ECHEC connexion ElasticSearch")
         exit(1)
@@ -223,7 +229,10 @@ if __name__ == '__main__':
 
         # PSQL Mise en base Categorie
         psql_cmd.insert_data(psql_conn, "categories", {"type": cat})
-        id_cat = psql_cmd.get_data(psql_conn, "categories", ['id_cat'], f"type LIKE '{cat}'")[0]['id_cat']
+        id_cat = psql_cmd.get_data(psql_conn,
+                                   "categories",
+                                   ['id_cat'],
+                                   f"type LIKE '{cat}'")[0]['id_cat']
 
         for document in tqdm.tqdm(n_data.get(cat, []),
                                   desc="-- Mise en base ES & PSQL des {}...".format(cat),
