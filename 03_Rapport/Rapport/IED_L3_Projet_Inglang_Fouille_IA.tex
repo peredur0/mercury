@@ -698,7 +698,35 @@ Données stats de l'étape: mise en base:
 		\end{verbatim}
 		
 		\paragraph{Évolution lors du traitement}
+			J'effectue une petite analyse sur le volume de données conservés au cours des différentes étapes de la phase 1. Je vérifie pour chaque catégorie (ham, spam) ainsi qu'en globalité les éléments suivants : 
+			\begin{itemize}
+				\item nombre de documents conservés
+				\item nombre de mots (n-gram) dans le corpus
+				\item nombre de mots (n-gram) uniques dans le corpus
+			\end{itemize}
+			
+			Texte provisoire : \\
+			Il est alors possible de constater les comportements suivants:
+			\begin{itemize}
+				\item La diminution des spam est plus importante que celle des ham 
+				\item Le nombre de mots uniques ne diminue plus après la création de document
+				\item La diminution du nombre de mots est plus importante dans les ham que dans les spam. 
+				\item le nombre de mot uniques est plus important dans les ham que dans les spam
+				\item part des mots uniques dans le global
+			\end{itemize}
+			
+			\begin{figure}[H]
+				\includegraphics[width=\linewidth]{img/Statsrecolte.png}
+				\caption{Evolution des principaux marqueurs lors du traitement}
+			\end{figure}
 		
+			Conclusion provisoire
+			\begin{itemize}
+				\item Possiblement plus de doublons dans les spams
+				\item Perte importante de mots dans ham du au retrait des réponses
+				\item Plus de mot unique dans ham et plus grande proportion, plus de vocabulaire dans les ham
+			\end{itemize}
+				
 		\paragraph{Premières données statistiques}
 		
 	
@@ -780,7 +808,7 @@ def classement_zipf(dico):
 		\begin{figure}[H]
 				\includegraphics[width=\linewidth]{img/distribZipf.png}
 				\caption{Distribution de Zipf pour les deux corpus}
-			\end{figure}    		
+		\end{figure}    		
     		
     		\begin{itemize}
     			\item Nombre de mots dans brown:	mots: 49398	occurences: 1012528

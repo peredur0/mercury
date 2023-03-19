@@ -35,7 +35,6 @@ def display_bar_etapes(data, subp):
         multiplier += 1
 
     subp.set_xticks(x + width, etapes)
-    # subp.legend()
 
 
 if __name__ == '__main__':
