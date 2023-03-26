@@ -73,3 +73,5 @@ afficher des courbes de la recherche de minimum de cout pour justifier les choix
    de variable d'ajustement afin d'avoir le coup (écart absolu entre réel et théorique) le plus réduit. 
    # help : https://iq.opengenus.org/zipfs-law/
    # help : https://www.youtube.com/watch?v=WYO8Rc4JB_Y
+
+sudo apt install libpq-dev

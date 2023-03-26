@@ -1406,10 +1406,38 @@ def create_index(client_psql, nom, table, colonne):
 	\end{tabular}
 	
 	\section{Modèles}	
-		\subsection{Naive Bayes}
-	
+		\subsection{Naïves Bayes}
+			\paragraph{Introduction}
+				Les modèles Naïves Bayes se basent sur le théorème de probabilité de Bayes. Il permet de déterminer la probabilité conditionnelle d'apparition d'un évènement A sachant qu'un évènement B s'est produit. Le terme naïf fait référence au fait que l'on présuppose que les évènements A et B ne sont pas corrélés.\\
+				Ces techniques sont utilisées pour des modèles de classification en apprentissage supervisé.\\
+				
+				La formule mathématique de ce théorème est la suivante :
+				\begin{eqnarray*}
+					P(A|B) &=& \frac{P(B|A)P(A)}{P(B)}
+				\end{eqnarray*}
+				
+			On recherche ici $P(A|B)$, c'est a dire la probabilité d'apparition d'un évènement A sachant que l'évènement B s'est produit. \\ 
+			
+			Pour ce faire nous avons besoin des données suivantes :
+			\begin{itemize}
+				\item $P(B|A)$ est la probabilité que l'évènement B s'est produit sachant que l'évènement A s'est produit
+				\item $P(A)$ est la probabilité d'apparition de l'évènement A
+				\item $P(B)$ est la probabilité d'apparition de l'évènement B
+			\end{itemize}
+			
+			\paragraph{Exemples d'utilisation}
+				
+				
+			
+			\paragraph{Avantages et inconvénients}
+				
+				
 	\section{Bibliographie}
-	
+		\bibliographystyle{plain}
+		\bibliography{IED_L3_Projet_Inglang_Fouille_IA}
+
+
+		
 	\section{Sitotec}
 		\subsection{Corpus}
 			\begin{itemize}
@@ -1424,7 +1452,15 @@ def create_index(client_psql, nom, table, colonne):
 				\item Page Github du projet \emph{langdetect} capable de différencier 49 langages avec une précision de 99\%, [en ligne] \url{https://github.com/Mimino666/langdetect} (consulté le 04/12/2022) \label{langdetect}
 				\item Language Detection Library, présentation du module (anglais) [en ligne] \url{https://www.slideshare.net/shuyo/language-detection-library-for-java} (consulté le 04/12/2022)
 			\end{itemize}
-		
+			
+		\subsection{Modèles}
+			\paragraph{Naïves Bayes}
+				Le modèle Naïves Bayes est employé dans le module langdetect (\ref{langdetect})
+			\begin{itemize}
+				\item Les algorithmes de Naïves Bayes, Explication sommaire du principe de ces type d'algorithme, [en ligne] \url{https://brightcape.co/les-algorithmes-de-naives-bayes/} (consulté le 26/03/2023)
+				\item Naive Bayes Classification Tutorial using Scikit-learn, exemple d'utilisation de ce type de modèle avec python (anglais) [en ligne] \url{https://www.datacamp.com/tutorial/naive-bayes-scikit-learn} (consulté le 26/03/2023)
+				\item Scikit learn Naive Bayes, description des types d'algorithme disponibles dans le module Scikitlearn en python (anglais) [en ligne] \url{https://scikit-learn.org/stable/modules/naive_bayes.html} (consulté le 26/03/2023)
+			\end{itemize}
 		
 
 \end{document}

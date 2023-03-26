@@ -16,8 +16,19 @@
       <excludeFolder url="file://$MODULE_DIR$/venv" />
       <excludeFolder url="file://$MODULE_DIR$/databases/psql_db/docker/data" />
       <excludeFolder url="file://$MODULE_DIR$/out" />
+      <excludeFolder url="file://$MODULE_DIR$/py3-env" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.8" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.8 (01_programme)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/traitement" />
+        <option value="$MODULE_DIR$/tool" />
+        <option value="$MODULE_DIR$/importation" />
+        <option value="$MODULE_DIR$/databases" />
+      </list>
+    </option>
   </component>
 </module>
