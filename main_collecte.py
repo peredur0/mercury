@@ -128,11 +128,14 @@ def create_doc_process(categorie, liste):
 ####################################################################################################
 if __name__ == '__main__':
     # Globales
-    sqlite_db = './databases/sqlite_db/stats_dev.db'
+    DEV = False
+
+    sqlite_db = './databases/sqlite_db/stats_dev.db' if DEV else \
+        './databases/sqlite_db/stats_prod.db'
 
     # Vérification des accès docker
     print("=== Vérification des conteneurs Docker ===")
-    for cont in ['docker-es01-1', 'docker-kibana-1', 'docker-pgadmin-1', 'docker-pgdb-1']:
+    for cont in ['docker-es01-1', 'docker-kibana-1', 'docker_pgadmin_1', 'docker_pgdb_1']:
         if not docker_cmd.container_up(cont):
             print(f"* Conteneur '{cont}' non présent")
             ques = input("Continuer [O] [N] ? ")
@@ -152,18 +155,22 @@ if __name__ == '__main__':
 
     # == Récolte ==
     print("== Recolte ==")
-    current_os = platform.system().lower()
-    root = os.getcwd()
-    ds_ham = root + "{}".format('\\' if current_os == 'windows' else '/').join(['',
-                                                                                'dev_dataset',
-                                                                                'easy_ham'])
-    ds_spam = root + "{}".format('\\' if current_os == 'windows' else '/').join(['',
-                                                                                 'dev_dataset',
-                                                                                 'spam'])
+    if DEV:
+        ds_ham = [os.path.join(os.getcwd(), 'dev_dataset', 'easy_ham')]
+        ds_spam = [os.path.join(os.getcwd(), 'dev_dataset', 'spam')]
+    else:
+        root_ds = '/home/perceval/LicenceIED/01_exercices-en-cours/L3_C1-15_Projet/V2/00_dataset' \
+                  '/ds3'
+        ds_ham = [os.path.join(root_ds, folder) for folder in ('easy_ham', 'easy_ham_2',
+                                                               'hard_ham')]
+        ds_spam = [os.path.join(root_ds, folder) for folder in ('spam', 'spam_2')]
 
     print("-- Création de la liste des fichiers...", end=' ')
-    r_data = {'ham': mail_load.list_files(ds_ham),
-              'spam': mail_load.list_files(ds_spam)}
+    r_data = {'ham': [], 'spam': []}
+    for folder in ds_ham:
+        r_data['ham'] += mail_load.list_files(folder)
+    for folder in ds_spam:
+        r_data['spam'] += mail_load.list_files(folder)
     print("OK")
 
     # - Stats récolte -
@@ -191,7 +198,7 @@ if __name__ == '__main__':
         exit(1)
 
     email_mapping = json.load(open('databases/elastic/mail_mapping.json', 'r'))
-    index = "test_import_dev0"
+    index = "test_import_dev0" if DEV else "import_prod"
     elastic_cmd.es_create_indice(es_cli, index, email_mapping)
     print("OK")
 
@@ -204,7 +211,8 @@ if __name__ == '__main__':
                          host=psql_secrets.host,
                          port=psql_secrets.port)
 
-    psql_conf = json.load(open("./databases/psql_db/db_mapping.json"))
+    psql_conf = json.load(open("./databases/psql_db/db_mapping.json")) if DEV else json.load(
+        open("./databases/psql_db/db_mapping_prod.json"))
     psql_db = list(psql_conf.keys())[0]
     psql_cmd.create_db(nom=psql_db,
                        owner=psql_secrets.owner,

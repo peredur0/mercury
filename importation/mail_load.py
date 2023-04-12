@@ -37,7 +37,7 @@ def list_files(chemin):
 
     for sd in subdirs:
         for f in os.listdir(sd):
-            x = "{}{}{}".format(sd, '\\' if current_os == 'windows' else '/', f)
+            x = os.path.join(sd, f)
             if os.path.isfile(x):
                 files.append(x)
 

@@ -649,8 +649,8 @@ def exec_query(client_psql, query):
 === Vérification des conteneurs Docker ===
 * Conteneur 'docker-es01-1'... OK
 * Conteneur 'docker-kibana-1'... OK
-* Conteneur 'docker-pgadmin-1'... OK
-* Conteneur 'docker-pgdb-1'... OK
+* Conteneur 'docker_pgadmin_1'... OK
+* Conteneur 'docker_pgdb_1'... OK
 === Phase 1 : collecte & mise en base ===
 == Création de la base SQLITE
 SQLITE table globales : CREATED
@@ -659,42 +659,43 @@ SQLITE table ham : CREATED
 == Recolte ==
 -- Création de la liste des fichiers... OK
 --- Process de statistiques après la récole
--- Stats - étape : Récolte spam... OK
--- Stats - étape : Récolte ham... OK
+-- Stats - étape : Récolte spam... OK                                                                                                                                                                                                         
+-- Stats - étape : Récolte ham... OK                                                                                                                                                                                                          
 --- Sauvegarde des stats de l'étape: recolte... OK
 Données stats de l'étape: recolte:
-	HAM,  mails: 1540 	mots: 760217	 mots uniques: 75572
-	SPAM,  mails: 500 	mots: 292535	 mots uniques: 53881
-	GLOBALES,  mails: 2040 	mots: 1052752	 mots uniques: 120429
+	HAM,  mails: 4153 	mots: 1863674	 mots uniques: 178812
+	SPAM,  mails: 1898 	mots: 918256	 mots uniques: 129601
+	GLOBALES,  mails: 6051 	mots: 2781930	 mots uniques: 287637
 == Création document ==
--- Importation - Création spam... OK
--- Importation - Création ham... OK
+-- Importation - Création spam... OK                                                                                                                                                                                                          
+-- Importation - Création ham... OK                                                                                                                                                                                                           
 --- Process de statistiques après la création de document
--- Stats - étape : création documents spam... OK
--- Stats - étape : création documents ham... OK
+-- Stats - étape : création documents spam... OK                                                                                                                                                                                              
+-- Stats - étape : création documents ham... OK                                                                                                                                                                                               
 --- Sauvegarde des stats de l'étape: creation document... OK
 Données stats de l'étape: creation document:
-	HAM,  mails: 1534 	mots: 276735	 mots uniques: 33781
-	SPAM,  mails: 471 	mots: 151359	 mots uniques: 17961
-	GLOBALES,  mails: 2005 	mots: 428094	 mots uniques: 44444
+	HAM,  mails: 4124 	mots: 844151	 mots uniques: 73725
+	SPAM,  mails: 1784 	mots: 584012	 mots uniques: 40099
+	GLOBALES,  mails: 5908 	mots: 1428163	 mots uniques: 97235
 == Mise en base des documents ==
 -- Création de l'index ElasticSearch... OK
 -- Création de la base PostgreSQL
-User 'mercury' créé
+User 'data' déjà existant
 -- Création des tables PostgreSQL... OK
--- Mise en base ES & PSQL des spam... OK (49 doublons)
--- Mise en base ES & PSQL des ham... OK (4 doublons)
+-- Mise en base ES & PSQL des spam... OK (256 doublons)                                                                                                                                                                                       
+-- Mise en base ES & PSQL des ham... OK (78 doublons)                                                                                                                                                                                         
 -- Récupération des spam... OK
 -- Récupération des ham... OK
 --- Process de statistiques après la mise en base
--- Stats - étape : Mise en base spam... OK
--- Stats - étape : Mise en base ham... OK
+-- Stats - étape : Mise en base spam... OK                                                                                                                                                                                                    
+-- Stats - étape : Mise en base ham... OK                                                                                                                                                                                                     
 --- Sauvegarde des stats de l'étape: mise en base... OK
 Données stats de l'étape: mise en base:
-	HAM,  mails: 1530 	mots: 276173	 mots uniques: 33781
-	SPAM,  mails: 422 	mots: 142348	 mots uniques: 17961
-	GLOBALES,  mails: 1952 	mots: 418521	 mots uniques: 44444
+	HAM,  mails: 4046 	mots: 839368	 mots uniques: 73725
+	SPAM,  mails: 1528 	mots: 529121	 mots uniques: 40099
+	GLOBALES,  mails: 5574 	mots: 1368489	 mots uniques: 97235
 == FIN ==
+
 		\end{verbatim}
 		
 		\paragraph{Évolution lors du traitement}
@@ -708,11 +709,10 @@ Données stats de l'étape: mise en base:
 			Texte provisoire : \\
 			Il est alors possible de constater les comportements suivants:
 			\begin{itemize}
-				\item La diminution des spam est plus importante que celle des ham 
+				\item La diminution des documents spam est plus importante que celle des ham 
 				\item Le nombre de mots uniques ne diminue plus après la création de document
 				\item La diminution du nombre de mots est plus importante dans les ham que dans les spam. 
 				\item le nombre de mot uniques est plus important dans les ham que dans les spam
-				\item part des mots uniques dans le global
 			\end{itemize}
 			
 			\begin{figure}[H]
@@ -720,15 +720,26 @@ Données stats de l'étape: mise en base:
 				\caption{Evolution des principaux marqueurs lors du traitement}
 			\end{figure}
 		
-			Conclusion provisoire
-			\begin{itemize}
-				\item Possiblement plus de doublons dans les spams
-				\item Perte importante de mots dans ham du au retrait des réponses
-				\item Plus de mot unique dans ham et plus grande proportion, plus de vocabulaire dans les ham
-			\end{itemize}
+			\subparagraph{Conclusion de la récolte}
+				A l'issue de la phase de récolte, on remarque qu'il y a un nombre plus important de document en double dans la catégorie \emph{spam}.				
+				Il y a également une réduction importante du nombre de mots ainsi que du nombre de mots uniques dans les \emph{ham}. Cette réduction peut s'expliquer par le nettoyage du corps des mails :
+				\begin{itemize}
+					\item Retrait des réponses
+					\item Retrait de certaines ponctuations
+					\item Suppression des balises HTML et enriched text
+					\item Retrait des liens, et nombres
+				\end{itemize}
+				
+				
+				Enfin on peut voir que les \emph{ham} utilise plus de mots uniques que les \emph{spam}. Il est donc possible que le vocabulaire des \emph{spam} soit plus restreint. 
+			
 				
 		\paragraph{Premières données statistiques}
-		
+			% Ratio SPAM/HAM dans le dataset
+			
+			% Ratio Lien par type
+			
+			% Distribution Lien par type
 	
 \newpage
 \section{Phase 2}
@@ -846,7 +857,7 @@ def classement_zipf(dico):
 			Pour ce faire nous allons:
 
 			\begin{enumerate}
-				\item Faire la liste de tous les coefficients possibles dans l'intervalle $[0.86, 1.3]$ avec un pas de $0.01$\footnote{Borne et pas, totalement arbitraire afin d'obtenir un graphique présentable}.
+				\item Faire la liste de tous les coefficients possibles dans l'intervalle $[0.86, 1.3]$ avec un pas de $0.01$\footnote{les bornes et le pas sont totalement arbitraire afin d'obtenir un graphique présentable}.
 				\item Calculer toutes la fréquences théoriques de tous les rangs avec tous les coefficients possibles avec en constante la moyenne et la médiane de chaque corpus.
 				\item Calculer la moyenne des coûts absolus entre les fréquences théoriques par coefficient avec la fréquence réelle observée pour chaque corpus.\\
 			\end{enumerate}
@@ -1407,14 +1418,16 @@ def create_index(client_psql, nom, table, colonne):
 	
 	\section{Modèles}	
 		\subsection{Naïves Bayes}
+			Ce type de modèle est utilisé par le module \emph{langdetect} qui me sert pour la détection des langues dans mon programme.
+			
 			\paragraph{Introduction}
 				Les modèles Naïves Bayes se basent sur le théorème de probabilité de Bayes. Il permet de déterminer la probabilité conditionnelle d'apparition d'un évènement A sachant qu'un évènement B s'est produit. Le terme naïf fait référence au fait que l'on présuppose que les évènements A et B ne sont pas corrélés.\\
 				Ces techniques sont utilisées pour des modèles de classification en apprentissage supervisé.\\
 				
 				La formule mathématique de ce théorème est la suivante :
-				\begin{eqnarray*}
+				\begin{eqnarray}\label{NBeq}
 					P(A|B) &=& \frac{P(B|A)P(A)}{P(B)}
-				\end{eqnarray*}
+				\end{eqnarray}
 				
 			On recherche ici $P(A|B)$, c'est a dire la probabilité d'apparition d'un évènement A sachant que l'évènement B s'est produit. \\ 
 			
@@ -1426,11 +1439,199 @@ def create_index(client_psql, nom, table, colonne):
 			\end{itemize}
 			
 			\paragraph{Exemples d'utilisation}
+				Les exemples ci dessous vont permettre d'illustrer l'utilisation de cette technique. d'abord manuellement sur un petit jeu de données puis à l'aide d'un code pré-existant sur un autre jeu de données plus important.
 				
+				\subparagraph{Manuel}
+					Dans cet exemple nous allons déterminer la probabilité qu'a un joueur d'aller sur le terrain selon les conditions météorologiques. Cette probabilité sera calculée en fonction des données récupérées lors des match précédent.\footnote{Les données présentées sont inventées} \\
+					
+					On recherchera ainsi la probabilité de présence sur le terrain d'un joueur selon la météo $P(A|B)$. Pour ce faire nous auront besoin de: 
+					\begin{itemize}
+						\item $P(A)$ Probabilité de jouer quelque soit le temps
+						\item $P(B)$ Probabilité de l'évènement météorologique
+						\item $P(B|A)$ Probabilité de l'évènement sachant que le joueur a été sur le terrain					
+					\end{itemize}
 				
-			
-			\paragraph{Avantages et inconvénients}
+				\begin{table}[H]
+					\centering
+					\captionof{table}{Données de présence sur le terrain} \label{tab:data}
+					\begin{tabular}{|l|c|c|c|c|c|c|c|}
+						\hline
+						météo & soleil & soleil & couvert & pluie & pluie & pluie & couvert \\
+						\hline
+						présent & non & non & oui & oui & oui & non & oui \\
+						\hline
+						\hline
+						météo & soleil & soleil & pluie & soleil & couvert & couvert & pluie \\
+						\hline
+						présent & non & oui & oui & oui & oui & oui & non \\
+						\hline
+					\end{tabular}
+				\end{table}
 				
+				\begin{table}[H]
+					\centering
+					\captionof{table}{Synthèse et probabilité simple P(A) et P(B)} \label{tab:pab}
+					\begin{tabular}{|l|c|c|r|}
+						\hline
+						météo & oui & non & $P(B)$\\
+						\hline
+						couvert & 4 & 0 & $4/14$\\
+						\hline
+						soleil & 2 & 3 & $5/14$\\
+						\hline
+						pluie & 3 & 2 & $5/14$\\
+						\hline
+						$P(A)$ & $9/14$ & $5/14$ & \\
+						\hline
+					\end{tabular}
+				\end{table}
+						
+				On peut déterminer les probabilités de chaque météo en fonction de la présence du joueur sur le terrain P(B|A). Pour ce faire on divise le nombre d'évènements de présence du joueur lors d'un évènement météo par le nombre total d'évènements de présence du joueur
+				
+				\begin{table}[H]
+					\centering
+					\captionof{table}{Probabilité météo selon présence du joueur} \label{tab:pba}
+					\begin{tabular}{|l|c|c|}
+						\hline
+						météo & P(B|oui) & P(B|non) \\
+						\hline
+						couvert & $4/9$ & $0/5$ \\
+						\hline
+						soleil & $2/9$ & $3/5$ \\
+						\hline
+						pluie & $3/9$ & $2/5$ \\
+						\hline	
+					\end{tabular}
+				\end{table}
+				
+				On va maintenant calculer la probabilité qu'à un joueur d'être sur le terrain si la météo est couverte.\\
+				On commence par la probabilité du oui:
+				\begin{eqnarray*}
+					P(A|B) &=& \frac{P(B|A)P(A)}{P(B)}\\
+					P(A|B) &=& \frac{\frac{4}{9}\cdot\frac{9}{14}}{\frac{4}{14}}\\
+					P(A|B) &=& \frac{\frac{4}{14}}{\frac{4}{14}}\\
+					P(A|B) &=& \frac{4}{14}\cdot\frac{14}{4}\\
+					P(A|B) &=& 1
+				\end{eqnarray*}
+				
+				On enchaîne sur la probabilité de ne pas jouer si le temps est couvert
+				\begin{eqnarray*}
+					P(A|B) &=& \frac{P(B|A)P(A)}{P(B)}\\
+					P(A|B) &=& \frac{\frac{0}{5}\cdot\frac{5}{14}}{\frac{4}{14}}\\
+					P(A|B) &=& 0\cdot\frac{14}{4}\\
+					P(A|B) &=& 0
+				\end{eqnarray*}	
+				
+				On peut dire que si le temps est couvert le joueur très probablement sur le terrain			 
+				On peut également déterminer la probabilité de jouer pour chaque évènement météo
+				\begin{table}[H]
+					\centering
+					\captionof{table}{Probabilité présence du joueur selon la météo} \label{tab:pab2}
+					\begin{tabular}{|l|c|c|c|}
+						\hline
+						météo & oui & non & plus probable\\
+						\hline
+						couvert & 1 & 0 & oui\\
+						\hline
+						soleil & 2/5 & 3/5 & non \\
+						\hline
+						pluie & 3/5 & 2/5 & oui \\
+						\hline
+					\end{tabular}
+				\end{table}
+				
+				\emph{Cas polynomial}: Il est possible de déterminer la probabilité d'un évènement par rapport à plus autres. Dans ce cas, il faudra multiplier entre elles les probabilités de ces évènements selon l'apparition de l'évènement voulu.\\
+				
+				 Calcul pour un évènement (A) selon 2 autres évènements (B et C)
+				 \begin{eqnarray*}
+				 	P(A|BC) &=& \frac{P(B|A)P(C|A)P(A)}{P(B)P(C)}
+				 \end{eqnarray*}
+				
+				\subparagraph{En code} Dans cet exemple nous allons utiliser un code existant dans la librairie python scikit-learn\cite{scikit-learn}. Ce moteur Naïves Bayes va nous permettre cette fois-ci de catégoriser des variétés d'iris selon la longueur et la largeur des pétales et des sépales. Les données proviennent cette fois-ci d'un dataset également disponible dans scikit-learn.
+				
+				Nous allons utilisé le modèle \emph{GaussianNB} de scikit-learn qui est adapté lorsque les données utilisées suivent une distribution normale. Ce qui semble être le cas pour les longueurs et largeur des sépale. 
+				\begin{figure}[H]
+					\includegraphics[width=\linewidth]{img/NBdistrib.png}
+					\caption{Distribution des longueurs et largeurs des sépales}
+				\end{figure}
+				
+\begin{lstlisting}[title=Progamme complet]
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, f1_score, \
+    recall_score
+
+import matplotlib.pyplot as plt
+
+X, y = load_iris(return_X_y=True)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=0)
+model = GaussianNB()
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+precision = accuracy_score(y_pred, y_test)
+recall = recall_score(y_test, y_pred, average="weighted")
+f1 = f1_score(y_pred, y_test, average="weighted")
+
+print("Precision:", precision)
+print("Rappel:", recall)
+print("Score F1:", f1)
+
+plt.figure('Donnees du modele', figsize=(14, 5))
+plt.subplot(1, 3, 1, title='Donnees du train set')
+plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train)
+plt.xlabel('Sepale long.')
+plt.ylabel('Sepale larg.')
+plt.subplot(1, 3, 2, title='Donnees du test set')
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_test)
+plt.xlabel('Sepale long.')
+plt.subplot(1, 3, 3, title='Donnees test apres evaluation')
+plt.scatter(X_test[:, 0], X_test[:, 1], c=y_pred)
+plt.xlabel('Sepale long.')
+plt.show()
+
+cm = confusion_matrix(y_test, y_pred, labels=[0, 1, 2])
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=[0, 1, 2])
+disp.ax_.set_title('Matrice de confusion')
+disp.plot()
+plt.show()
+
+plt.figure('Distribution des donnees Iris', figsize=(14, 5))
+plt.subplot(1, 2, 1, title='Longueur sepale')
+plt.hist(X[:, 0], bins=15)
+plt.subplot(1, 2, 2, title='Largeur sepale')
+plt.hist(X[:, 1], bins=15)
+plt.show()\end{lstlisting}
+				
+				Les données du dataset ont été séparés en 2 jeux, un pour l’entraînement du modèle et un pour le test. On obtient alors la représentation suivantes après entrainement et test du modèle
+				\begin{figure}[H]
+					\includegraphics[width=\linewidth]{img/NBdata.png}
+					\caption{Représentation des données }
+				\end{figure}
+				
+				Dans les données de test nous avons 2 catégorisation qui n'ont pas été réalisée correctement. On obtient les scores suivants :
+				\begin{itemize}
+					\item Précision: 0.96                    \footnote{La précision est la proportion des éléments correctement identifiés sur l'ensemble des éléments prédit}
+					\item Rappel: 0.96						\footnote{Le rappel est la proportion des éléments correctement identifiés sur l'ensemble des éléments de la catégorie}
+					\item Score F1: 0.9604285714285714		\footnote{Le Score F1 est la moyenne harmonique calculée de la manière suivante $2*(precision*rappel)/(precision+rappel)$}
+				\end{itemize}				
+				
+				\begin{figure}[H]
+					\centering
+					\includegraphics[scale=0.7]{img/NBmatrix.png}
+					\caption{Matrice de confusion}
+				\end{figure}
+				
+				A l'aide de ce modèle nous devrions avoir une 96\% de chance de déterminer la bonne variété d'iris en se basant sur la longueur et la largeur des sépales.  
+				
+			\paragraph{Avantages et inconvénients} 
+				Le modèle Naïve Bayes est un modèle simple et rapide qui ne nécessite pas de grande capacités de calcul. De ce fait il permet de traiter une grande quantité de données.\\
+				
+				Cependant, les données qui lui sont fournies ne doivent pas être corrélées ce qui est rarement le cas dans les problèmes du monde réel. Ce type de modèle est limité à des problèmes de classification supervisée. Si on se fie à l'équation (\ref{NBeq}) la probabilité d'apparition de l’évènement B : P(B) ne peut pas être nulle. 
+									
+						
 				
 	\section{Bibliographie}
 		\bibliographystyle{plain}

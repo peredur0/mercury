@@ -38,7 +38,9 @@ def display_bar_etapes(data, subp):
 
 
 if __name__ == '__main__':
-    sqlite_db = '../databases/sqlite_db/stats_dev.db'
+    DEV = False
+    sqlite_db = '../databases/sqlite_db/stats_dev.db' if DEV else \
+        '../databases/sqlite_db/stats_prod.db'
     sql_client = sqlite_cmd.sl_connect(sqlite_db)
 
     fig = plt.figure("Stats en cours de récolte", figsize=(17, 5))
