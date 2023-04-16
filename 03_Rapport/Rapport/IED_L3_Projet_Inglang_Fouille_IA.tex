@@ -735,11 +735,70 @@ Données stats de l'étape: mise en base:
 			
 				
 		\paragraph{Premières données statistiques}
-			% Ratio SPAM/HAM dans le dataset
+			Les documents conservés à l'issue de cette phase de récupération se constitue à $72,6\%$ de Ham et à $27.4\%$ de Spam.
 			
-			% Ratio Lien par type
+			\begin{figure}[H]
+				\centering
+				\includegraphics[scale=1]{img/hamSpam.png}
+				\caption{Répartition des ham/spam dans le dataset}
+			\end{figure}
 			
-			% Distribution Lien par type
+			A partir des informations et des pré-traitement réalisés lors de cette première phase, il est possible de présenter quelques données statistiques. Notamment sur la présence et l'utilisation de liens (url, mail, téléphonique) et des données numériques (nombres et prix).\\
+
+			\begin{table}[H]
+					\centering
+					\captionof{table}{Statistiques sur les liens} \label{tab:p1liens}
+					\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|}
+						\hline
+						 	& \multicolumn{3}{|c|}{url} & \multicolumn{3}{|c|}{mail} & \multicolumn{3}{|c|}{tel}\\
+						 	& Globale & Ham & Spam & Globale & Ham & Spam & Globale & Ham & Spam \\
+						\hline
+						moyenne    & 5.47 & 5.54 & 5.26 & 1.16 & 1.21 & 1.01 & 0.16 & 0.20 & 0.64 \\
+						\hline
+						écart-type & 49.74 & 57.77 & 13.71    & 2.50 & 1.72 & 3.88     & 1.06 & 0.63 & 1.73 \\
+						\hline
+						minimum    & \multicolumn{3}{|c|}{0} & \multicolumn{3}{|c|}{0} & \multicolumn{3}{|c|}{0} \\
+						\hline
+						25\%       & \multicolumn{3}{|c|}{1}     & \multicolumn{3}{|c|}{0}    & \multicolumn{3}{|c|}{0} \\
+						\hline
+						médiane    & 2 & 2 & 3     & 1 & 1 & 0   & \multicolumn{3}{|c|}{0} \\
+						\hline
+						75\%       & 4 & 4 & 5    & 2 & 2 & 1    & \multicolumn{3}{|c|}{0} \\
+						\hline
+						maximum    & 3557 & 3557 & 295  & 69 & 34 & 69  & 67 & 25 & 67 \\
+						\hline
+					\end{tabular}
+				\end{table}
+				
+				\begin{table}[H]
+					\centering
+					\captionof{table}{Statistiques sur les données numériques} \label{tab:p1nb}
+					\begin{tabular}{|l|c|c|c|c|c|c|}
+						\hline
+						 	& \multicolumn{3}{|c|}{nombre} & \multicolumn{3}{|c|}{prix} \\
+						 	& Globale & Ham & Spam & Globale & Ham & Spam \\
+						\hline
+						moyenne    & 15.14 & 9.38 & 30.38 & 0.28 & 0.08 & 0.81\\
+						\hline
+						écart-type & 219.16 & 49.35 & 410.53    & 1.54 & 0.66 & 2.66 \\
+						\hline
+						minimum    & \multicolumn{3}{|c|}{0} & \multicolumn{3}{|c|}{0} \\
+						\hline
+						25\%       & 1 & 1 & 2      & \multicolumn{3}{|c|}{0} \\
+						\hline
+						médiane    & 5 & 5 & 7     & \multicolumn{3}{|c|}{0} \\
+						\hline
+						75\%       & 9 & 8 & 14     & \multicolumn{3}{|c|}{0} \\
+						\hline
+						maximum    & 15801 & 2794 & 15801  & 29 & 17 & 29 \\
+						\hline
+					\end{tabular}
+				\end{table}
+			
+			\begin{figure}[H]
+				\includegraphics[width=\linewidth]{img/P1feat.png}
+				\caption{Distribution du nombre de liens selon la catégorie du mail}
+			\end{figure}
 	
 \newpage
 \section{Phase 2}
