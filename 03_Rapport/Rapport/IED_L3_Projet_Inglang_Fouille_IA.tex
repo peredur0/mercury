@@ -96,7 +96,7 @@
 		\item Eliminer les mails en doublons
 		\item Eliminer les parties de textes non pertinente (liens, réponses, certaines ponctuations)
 	\end{itemize}
-	Cette phase se termine avec la mise en base des documents dans un index ElasticSearch.
+	Cette phase se termine avec la mise en base des documents dans un index ElasticSearch et le stockage du nombre de liens dans une base PSQL.
 	
 	\subparagraph{Phase 2} La phase 2 vise à générer les données statistiques et numériques à partir des corps de mails. Lors de cette phase une analyse statistique manuelle des données est réalisée
 	% todo : description rapide des actions de la phase 2
@@ -770,6 +770,11 @@ Données stats de l'étape: mise en base:
 					\end{tabular}
 				\end{table}
 				
+				A partir des données des liens présentées dans le tableau ci dessus il est possible d'émettre les hypothèses suivantes.\\
+				On trouve en moyenne environ 5 url dans les deux types de mails. Cependant la dispersion est notablement plus faible pour les spams. On voit également que $75\%$ des spam contiennent 5 liens ou moins. \\
+				La présence d'adresse mail est assez marginale environ 1 adresse mail part corps de texte. L'écart-type est plus faible dans les ham. On voit également que $75\%$ des ham contiennent 2 adresse mails ou moins contre 1 pour les spam.\\
+				Enfin la présence de numéro de téléphone est quasiment nulle pour les deux catégories. 
+				
 				\begin{table}[H]
 					\centering
 					\captionof{table}{Statistiques sur les données numériques} \label{tab:p1nb}
@@ -794,11 +799,24 @@ Données stats de l'étape: mise en base:
 						\hline
 					\end{tabular}
 				\end{table}
+				
+				Les données numériques du dataset montrent les hypothèses suivantes.\\
+				Les nombres simples semblent être les données les plus présentes dans le corps du mail, environ $15$ en moyenne par mail, cependant la dispersion est élevée. Cela étant $75\%$ des spam ont $14$ nombres ou moins contre $8$ ou moins pour les ham.\\
+				Enfin la présence de prix est assez marginale par rapport aux nombres. Il y a cependant en moyenne 10 fois plus de prix dans les spam que les ham.\\
 			
 			\begin{figure}[H]
 				\includegraphics[width=\linewidth]{img/P1feat.png}
 				\caption{Distribution du nombre de liens selon la catégorie du mail}
 			\end{figure}
+			
+			
+			Au vu des analyses précédents, on peut dire qu'il est statistiquement plus probable de trouver dans les spam plus de liens url, de nombre et de prix que dans les ham. La présence d'adresse mail est plus probable dans les ham. Il est enfin possible d'exclure la présence de numéro de téléphone qui est trop marginale.\\
+			
+			Les codes sources de cette partie sont disponibles dans le fichier \emph{./analyse/analyse\_p1.py} ou dans la section \ref{subsec:analp1}
+			
+			
+			
+ 
 	
 \newpage
 \section{Phase 2}
@@ -1689,9 +1707,7 @@ plt.show()\end{lstlisting}
 				Le modèle Naïve Bayes est un modèle simple et rapide qui ne nécessite pas de grande capacités de calcul. De ce fait il permet de traiter une grande quantité de données.\\
 				
 				Cependant, les données qui lui sont fournies ne doivent pas être corrélées ce qui est rarement le cas dans les problèmes du monde réel. Ce type de modèle est limité à des problèmes de classification supervisée. Si on se fie à l'équation (\ref{NBeq}) la probabilité d'apparition de l’évènement B : P(B) ne peut pas être nulle. 
-									
-						
-				
+																
 	\section{Bibliographie}
 		\bibliographystyle{plain}
 		\bibliography{IED_L3_Projet_Inglang_Fouille_IA}
@@ -1721,7 +1737,65 @@ plt.show()\end{lstlisting}
 				\item Naive Bayes Classification Tutorial using Scikit-learn, exemple d'utilisation de ce type de modèle avec python (anglais) [en ligne] \url{https://www.datacamp.com/tutorial/naive-bayes-scikit-learn} (consulté le 26/03/2023)
 				\item Scikit learn Naive Bayes, description des types d'algorithme disponibles dans le module Scikitlearn en python (anglais) [en ligne] \url{https://scikit-learn.org/stable/modules/naive_bayes.html} (consulté le 26/03/2023)
 			\end{itemize}
-		
+			
+	\section{Codes sources}
+			
+		\subsection{Analyse statistiques de la phase 1}
+		\label{subsec:analp1}
+			\begin{lstlisting}[title=Code pour l'affichage des statistiques de la phase 1]
+import matplotlib.pyplot as plt
+import pandas as pd
+
+from databases.psql_cmd import connect_db, exec_query
+from databases.psql_db import secrets as psql_secrets
+
+
+def get_p1_data():
+    psql_cli = connect_db('mail_features_prod', psql_secrets.owner, psql_secrets.owner_pw,
+                          psql_secrets.host, psql_secrets.port)
+
+    column = ['id_message', 'type', 'url', 'mail', 'tel', 'nombre', 'prix']
+    query = """select m.id_message, c.type, l.url, l.mail, l.tel, l.nombre, l.prix from messages 
+    as m 
+    join categories as c on m.id_cat = c.id_cat
+    join liens as l on m.id_message = l.id_message"""
+
+    df = pd.DataFrame(exec_query(psql_cli, query), columns=column)
+    psql_cli.close()
+
+    return df.set_index('id_message')
+
+
+def set_bar_graph(data, feat, subplot, pos):
+    df = data[data[feat] < 20].groupby(['type', data[feat]]).size()
+    df.unstack(0).plot(kind='bar', ax=subplot[pos])
+
+
+if __name__ == '__main__':
+    df_all = get_p1_data()
+    df_spam = df_all[df_all['type'] == 'spam']
+    df_ham = df_all[df_all['type'] == 'ham']
+
+    d_pie = df_all.groupby(['type']).size()
+    fig, ax = plt.subplots()
+    fig.suptitle('Repartition des ham/spam')
+    ax.pie(d_pie, labels=d_pie.index, autopct='%1.1f%%')
+    plt.show()
+
+    print("Statistiques Liens")
+    print("Gobales: \n", df_all.describe())
+    print("Ham: \n", df_ham.describe())
+    print("Spam: \n", df_spam.describe())
+
+    fig, ax = plt.subplots(nrows=5, ncols=1)
+    fig.suptitle("Distribution des mails en fonction du nombre de liens")
+    fig.tight_layout(pad=0.5)
+    position = 0
+    for feat in ['url', 'mail', 'tel', 'nombre', 'prix']:
+        set_bar_graph(df_all, feat, ax, position)
+        position += 1
+    plt.show()
+				\end{lstlisting}
 
 \end{document}
 

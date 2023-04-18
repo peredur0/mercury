@@ -9,7 +9,6 @@ Analyses préliminaires de la phase 1.
         - Ratio HAM/SPAM pour les liens (url, mail, telephone, nombres, prix)
         - Distribution HAM/SPAM pour les liens
 """
-import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -41,19 +40,6 @@ def get_p1_data():
     return df.set_index('id_message')
 
 
-def type_pie_chart(data):
-    """
-    Ratio simple HAM/SPAM
-    :param data: <DataFrame> Data frame with all data
-    :return: None
-    """
-    d_pie = data.groupby(['type']).size()
-    fig, ax = plt.subplots()
-    fig.suptitle('Répartition des ham/spam')
-    ax.pie(d_pie, labels=d_pie.index, autopct='%1.1f%%')
-    plt.show()
-
-
 def set_bar_graph(data, feat, subplot, pos):
     """
     Affiche les statistiques générales d'une caracteristiques
@@ -72,7 +58,11 @@ if __name__ == '__main__':
     df_spam = df_all[df_all['type'] == 'spam']
     df_ham = df_all[df_all['type'] == 'ham']
 
-    type_pie_chart(df_all)
+    d_pie = df_all.groupby(['type']).size()
+    fig, ax = plt.subplots()
+    fig.suptitle('Répartition des ham/spam')
+    ax.pie(d_pie, labels=d_pie.index, autopct='%1.1f%%')
+    plt.show()
 
     print("Statistiques Liens")
     print("Gobales: \n", df_all.describe())
