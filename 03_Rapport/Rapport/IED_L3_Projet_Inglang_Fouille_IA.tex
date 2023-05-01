@@ -74,14 +74,14 @@
 	Il est possible d'ajouter à cette catégorie tous les mails indésirables comme les tentatives d'hameçonnage permettant de soutirer des informations personnelles à une cible.\\ 
 	
 	L'objectif est de travailler uniquement sur les données textuelles issues du corps du mail.
-	Nous avons donc en point de départ les éléments suivants:
+	Nous avons donc comme point de départ les éléments suivants:
 	\begin{itemize}
 		\item langue: anglais
 		\item corpus: monolingue écrit
 		\item type: e-mail
 	\end{itemize}
 	
-	\paragraph{Déroulé} Le développement de ce projet s'articule autour de 3 phases majeurs
+	\paragraph{Déroulé} Le développement de ce projet s'articule autour de 3 phases majeures
 		\begin{itemize}
 			\item Phase 1 : Récupération des données
 			\item Phase 2 : Analyse des caractéristiques
@@ -92,18 +92,18 @@
 	\subparagraph{Phase 1} La phase 1 concerne la récolte des informations et les traitements minimums nécessaires pour la mise en base. Les objectifs de traitement de cette phase sont:
 	\begin{itemize}
 		\item Extraire les corps des mails et éliminer les méta-données superflues
-		\item Eliminer les mails non anglais
-		\item Eliminer les mails en doublons
-		\item Eliminer les parties de textes non pertinente (liens, réponses, certaines ponctuations)
+		\item Éliminer les mails non anglais
+		\item Éliminer les mails en doublons
+		\item Éliminer les parties de textes non pertinentes (liens, réponses, certaines ponctuations)
 	\end{itemize}
 	Cette phase se termine avec la mise en base des documents dans un index ElasticSearch et le stockage du nombre de liens dans une base PSQL.
 	
-	\subparagraph{Phase 2} La phase 2 vise à générer les données statistiques et numériques à partir des corps de mails. Lors de cette phase une analyse statistique manuelle des données est réalisée
+	\subparagraph{Phase 2} La phase 2 vise à générer les données statistiques et numériques à partir des corps de mails. A l'issue de cette phase, il est alors possible d'analyser manuellement les statistiques générés.
 	% todo : description rapide des actions de la phase 2
 	
 	\subparagraph{Phase 3} La phase 3 regroupe tous les opérations d'exploitation des données et vise à développer et à créer un modèle de classement des mails et d'en évaluer les performances.\\
 	
-	Afin de conserver une certaine cohérence dans le déroulé entre les phases et au vu du temps que j'ai pris pour réaliser ce projet l'ensemble des étapes est automatisé en langage Python. Seule la récolte initiale des mails a été réalisée à la main.\\
+	Afin de conserver une certaine cohérence dans le déroulé entre les phases et au vu du temps que j'ai pris pour réaliser ce projet, l'ensemble des étapes est automatisé avec Python. Seule la récolte initiale des mails a été réalisée à la main.\\
 	
 	Le schéma ci-dessous donne une vue synthétique des étapes du projet
 	\begin{figure}[H]
@@ -114,7 +114,7 @@
 \newpage
 
 \section{Phase 1 : Récupération des données}
-	La phase 1 est une pipeline qui vas permettre d'extraire un maximum d'information d'un email en essayant de pas dénaturer le fond ni la forme. Il pourra ensuite être stocké avec sa catégorie d'appartenance. Durant cette phase nous allons également initialiser les bases de données en créant les index (ES) et les tables (PSQL et SQLITE). 
+	La suite d'opération de cette phase vas permettre d'extraire un maximum d'information d'un email en essayant de ne dénaturer ni le fond ni la forme. Il pourra ensuite être stocké avec sa catégorie d'appartenance. Durant cette phase nous allons également initialiser les bases de données en créant les index (ES) et les tables (PSQL et SQLITE). 
 	
 	Ci-dessous le schéma général de cette phase.
 	\begin{figure}[H]
@@ -125,7 +125,7 @@
 
 	\subsection{Récolte des données}
 		\paragraph{Recherche de dataset}
-			J'avais dans l'idée de faire la recherche de mails en français. Cependant, je n'ai pas trouvé de dataset dans cette langue. Je me suis donc retourné vers les datasets de mails en anglais. \\
+			Ma volonté initiale était de travailler sur des mails en français. Cependant, je n'ai pas trouvé de dataset dans cette langue. Je me suis donc retourné vers les dataset de mails en anglais. \\
 			J'ai pu alors récupérer deux dataset:
 			\begin{itemize}
 				\item Enron company mails (voir: \ref{Enron_dataset})
@@ -148,9 +148,9 @@
 	\subsection{Pré-traitement}
 		Les étapes de pré-traitement regroupent toutes les étapes et actions réalisées avant la mise en base. 
 		L'objectif de ces étapes est d'extraire le message en retirant les métadonnées du mail.
-		Il va être possible d'effectuer certain traitement de nettoyage et de récupération d'informations sommaires.
+		Il va être possible d'effectuer certain traitement de nettoyage et de récupération d'informations primaires.
 		
-		Les manipulations de messages dans Python se font principalement à l'aide du module \emph{email} natif. 
+		Les manipulations de messages dans Python se font principalement à l'aide du module python natif \emph{email}. 
 		
 		\subsubsection{Importation}		
 			La fonction \emph{email.message\_from\_binary\_file} permet de transformer un fichier mail en objet python manipulable :
@@ -204,17 +204,18 @@ def extract_body(msg):
     return body \end{lstlisting}
 	    		
 		\subsubsection{Nettoyage}
-			Le nettoyage du texte utilise principalement les expressions régulières pour retirer un maximum d'éléments indésirables dans le texte. J'utilise 2 modules externes afin de traiter le code HTML et faire la détection des mails qui ne sont pas écrit en anglais.
+			Le nettoyage du texte utilise principalement les expressions régulières pour retirer un maximum d'éléments indésirables dans le texte. J'utilise également 2 modules externes afin de traiter le code HTML et faire la détection des mails qui ne sont pas écrits en anglais.
 			
-			\paragraph{Par regex} J'utilise le module python \emph{re} pour générer les suivantes:
-				\subparagraph{Suppression des réponses} Lorsque l'on réponds à un mail, le texte du message précédent est conservé dans le corps du mail. Afin de permettre la distinction avec les mails précédent le caractère '>' est ajouter en début de ligne. Je retire toutes les lignes correspondant à des réponses afin de limiter les doublons.
+			\paragraph{Par regex} J'utilise le module python \emph{re} pour réaliser les traitements suivants:
+			
+				\subparagraph{Suppression des réponses} Lorsque l'on répond à un mail, le texte du message précédent est conservé dans le corps du mail. Afin de permettre la distinction avec les mails précédant le caractère '>' est ajouté en début de ligne. Je retire toutes les lignes correspondant à des réponses afin de limiter les doublons.
 				
 					\begin{lstlisting}[title=Nettoyage des réponses]
 def clear_reply(texte):
     pattern = re.compile('^>.*$', flags=re.MULTILINE)
     return re.sub(pattern, '', texte) \end{lstlisting}
 					
-				\subparagraph{Suppression des ponctuations} Afin de ne pas surcharger la base de données et pour se concentrer sur le texte, une grande partie des caractères de ponctuation seront retirés. L'idée est de se concentrer sur les ponctuations les plus présentes (.,?!) 
+				\subparagraph{Suppression des ponctuations} Afin de ne pas surcharger la base de données et pour se concentrer sur le texte, une grande partie des caractères de ponctuation seront retirés. L'idée est de se concentrer sur les ponctuations classiques (.,?!).
 
 					\begin{lstlisting}[title=Nettoyage des ponctuations]				
 def clear_ponctuation(texte):
@@ -230,7 +231,7 @@ def clear_enriched(texte):
     return re.sub(pattern, '', texte) \end{lstlisting}
 						
 				% Modification des liens (URL, MAIL et TELEPHONE)
-				\subparagraph{Suppression des liens} Certaines informations présentent dans le texte ne peuvent pas être utilisées dans l'analyse textuelle. Cependant il peut être intéressant de conserver une trace de leur présence. Nous allons donc modifier les liens url, mail et les numéros de téléphone qui seront comptabilisé avant d'être retiré du texte.
+				\subparagraph{Suppression des liens} La présence de certaines informations comment les liens URL, les adresses mails et les numéros de téléphone ne peuvent pas être utilisés dans l'analyse textuelle. Cependant il peut être intéressant de conserver une trace de leur présence. Nous allons donc modifier ces liens qui seront comptabilisés avant d'être retirés du texte.
 				
 					\begin{lstlisting}[title=Nettoyage des liens]
 def change_lien(texte, liens):
@@ -277,7 +278,7 @@ def change_nombres(texte, liens):
  
  
 			\paragraph{Par module}
-				J'ai utilisé deux modules externes plus performant que ce que j'aurais pu faire avec simplement des expressions régulières. 
+				Lors du processus de nettoyage, j'utilise deux modules externes plus performants que ce que j'aurais pu faire simplement avec des expressions régulières. L'un me permet de nettoyer le code HTML, l'autre de détecter la langue du message. 
 				
 				% Suppression balise HTML avec BeautifulSoup
 				\subparagraph{Suppression du code HTML} Certaines parties du corps du mail sont de type HTML. J'utilise le module \emph{BeautifulSoup} pour parser le code et récupérer le texte affiché. 
@@ -291,9 +292,9 @@ def clear_html(texte):
     		
 				% Retrait des mails en langue non anglaise
 				\subparagraph{Sélection des mails en anglais} Lors de mes tests, je me suis rendu compte que certains mails n'étaient pas en anglais. J'ai donc trouvé le module \emph{langdetect} qui permet de détecter le langage utilisé dans un texte en utilisant un modèle Naïve Bayes avec une précision de 99\% (voir \ref{langdetect}). \\
-				Je conserve dans les données à mettre en base le langage détecté dans l'idée de pouvoir traité plusieurs langues (en idée d'évolution).\\
+				Je conserve dans les données à mettre en base le langage détecté avec l'idée de pouvoir traité plusieurs langues dans le futur.\\
 				
-				La détection de la langue se fait dans la fonction s'occupant de créer le document pour la mise en base ElasticSearch.
+				La détection de la langue est réalisée juste avant la mise en base dans l'index ElasticSearch.
 				
 				\begin{lstlisting}[title=Création d'un document]	
 import langdetect
@@ -433,7 +434,7 @@ advantage of the trusted zone file transfer option.
 
 
 		\subsubsection{Mise en base}
-			Cette section détaille les éléments relatifs à la mise en base des informations récoltées. Dans ce projet, j'utilise 2 moteurs de bases de données pour stocker les extractions des mails. 
+			Cette section détaille les éléments relatifs à la mise en base des informations récoltées. Dans ce projet, j'utilise 2 moteurs de bases de données pour stocker les données des mails. 
 			\begin{enumerate}
 				\item un index ElasticSearch pour faire le stockage des données textuelles
 				\item une base PostgreSQL pour le stockage des données numériques
@@ -505,9 +506,9 @@ def create_document(mail, categorie):
 		
 			\paragraph{Stockage des données: ElasticSearch}
 				ElasticSearch est un moteur de base de données NoSQL. Il intègre un moteur d'indexation des documents est assez performant pour stocker des données textuelles de taille aléatoire. 
-				Il est cependant assez compliqué de modifier le schéma d'un index une fois qu'il a été créé. Pour ces raisons, j'utilise cette technologie pour ne stocker les données textuelles après nettoyage car elles n'ont plus vocation à être modifiées. \\
+				Il est cependant assez compliqué de modifier le schéma d'un index une fois qu'il a été créé. Pour ces raisons, j'utilise cette technique pour ne stocker que les données textuelles après nettoyage car elles n'ont plus vocation à être modifiées. \\
 				
-				Les corps de mail mise en base seront récupérés ultérieurement pour réaliser les opérations d'analyse. Les résultats seront stockés dans la base PostgreSQL plus souple. \\
+				Les corps de mail mis en base seront récupérés ultérieurement pour réaliser les opérations d'analyse. Les résultats seront stockés dans la base PostgreSQL, plus souple. \\
 				
 				Ci-dessous les fonctions principales pour l'ajout d'un document dans la base ES.
 				\begin{lstlisting}[title=Fonctions basique pour la liaison ElasticSearch]
@@ -558,10 +559,10 @@ def es_document_exists(es_cli, index, hash):
 				\begin{itemize}
 					\item messages - liste des mails avec le hash permettant de faire le lien avec l'index ES
 					\item categorie - liste des catégories de mails
-					\item liens - chaque ligne contient toutes les nombres de liens retiré lors du nettoyage
+					\item liens - comptabilise le nombre d'occurrences par type de lien ou nombre
 				\end{itemize}
 				
-				Cette base a pour but de stocker les données formatées pour l'analyse, l'exploitation et l'entrainement du modèle.
+				Cette base a pour but de stocker les données formatées pour l'analyse, l'exploitation et l’entraînement du modèle.
 			
 				\begin{lstlisting}[title=Fonctions basiques pour la liaison PostgreSQL]
 def connect_db(database, user, passwd, host, port):
@@ -626,12 +627,12 @@ def exec_query(client_psql, query):
 			
 			
 			\paragraph{Stockage des données statistiques du traitement: SQLite}
-				Les données présentent dans cette base permettent de suivre l'évolution du traitement lors des différentes étapes de nettoyage. 
+				Les données présentent dans cette base permettent de suivre l'évolution de certaines métriques lors des différentes étapes du nettoyage. 
 				A chaque grandes étapes de la phase 1 (Importation, Nettoyage, Mise en base), je calcule pour les HAM, SPAM et (HAM+SPAM) les éléments suivants :
 				\begin{itemize}
 					\item mails - nombre de mails
-					\item mots - nombre de mots 
-					\item mots\_uniques - nombre de mots uniques
+					\item mots - nombre de mots dans tout le corpus
+					\item mots\_uniques - nombre de mots uniques dans tout le corpus
 				\end{itemize}
 				
 				Ces données me permettent d'estimer la quantité de données nettoyées durant cette phase.
@@ -699,15 +700,7 @@ Données stats de l'étape: mise en base:
 		\end{verbatim}
 		
 		\paragraph{Évolution lors du traitement}
-			J'effectue une petite analyse sur le volume de données conservés au cours des différentes étapes de la phase 1. Je vérifie pour chaque catégorie (ham, spam) ainsi qu'en globalité les éléments suivants : 
-			\begin{itemize}
-				\item nombre de documents conservés
-				\item nombre de mots (n-gram) dans le corpus
-				\item nombre de mots (n-gram) uniques dans le corpus
-			\end{itemize}
-			
-			Texte provisoire : \\
-			Il est alors possible de constater les comportements suivants:
+			Les données recueillis pendant le traitement permettent de constater les comportements suivants:
 			\begin{itemize}
 				\item La diminution des documents spam est plus importante que celle des ham 
 				\item Le nombre de mots uniques ne diminue plus après la création de document
@@ -717,7 +710,7 @@ Données stats de l'étape: mise en base:
 			
 			\begin{figure}[H]
 				\includegraphics[width=\linewidth]{img/Statsrecolte.png}
-				\caption{Evolution des principaux marqueurs lors du traitement}
+				\caption{Évolution des principaux marqueurs lors du traitement}
 			\end{figure}
 		
 			\subparagraph{Conclusion de la récolte}
@@ -730,8 +723,7 @@ Données stats de l'étape: mise en base:
 					\item Retrait des liens, et nombres
 				\end{itemize}
 				
-				
-				Enfin on peut voir que les \emph{ham} utilise plus de mots uniques que les \emph{spam}. Il est donc possible que le vocabulaire des \emph{spam} soit plus restreint. 
+				Enfin on peut voir que les \emph{ham} utilisent plus de mots uniques que les \emph{spam}. Il est donc possible que le vocabulaire des \emph{spam} soit plus restreint. 
 			
 				
 		\paragraph{Premières données statistiques}
@@ -743,7 +735,7 @@ Données stats de l'étape: mise en base:
 				\caption{Répartition des ham/spam dans le dataset}
 			\end{figure}
 			
-			A partir des informations et des pré-traitement réalisés lors de cette première phase, il est possible de présenter quelques données statistiques. Notamment sur la présence et l'utilisation de liens (url, mail, téléphonique) et des données numériques (nombres et prix).\\
+			Grâce aux informations et des pré-traitements réalisés lors de cette première phase, il est possible de présenter quelques données statistiques. Notamment sur la présence et l'utilisation de liens (url, mail, téléphonique) et des données numériques (nombres et prix).\\
 
 			\begin{table}[H]
 					\centering
@@ -770,9 +762,9 @@ Données stats de l'étape: mise en base:
 					\end{tabular}
 				\end{table}
 				
-				A partir des données des liens présentées dans le tableau ci dessus il est possible d'émettre les hypothèses suivantes.\\
+				A partir des données des liens présentées dans le tableau ci-dessus il est possible d'émettre les hypothèses suivantes.\\
 				On trouve en moyenne environ 5 url dans les deux types de mails. Cependant la dispersion est notablement plus faible pour les spams. On voit également que $75\%$ des spam contiennent 5 liens ou moins. \\
-				La présence d'adresse mail est assez marginale environ 1 adresse mail part corps de texte. L'écart-type est plus faible dans les ham. On voit également que $75\%$ des ham contiennent 2 adresse mails ou moins contre 1 pour les spam.\\
+				La présence d'adresses mail est assez marginale environ une adresse mail par corps de texte. L'écart-type est plus faible dans les ham. On voit également que $75\%$ des ham contiennent deux adresse mails ou moins contre 1 pour les spam.\\
 				Enfin la présence de numéro de téléphone est quasiment nulle pour les deux catégories. 
 				
 				\begin{table}[H]
@@ -820,14 +812,14 @@ Données stats de l'étape: mise en base:
 	
 \newpage
 \section{Phase 2}
-	\subsection{Traitement}
+%	\subsection{Traitement}
 	
-		\subsubsection{Recherche de caractéristiques}
-			\paragraph{Références}
+%		\subsubsection{Recherche de caractéristiques}
+%			\paragraph{Références}
 				% LIENS, Nombres
 							
 				
-		\subsubsection{Analyse préliminaire}
+%		\subsubsection{Analyse préliminaire}
 			% Etudes statistiques
 			% Etudes des distributions
 			% Travail sur la distribution de zipf
@@ -850,7 +842,7 @@ Données stats de l'étape: mise en base:
 		avec \emph{$|mot|$} la fréquence d'apparition d'un mot, \emph{constante} une valeur propre à chaque texte, \emph{rang(mot)} la place du mot dans le tri décroissant par fréquence d'apparition et \emph{k} un coefficient proche de 1. 
 		
 	\paragraph{Développement}
-		Afin de pouvoir utiliser les résultats de cette distribution dans mon analyse, j'ai développé un ensemble de fonctions sur un corpus "\emph{reconnu}". Mon choix s'est porté sur le corpus \emph{Brown} (voir \ref{Brown_corpus}) présent dans la librairie \emph{nltk}. Ce corpus contient environ 500 documents contenant 1 millions de mot en anglais.\\
+		Afin de pouvoir utiliser les résultats de cette distribution dans ce projet, j'ai développé un ensemble de fonctions sur un corpus "\emph{reconnu}". Mon choix s'est porté sur le corpus \emph{Brown} (voir \ref{Brown_corpus}) présent dans la librairie \emph{nltk}. Ce corpus contient environ 500 documents contenant 1 millions de mot en anglais.\\
 		
 		Le processus d'analyse se fait sur 2 versions de ce corpus.
 		\begin{itemize}
@@ -880,7 +872,7 @@ def frequence_mot(bag, freq=None):
 def classement_zipf(dico):
     """
     Trie un dictionnaire de mots : occurence et leur assigne un rang en fonction du nombre d'occurence
-    :param dico: <dict> dictionnaire de mot: occurences
+    :param dico: <dict> dictionnaire de mot: occurrences
     :return: <list> {"rang": <int>, "mot": <str>, "frequence": <int>}
     """
     ranked = []
@@ -906,7 +898,7 @@ def classement_zipf(dico):
     		La distribution de la version complète du corpus semble à première vue plus fidèle à la représentation classique de la distribution de Zipf. 
 			
 		\subparagraph{Etape 2 - calcul de la constante}
-			Le premier paramètre que je détermine est la \emph{constante}. Pour ce faire j'effectue le calcul suivant pour tous les mots :
+			Le premier paramètre qu'il faut déterminer est la \emph{constante}. Pour ce faire j'effectue le calcul suivant pour tous les mots :
 			
 			\begin{align*}
 				constante = |mot| \times rang(mot)
@@ -920,7 +912,7 @@ def classement_zipf(dico):
 				\caption{Distribution des constantes théoriques pour les deux corpus}
 			\end{figure}
 			
-			On voit qu'il y a une majorité de mots donnent une constante brute comprise entre $20.000$ et $60.000$. Dans les deux corpus
+			On voit qu'il y a une majorité de mots donnant une constante brute comprise entre $20.000$ et $60.000$. Dans les deux corpus
 			La différence entre les moyennes et médianes des deux corpus n'est pas flagrante :
 			\begin{itemize}
 				\item Brown moyenne: 56525.81, médiane: 48601.50
@@ -935,7 +927,7 @@ def classement_zipf(dico):
 
 			\begin{enumerate}
 				\item Faire la liste de tous les coefficients possibles dans l'intervalle $[0.86, 1.3]$ avec un pas de $0.01$\footnote{les bornes et le pas sont totalement arbitraire afin d'obtenir un graphique présentable}.
-				\item Calculer toutes la fréquences théoriques de tous les rangs avec tous les coefficients possibles avec en constante la moyenne et la médiane de chaque corpus.
+				\item Calculer toutes la fréquences théoriques de tous les rangs avec tous les coefficients possibles en utilisant les constantes moyenne et médiane de chaque corpus.
 				\item Calculer la moyenne des coûts absolus entre les fréquences théoriques par coefficient avec la fréquence réelle observée pour chaque corpus.\\
 			\end{enumerate}
 			
@@ -1054,12 +1046,12 @@ def cout(l1, l2, methode):
 \newpage
 \section{Déploiement des bases de données}	
 	Cette annexe détaille la mise en place de l'infrastructure de base de données pour le projet.
-	J'utilise 2 environnements de base de données en version conteneur (docker):
+	J'utilise 2 environnements de base de données en version conteneur (docker version 23.0.4):
 		\begin{itemize}
 			\item ElasticSearch
 				\begin{itemize}
 					\item 1 Node Elastic, pour le service de base de données
-					\item 1 Service Kibana, pour la visualisation des données
+					\item 1 Service Kibana, pour la visualisation des index
 					\item 1 Service de certificat, pour sécuriser les échanges
 				\end{itemize}
 			\item PostgreSQL
@@ -1080,7 +1072,7 @@ def cout(l1, l2, methode):
 	\subsection{ElasticSearch} \label{ES}
 		Cet environnement se lance avec la commande suivante :
 		\begin{verbatim}
-docker-compose -f ./databases/elastic/docker/docker-compose.yml up -d		
+docker compose -f ./databases/elastic/docker/docker-compose.yml up -d		
 		\end{verbatim}
 		
 		\subsubsection{Conteneurisation}
@@ -1209,9 +1201,9 @@ services:
 			
 			\begin{lstlisting}[title=Fichier d'environnement]
 # Password for elastic user
-ELASTIC_PASSWORD=elastic123
+ELASTIC_PASSWORD=XXXXXXXXX
 # Password for kibana_system user
-KIBANA_PASSWORD=kibana123
+KIBANA_PASSWORD=XXXXXXXXX
 # Version elastic product
 VERSION=8.1.2
 # Licence to use
@@ -1235,7 +1227,7 @@ ca_cert = "databases/elastic/docker/certs/ca/ca.crt"
 			\end{lstlisting}
 			Il est possible de générer une clé API via l'interface Kibana > Stack Management > Sécurité > API keys > Create API Key > JSON. 
 			
-			\begin{lstlisting}[title=Mapping]
+			\begin{lstlisting}[title=Mapping de l'index]
 {
   "properties": {
     "hash": {"type": "keyword"},
@@ -1249,7 +1241,7 @@ ca_cert = "databases/elastic/docker/certs/ca/ca.crt"
 			\end{lstlisting}
 			
 			
-				\begin{lstlisting}[title=Fonctions utiles]
+				\begin{lstlisting}[title=Fonctions Python utiles]
 def es_connect(server, creds, crt):
     """ Connexion au serveur ElasticSearch """
     client = Elasticsearch(server, api_key=creds, ca_certs=crt)
@@ -1287,10 +1279,10 @@ def es_create_indice(es_cli, index, mapping):
 	\subsection{PostgreSQL} \label{PSQL}
 		Cet environnement se lance avec la commande suivante :
 		\begin{verbatim}
-docker-compose -f ./databases/psql_db/docker/docker-compose.yml up -d		
+docker compose -f ./databases/psql_db/docker/docker-compose.yml up -d		
 		\end{verbatim}
 		
-		L'application se charge automatiquement de créer le compte utilisé par l'application pour se connecter à la base.
+		Le programme se charge automatiquement de créer le compte utilisé pour se connecter à la base.
 				
 		\subsubsection{Conteneurisation}
 			\begin{lstlisting}[title=DockerCompose]
@@ -1321,11 +1313,11 @@ services:
 			\begin{lstlisting}[title=Fichier d'environnement]
 PS_VERSION=latest
 
-PS_PASSWORD=postgres
+PS_PASSWORD=XXXXXXXXX
 PS_PORT=5433
 
 PGA_MAIL=data@data.org
-PGA_PASSWORD=data
+PGA_PASSWORD=XXXXXX
 PGA_PORT=80
 			\end{lstlisting}
 
@@ -1480,7 +1472,12 @@ def create_index(client_psql, nom, table, colonne):
 		\hline
 		Module email & Oui & Module natif pour le traitement des mails & Grande flexibilité pour la lecture des mails \\
 		\hline
-				
+		
+		\multicolumn{4}{|c|}{Virtualisation} \\
+		\hline
+		Docket & Oui & configuration et environnement dans les fichiers. Cela facilite le portage vers d'autre environnement & Lors du développement j'ai pu utilisé mon PC personnel sous Linux et un autre PC sous Windows. L'utilisation de Docker m'a évité de nombres configurations sur Windows\\
+		\hline
+		
 		\multicolumn{4}{|c|}{Bases de données} \\
 		\hline
 		ElasticSearch & Oui & Technologie utilisée dans mon entreprise. Présence d'une interface de visualisation des données Kibana. & Application dockerisée. \\
@@ -1495,7 +1492,7 @@ def create_index(client_psql, nom, table, colonne):
 	
 	\section{Modèles}	
 		\subsection{Naïves Bayes}
-			Ce type de modèle est utilisé par le module \emph{langdetect} qui me sert pour la détection des langues dans mon programme.
+			Ce type de modèle est utilisé par le module \emph{langdetect} qui me sert pour la détection des langues.
 			
 			\paragraph{Introduction}
 				Les modèles Naïves Bayes se basent sur le théorème de probabilité de Bayes. Il permet de déterminer la probabilité conditionnelle d'apparition d'un évènement A sachant qu'un évènement B s'est produit. Le terme naïf fait référence au fait que l'on présuppose que les évènements A et B ne sont pas corrélés.\\
@@ -1516,10 +1513,10 @@ def create_index(client_psql, nom, table, colonne):
 			\end{itemize}
 			
 			\paragraph{Exemples d'utilisation}
-				Les exemples ci dessous vont permettre d'illustrer l'utilisation de cette technique. d'abord manuellement sur un petit jeu de données puis à l'aide d'un code pré-existant sur un autre jeu de données plus important.
+				Les exemples ci dessous vont permettre d'illustrer l'utilisation de cette technique. D'abord manuellement sur un petit jeu de données puis à l'aide d'un code pré-existant sur un autre jeu de données plus important.
 				
 				\subparagraph{Manuel}
-					Dans cet exemple nous allons déterminer la probabilité qu'a un joueur d'aller sur le terrain selon les conditions météorologiques. Cette probabilité sera calculée en fonction des données récupérées lors des match précédent.\footnote{Les données présentées sont inventées} \\
+					Dans cet exemple nous allons déterminer la probabilité qu'a un joueur d'aller sur le terrain selon les conditions météorologiques. Cette probabilité sera calculée en fonction des données récupérées lors des matchs précédents.\footnote{Les données présentées sont inventées} \\
 					
 					On recherchera ainsi la probabilité de présence sur le terrain d'un joueur selon la météo $P(A|B)$. Pour ce faire nous auront besoin de: 
 					\begin{itemize}
@@ -1581,7 +1578,7 @@ def create_index(client_psql, nom, table, colonne):
 					\end{tabular}
 				\end{table}
 				
-				On va maintenant calculer la probabilité qu'à un joueur d'être sur le terrain si la météo est couverte.\\
+				On va maintenant calculer la probabilité qu'à un joueur d'être sur le terrain si le temps est couvert.\\
 				On commence par la probabilité du oui:
 				\begin{eqnarray*}
 					P(A|B) &=& \frac{P(B|A)P(A)}{P(B)}\\
@@ -1688,7 +1685,7 @@ plt.show()\end{lstlisting}
 					\caption{Représentation des données }
 				\end{figure}
 				
-				Dans les données de test nous avons 2 catégorisation qui n'ont pas été réalisée correctement. On obtient les scores suivants :
+				Dans les données de test nous avons 2 catégorisations qui n'ont pas été réalisées correctement. On obtient les scores suivants :
 				\begin{itemize}
 					\item Précision: 0.96                    \footnote{La précision est la proportion des éléments correctement identifiés sur l'ensemble des éléments prédit}
 					\item Rappel: 0.96						\footnote{Le rappel est la proportion des éléments correctement identifiés sur l'ensemble des éléments de la catégorie}
