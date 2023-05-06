@@ -23,7 +23,7 @@
       "id_message": ["INT"],
       "mots_uniques": ["INT"],
       "mots": ["INT"],
-      "char": ["INT"],
+      "char_min": ["INT"],
       "char_maj": ["INT"],
       "mot_maj": ["INT"],
       "mot_cap": ["INT"],

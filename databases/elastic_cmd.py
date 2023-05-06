@@ -113,7 +113,7 @@ def es_get_all(es_cli, index, sort, query):
     :param index: <str> index de recherche
     :param sort: <dict> informations pour le sort
     :param query: <dict> requete à utilisé
-    :return:
+    :return: <list> list of documents <dict>
     """
     documents = []
     size = 1000
