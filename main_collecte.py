@@ -14,7 +14,6 @@ Phase 1: collecte et mise en base
 """
 
 import os
-import platform
 import sys
 import warnings
 import hashlib

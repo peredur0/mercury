@@ -50,6 +50,7 @@
     },
     "hapax": {
       "id_message": ["INT"],
+      "nombre": ["INT"],
       "ratio_unique": ["REAL"],
       "ratio_texte": ["REAL"],
       "fk": ["fk_hapax", "id_message", "messages(id_message)", "CASCADE"]

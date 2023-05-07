@@ -103,7 +103,11 @@ def es_get_doc_nb(es_cli, index, query):
     :param query: <dict> corp de la requête
     :return: <int> nombre de documents qui matchent la requête
     """
-    return es_cli.count(index=index, query=query)['count']
+    try:
+        return es_cli.count(index=index, query=query)['count']
+    except AttributeError:
+        print("ES query error, check if ES is running")
+        return 0
 
 
 def es_get_all(es_cli, index, sort, query):
