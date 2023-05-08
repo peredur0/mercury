@@ -63,7 +63,7 @@
 	\tableofcontents
 	\newpage
 	
-\section{Introduction}
+\section*{Introduction}
 	Ce projet a pour but de développer un modèle permettant de catégoriser des emails en spam ou ham.
 	La définition d'un spam dans le dictionnaire \emph{Larousse} est:
 	
@@ -811,25 +811,119 @@ Données stats de l'étape: mise en base:
  
 	
 \newpage
-\section{Phase 2}
-%	\subsection{Traitement}
+\section{Phase 2: Traitement des données}
+	Les opérations de cette phase ont pour but d'extraire les caractéristiques des textes collectés à la phase précédente. 
+	Nous allons premièrement rechercher des informations numériques sur la forme des messages (nombre de mots, de ponctuations,...).  
+	Dans un second temps, nous appliqueront des techniques de traitement du langage naturel pour travailler sur le fond des corps de mail. 
 	
-%		\subsubsection{Recherche de caractéristiques}
-%			\paragraph{Références}
-				% LIENS, Nombres
+	
+	\subsection{Analyses statistiques}
+		Dans un premier temps, nous verrons si globalement les mails respectent la distribution de Zipf. Puis nous nous intéresserons aux données statistiques suivantes message par message:
+		\begin{itemize}
+			\item nombre de mots
+			\item nombre de mots uniques
+			\item nombre de caractère en minuscule
+			\item nombre de caractère en majuscule
+			\item nombre de mots écrits complètement en majuscule
+			\item nombre de mots écrits complètement avec la première lettre en capitale
+		\end{itemize}
+		A cela nous ajouterons une recherche de caractéristique sur les données de ponctuation:
+		\begin{itemize}
+			\item nombre de points '.'
+			\item nombre de virgules ','
+			\item nombre de points d'exclamation
+			\item nombre de points d'interrogation
+			\item nombre de tabulations
+			\item nombre d'espaces
+			\item nombre de lignes totales
+			\item nombre de lignes vides
+		\end{itemize}
+		Enfin nous appliquerons les méthodes de distribution de Zipf sur chaque message\footnote{J'ai conscience que cette distribution est plus pertinente quand le corpus est grand}. Nous récupérerons alors les données suivantes
+		\begin{itemize}
+			\item constante estimée
+			\item coefficient estimées
+			\item taux d'erreur absolu moyen entre les fréquences réelles et théoriques de chaque mot
+			\item nombre de mots n'apparaissant qu'une seule fois dans le texte (hapax)
+			\item nombre d'hapax par rapport au vocabulaire du texte
+			\item nombre d'hapax par rapport au total des mots du texte
+		\end{itemize}
+		
+		\paragraph{Statistiques des mots} Lorem Ipsum
+		
+		\paragraph{Statistiques des ponctuations} Lorem Ipsum
+	
+		\paragraph{Distribution de Zipf} Cette distribution est une loi empirique qui permet de décrire un classement des mots selon leur fréquence d'apparition. Les fonctions utilisées pour la mise en œuvre de cette distribution ont été réalisées par mes soins. L'annexe \ref{sec:devZipf} détaille le développement de cette fonctionnalité.  
+		
+			Les données suivantes montre la représentation de cette distribution pour l'ensemble du corpus.
+			\begin{figure}[H]
+				\includegraphics[width=\linewidth]{}
+				\caption{Distribution du nombre de liens selon la catégorie du mail}
+			\end{figure}
+						
+			%image 	
+			\begin{table}[H]
+			\centering
+				\begin{tabular}{|l|c|c|c||c|c|c|}
+					\hline
+								& constante & coefficient & erreur moyenne & hapax & hapax/vocab & hapax/total \\
+					\hline
+					Ham + Spam  & 73746.97  & 0.93        & 6.37	             & 33666 & 0.47              & 0.02 \\
+					\hline
+					Ham 		    & 52712.40  & 0.93        & 4.19              & 26231 & 0.48              & 0.03 \\
+					\hline
+					Spam		    & 35485.13  & 0.93        & 4.84              & 12396 & 0.40              & 0.02 \\
+					\hline
+				\end{tabular}
+			\end{table}
 							
-				
-%		\subsubsection{Analyse préliminaire}
-			% Etudes statistiques
-			% Etudes des distributions
-			% Travail sur la distribution de zipf
+		% Récupération des données stats, affichage
+		% globale
+		
+		% par catégorie 
+		
+		
+
+	\subsection{Traitement du langage}
+		% Module de lemmatization 
+		
+		% Vectorisation TF-IDF
+
+
+
+	\subsection{Sortie de la partie 2}
+		\begin{verbatim}
+=== Phase 2 : Stats Exploitation ===
+-- Récupération des spam... OK
+-- Récupération des ham... OK
+-- Récupération des statistiques par message
+Stats Spam... OK
+Stats Ham... OK
+-- Récupérations des statistiques globales
+Données Zipf ham+spam: {'const_moy': 73746.97464716957, 'cout_min': 6.37798252533617, 
+	'coef_min': 0.93}
+Données Hapax ham+spam: {'nombres': 33666, 'ratio_mots_uniques': 0.47656526478207323, 
+	'ratio_texte': 0.024792183385275213}
+Données Zipf ham: {'const_moy': 52712.404742906976, 'cout_min': 4.193202011347324, 
+	'coef_min': 0.93}
+Données Hapax ham: {'nombres': 26231, 'ratio_mots_uniques': 0.48674175650850793, 
+	'ratio_texte': 0.03150367568904908}
+Données Zipf spam: {'const_moy': 35485.13912209956, 'cout_min': 4.848725944493132, 
+	'coef_min': 0.93}
+Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736, 
+	'ratio_texte': 0.023598168648092978}
+		\end{verbatim}
 
 \newpage
 \section{Phase 3}
 
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage	
 \appendix
 \section{Développement visualisation distribution de Zipf}
+	\label{sec:devZipf}
 	\paragraph{Présentation}
 		La loi de distribution de Zipf est une loi empirique (basée sur l'observation) qui veut que le mot le plus fréquent est, à peu de chose près, 2 fois plus fréquent que le $2^{eme}$, 3 fois plus fréquent que le $3^{eme}$ etc.\\
 		
@@ -1704,7 +1798,14 @@ plt.show()\end{lstlisting}
 				Le modèle Naïve Bayes est un modèle simple et rapide qui ne nécessite pas de grande capacités de calcul. De ce fait il permet de traiter une grande quantité de données.\\
 				
 				Cependant, les données qui lui sont fournies ne doivent pas être corrélées ce qui est rarement le cas dans les problèmes du monde réel. Ce type de modèle est limité à des problèmes de classification supervisée. Si on se fie à l'équation (\ref{NBeq}) la probabilité d'apparition de l’évènement B : P(B) ne peut pas être nulle. 
-																
+						
+		\subsection{Réseau de neurones}		
+		
+		\subsection{TensorFlow}
+		
+		
+		
+										
 	\section{Bibliographie}
 		\bibliographystyle{plain}
 		\bibliography{IED_L3_Projet_Inglang_Fouille_IA}
