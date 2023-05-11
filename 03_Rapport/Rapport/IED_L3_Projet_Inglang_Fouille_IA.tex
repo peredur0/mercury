@@ -848,19 +848,137 @@ Données stats de l'étape: mise en base:
 			\item nombre d'hapax par rapport au total des mots du texte
 		\end{itemize}
 		
-		\paragraph{Statistiques des mots} Lorem Ipsum
+		\paragraph{Statistiques des mots et caractères} Lorem Ipsum
+			\begin{table}[htbp]
+				\centering
+				\captionof{table}{Statistiques sur les données des mots}
+				\resizebox{\columnwidth}{!}{\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+					\hline
+								& \multicolumn{3}{|c|}{nombre de mots} & \multicolumn{3}{|c|}{mots uniques} & \multicolumn{3}{|c|}{mots capitalisés} & \multicolumn{3}{|c|}{mots majuscules} \\
+								& Global		& Ham 	& Spam 	& Global		& Ham	& Spam	& Global		& Ham	& Spam	& Global		& Ham	& Spam	\\
+					\hline
+					moyenne		& 243		& 205	& 343	& 130		& 116	& 167	& 41			& 34		& 59		& 14			& 8		& 29		\\
+					\hline
+					écart-type	& 586		& 531	& 701	& 187		& 180	& 198	& 114		& 111	& 119	& 49			& 39		& 66		\\
+					\hline
+					minimum		& 1			& 3		& 1		& 1			& 3		& 1		& 0			& 0		& 0		& 0			& 0		& 0		\\
+					\hline
+					25\%			& 53			& 44		& 94		& 46			& 39		& 73		& 9			& 8		& 15		& 2			& 2		& 3		\\
+					\hline
+					médiane		& 105		& 85		& 161	& 80			& 68		& 110	& 17			& 14		& 32		& 4			& 3		& 10		\\
+					\hline
+					75\%			& 215		& 174	& 326	& 139		& 120	& 191	& 35			& 25		& 60		& 10			& 7		& 24		\\
+					\hline
+					maximum		& 14127		& 14127	& 11274	& 4322		& 4322	& 2479	& 4656		& 4656	& 2192	& 1969		& 1969	& 763	\\
+					\hline
+				\end{tabular}}
+			\end{table}
+				
+				\begin{table}[H]
+					\centering
+					\captionof{table}{Statistiques sur les données des caractères}
+					\begin{tabular}{|l|c|c|c|c|c|c|}
+						\hline
+									& \multicolumn{3}{|c|}{caractères en minuscule} & \multicolumn{3}{|c|}{caractères en majuscule}\\
+									& Globale	& Ham 	& Spam 	& Globale	& Ham	& Spam	\\
+						\hline
+						moyenne		& 1084		& 923	& 1511	& 111		& 66		& 232	\\
+						\hline
+						écart-type	& 2816		& 2518	& 3448	& 736		& 222	& 1351	\\
+						\hline
+						minimum		& 0			& 3		& 0		& 0			& 0		& 0		\\
+						\hline
+						25\%			& 223		& 187	& 380	& 15			& 13		& 43		\\
+						\hline
+						médiane		& 442		& 367	& 675	& 31			& 23		& 84		\\
+						\hline
+						75\%			& 917		& 755	& 1410	& 76			& 44		& 173	\\
+						\hline
+						maximum		& 68082		& 68082	& 54406	& 50543		& 6450	& 50543	\\
+						\hline
+						
+					\end{tabular}
+				\end{table}
+		
 		
 		\paragraph{Statistiques des ponctuations} Lorem Ipsum
+			\begin{table}[htbp]
+				\centering
+				\captionof{table}{Statistiques sur les ponctuations}
+				\resizebox{\columnwidth}{!}{\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+					\hline
+								& \multicolumn{3}{|c|}{points} & \multicolumn{3}{|c|}{virgules} & \multicolumn{3}{|c|}{exclamations} & \multicolumn{3}{|c|}{interrogations} \\
+								& Global		& Ham 	& Spam 	& Global		& Ham	& Spam	& Global		& Ham	& Spam	& Global		& Ham	& Spam	\\
+					\hline
+					moyenne		& 14			& 12		& 20		& 12			& 11		& 16		& 2			& 0.7	& 5.9	& 1			& 0.9	& 1.3	\\
+					\hline
+					écart-type	& 35			& 30		& 46		& 37			& 31		& 50		& 7			& 5		& 10		& 2			& 2		& 3		\\
+					\hline
+					minimum		& 0			& 0		& 0		& 0			& 0		& 0		& 0			& 0		& 0		& 0			& 0		& 0		\\
+					\hline
+					25\%			& 3			& 3		& 3		& 2			& 2		& 2		& 0			& 0		& 1		& 0			& 0		& 0		\\
+					\hline
+					médiane		& 6			& 5		& 9		& 5			& 4		& 6		& 0			& 0		& 3		& 0			& 0		& 0		\\
+					\hline
+					75\%			& 13			& 11		& 18		& 10			& 9		& 14		& 2			& 1		& 7		& 1			& 1		& 1		\\
+					\hline
+					maximum		& 848		& 848	& 643	& 1268		& 890	& 1268	& 343		& 343	& 92		& 79			& 79		& 58		\\
+					\hline
+				\end{tabular}}
+			\end{table}
+				
+		\paragraph{Statistiques des espaces et des lignes}
+			\begin{table}[htbp]
+				\centering
+				\captionof{table}{Statistiques sur les espaces et les lignes}
+				\resizebox{\columnwidth}{!}{\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+					\hline
+								& \multicolumn{3}{|c|}{tabulations} & \multicolumn{3}{|c|}{espaces} & \multicolumn{3}{|c|}{lignes} & \multicolumn{3}{|c|}{lignes vides} \\
+								& Globale	& Ham 	& Spam 	& Globale	& Ham	& Spam	& Globale	& Ham 	& Spam 	& Globale	& Ham	& Spam	\\
+					\hline
+					moyenne		& 2			& 2		& 3		& 287		& 240	& 411	& 65			& 57	 	& 86	 	& 15			& 13		& 19		\\
+					\hline
+					écart-type	& 29			& 32		& 19		& 874		& 917	& 733	& 137		& 144 	& 113 	& 44			& 50		& 22		\\
+					\hline
+					minimum		& 0			& 0		& 0		& 1			& 2		& 1		& 1			& 1	 	& 1	 	& 0			& 0		& 0		\\
+					\hline
+					25\%			& 0			& 0		& 0		& 55			& 45		& 99		& 21			& 19	 	& 28	 	& 6			& 6		& 8		\\
+					\hline
+					médiane		& 0			& 0		& 0		& 114		& 95		& 196	& 34			& 30	 	& 52	 	& 9			& 8		& 13		\\
+					\hline
+					75\%			& 0			& 0		& 0		& 255		& 196	& 435	& 61			& 48	 	& 97	 	& 14			& 12		& 23		\\
+					\hline
+					maximum		& 1118		& 1118	& 379	& 36350		& 36350	& 11436	& 6320		& 6320 	& 1695 	& 2882		& 2882	& 291	\\
+					\hline
+					
+				\end{tabular}}
+			\end{table}
+		
+		
+		
 	
 		\paragraph{Distribution de Zipf} Cette distribution est une loi empirique qui permet de décrire un classement des mots selon leur fréquence d'apparition. Les fonctions utilisées pour la mise en œuvre de cette distribution ont été réalisées par mes soins. L'annexe \ref{sec:devZipf} détaille le développement de cette fonctionnalité.  
 		
 			Les données suivantes montre la représentation de cette distribution pour l'ensemble du corpus.
 			\begin{figure}[H]
-				\includegraphics[width=\linewidth]{}
-				\caption{Distribution du nombre de liens selon la catégorie du mail}
-			\end{figure}
-						
-			%image 	
+  				\centering
+  				\begin{subfigure}[b]{0.3\linewidth}
+    					\includegraphics[width=\linewidth]{img/zipfGlobal.png}
+    					\caption{Ham + Spam}
+  				\end{subfigure}
+  				\begin{subfigure}[b]{0.3\linewidth}
+    					\includegraphics[width=\linewidth]{img/zipfHam.png}
+    					\caption{Ham}
+  				\end{subfigure}
+  				\begin{subfigure}[b]{0.3\linewidth}
+  					\includegraphics[width=\linewidth]{img/zipfSpam.png}
+  					\caption{Spam}
+				\end{subfigure}  				
+  				\label{fig:coffee}
+			\end{figure}	
+			
+			On voit dans les graphiques ci dessus que les corpus Ham, Spam et l'association des deux respectent une distribution zipfienne.
+			
 			\begin{table}[H]
 			\centering
 				\begin{tabular}{|l|c|c|c||c|c|c|}
@@ -875,21 +993,16 @@ Données stats de l'étape: mise en base:
 					\hline
 				\end{tabular}
 			\end{table}
-							
-		% Récupération des données stats, affichage
-		% globale
+			
+			On remarque à partir du tableau ci dessus que la constante estimée est plus importante dans les corpus Ham que dans le corpus Spam. La constante des Ham (52712) est assez proche de la constante moyenne découverte avec le corpus de Brown lors du développement de cette méthode (56525). Il est possible d'émettre l'hypothèse que le vocabulaire des Ham est plus fournis. On remarque également que le taux d'hapax dans le vocabulaire des Ham est de 48\% alors que cette proportion est de 40\% pour les Spam.    
 		
-		% par catégorie 
-		
-		
-
 	\subsection{Traitement du langage}
 		% Module de lemmatization 
 		
 		% Vectorisation TF-IDF
 
 
-
+	\newpage
 	\subsection{Sortie de la partie 2}
 		\begin{verbatim}
 === Phase 2 : Stats Exploitation ===
