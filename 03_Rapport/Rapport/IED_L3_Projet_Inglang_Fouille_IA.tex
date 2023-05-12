@@ -848,10 +848,10 @@ Données stats de l'étape: mise en base:
 			\item nombre d'hapax par rapport au total des mots du texte
 		\end{itemize}
 		
-		\paragraph{Statistiques des mots et caractères} Lorem Ipsum
+		\paragraph{Statistiques des mots et caractères}
 			\begin{table}[htbp]
 				\centering
-				\captionof{table}{Statistiques sur les données des mots}
+				\captionof{table}{Statistiques sur les données des mots} \label{tab:smots}
 				\resizebox{\columnwidth}{!}{\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
 					\hline
 								& \multicolumn{3}{|c|}{nombre de mots} & \multicolumn{3}{|c|}{mots uniques} & \multicolumn{3}{|c|}{mots capitalisés} & \multicolumn{3}{|c|}{mots majuscules} \\
@@ -873,10 +873,11 @@ Données stats de l'étape: mise en base:
 					\hline
 				\end{tabular}}
 			\end{table}
-				
+			Le tableau \ref{tab:smots}, sur les données des mots, montre que les Spam ont généralement plus de mots, 343 contre 205 en moyenne pour les Hams. Cela est également vrai pour les mots uniques par messages, les spams en contiennent globalement plus. Concernant la forme des mots, on voit que les mots avec majuscules sont plus souvent utilisés. Enfin, il est important de noter la forte dispersion des données de toutes ces métriques quelque soit la catégorie. 					
+			
 				\begin{table}[H]
 					\centering
-					\captionof{table}{Statistiques sur les données des caractères}
+					\captionof{table}{Statistiques sur les données des caractères} \label{tab:schar}
 					\begin{tabular}{|l|c|c|c|c|c|c|}
 						\hline
 									& \multicolumn{3}{|c|}{caractères en minuscule} & \multicolumn{3}{|c|}{caractères en majuscule}\\
@@ -899,12 +900,13 @@ Données stats de l'étape: mise en base:
 						
 					\end{tabular}
 				\end{table}
+				Le tableau \ref{tab:schar} qui montre les données des caractères minuscules et majuscules montre une taille moyenne des Spam plus grande que celle des Ham. Il est également intéressant de noter que l'utilisation des majuscules est plus prononcée dans les Spam.  
 		
 		
 		\paragraph{Statistiques des ponctuations} Lorem Ipsum
 			\begin{table}[htbp]
 				\centering
-				\captionof{table}{Statistiques sur les ponctuations}
+				\captionof{table}{Statistiques sur les ponctuations} \label{tab:sponct}
 				\resizebox{\columnwidth}{!}{\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
 					\hline
 								& \multicolumn{3}{|c|}{points} & \multicolumn{3}{|c|}{virgules} & \multicolumn{3}{|c|}{exclamations} & \multicolumn{3}{|c|}{interrogations} \\
@@ -926,11 +928,13 @@ Données stats de l'étape: mise en base:
 					\hline
 				\end{tabular}}
 			\end{table}
-				
+			
+			Le tableau \ref{tab:sponct} des données de ponctuation donne l'information que les textes des Spam utilisent plus de signes de ponctuation que les Ham. Il faut relever que l'utilisation des points d'interrogation est anecdotique pour les deux catégories.  			
+			
 		\paragraph{Statistiques des espaces et des lignes}
 			\begin{table}[htbp]
 				\centering
-				\captionof{table}{Statistiques sur les espaces et les lignes}
+				\captionof{table}{Statistiques sur les espaces et les lignes} \label{tab:sspace}
 				\resizebox{\columnwidth}{!}{\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
 					\hline
 								& \multicolumn{3}{|c|}{tabulations} & \multicolumn{3}{|c|}{espaces} & \multicolumn{3}{|c|}{lignes} & \multicolumn{3}{|c|}{lignes vides} \\
@@ -953,10 +957,10 @@ Données stats de l'étape: mise en base:
 					
 				\end{tabular}}
 			\end{table}
+			
+			Le tableau \ref{tab:sspace} regroupe les données des espace vide et le calcul du nombre de lignes. On remarque que les tabulations ne sont pas utilisées, sauf en grande quantité. Il pourrait être intéressant de voir si cet élément peut être utiliser pour détecter les documents générant des valeurs aberrantes. Pour ce qui est du nombre d'espaces, de lignes et de lignes vide, la moyenne des Spam est approximativement le double de celle des Ham.
 		
 		
-		
-	
 		\paragraph{Distribution de Zipf} Cette distribution est une loi empirique qui permet de décrire un classement des mots selon leur fréquence d'apparition. Les fonctions utilisées pour la mise en œuvre de cette distribution ont été réalisées par mes soins. L'annexe \ref{sec:devZipf} détaille le développement de cette fonctionnalité.  
 		
 			Les données suivantes montre la représentation de cette distribution pour l'ensemble du corpus.
@@ -995,6 +999,8 @@ Données stats de l'étape: mise en base:
 			\end{table}
 			
 			On remarque à partir du tableau ci dessus que la constante estimée est plus importante dans les corpus Ham que dans le corpus Spam. La constante des Ham (52712) est assez proche de la constante moyenne découverte avec le corpus de Brown lors du développement de cette méthode (56525). Il est possible d'émettre l'hypothèse que le vocabulaire des Ham est plus fournis. On remarque également que le taux d'hapax dans le vocabulaire des Ham est de 48\% alors que cette proportion est de 40\% pour les Spam.    
+			
+			\paragraph{Conclusion}
 		
 	\subsection{Traitement du langage}
 		% Module de lemmatization 
@@ -1029,7 +1035,7 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 \newpage
 \section{Phase 3}
 
-
+% Recherche des outliers
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
