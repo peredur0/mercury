@@ -8,6 +8,7 @@ Analyse statistique sur les données de la phase 2.
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 
 from databases.psql_cmd import connect_db, exec_query
 from databases.psql_db import secrets as psql_secrets
@@ -166,12 +167,19 @@ if __name__ == '__main__':
     fig.tight_layout(pad=0.5)
     add_hist(df_ham, df_spam, 'constante', 200, 30, "Répartition par constante calculée", ax[0, 0])
     add_hist(df_ham, df_spam, 'coefficient', 1.5, 30, "Répartition par coefficient", ax[0, 1])
-    add_hist(df_ham, df_spam, 'tx_erreur', 1, 30, "Répartition par taux d'erreur ", ax[0, 2])
+    add_hist(df_ham, df_spam, 'tx_erreur', 6, 30, "Répartition par taux d'erreur ", ax[0, 2])
     add_hist(df_ham, df_spam, 'nombre', 200, 30, "Répartition par nombre d'hapax", ax[1, 0])
     add_hist(df_ham, df_spam, 'ratio_unique', 1, 30, "Répartition par ratio hapax/vocabulaire",
              ax[1, 1])
     add_hist(df_ham, df_spam, 'ratio_texte', 1, 30, "Répartition par ratio hapax/nombre de mots",
              ax[1, 2])
+    plt.show()
+
+    # Matrice de corrélation
+    df_corr = g_stats.drop(['type'], axis=1)
+    df_corr.rename(columns={'nombre': 'hapax'}, inplace=True)
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(df_corr.corr(), annot=True)
     plt.show()
 
 
