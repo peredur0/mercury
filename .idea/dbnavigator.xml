@@ -55,14 +55,16 @@ join spam as s on g.etape like s.etape]]></console>
           <description value="" />
           <database-type value="SQLITE" />
           <config-type value="BASIC" />
-          <database-version value="3.39" />
-          <driver-source value="BUILTIN" />
+          <database-version value="3.41" />
+          <driver-source value="BUNDLED" />
           <driver-library value="" />
           <driver value="" />
           <url-type value="FILE" />
           <host value="" />
           <port value="" />
           <database value="" />
+          <tns-folder value="" />
+          <tns-profile value="" />
           <files>
             <file path="$PROJECT_DIR$/databases/sqlite_db/stats_dev.db" schema="main" />
           </files>
@@ -143,13 +145,15 @@ join spam as s on g.etape like s.etape]]></console>
           <database-type value="POSTGRES" />
           <config-type value="BASIC" />
           <database-version value="14.2" />
-          <driver-source value="BUILTIN" />
+          <driver-source value="BUNDLED" />
           <driver-library value="" />
           <driver value="" />
           <url-type value="DATABASE" />
           <host value="localhost" />
           <port value="5433" />
           <database value="mail_features" />
+          <tns-folder value="" />
+          <tns-profile value="" />
           <type value="USER_PASSWORD" />
           <user value="postgres" />
           <deprecated-pwd value="cG9zdGdyZXM=" />

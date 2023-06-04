@@ -1076,10 +1076,38 @@ Données stats de l'étape: mise en base:
 				
 				
 			\paragraph{Matrice de corrélation}
+				La corrélation entre 2 variables permet de voir l'interdépendance entre elles. Il est alors possible de voir si leurs augmentations ou diminutions sont de nature à être liées. Cette relation peut dans certain cas montrer une relation de cause à effet. 
+				
+				Le calcul des coefficients présentés dans la matrice de la Figure \ref{fig:corr} utilise la méthode de corrélation linéaire de Pearson.
+				Il s'agit ici de calculer le ratio ($r$) de la covariance entre 2 variables par le produit de leurs écart-types.
+				
+				\begin{eqnarray*}
+					r_{X,Y} &=& \frac{cov(X,Y)}{\sigma_{X}\sigma_{y}}\\
+					r_{X,Y} &=& \frac{\sum_{i=1}^{n}(x_{i}-\overline{x})(y_{i}-\overline{y})}{\sqrt{\sum_{i=1}^{n}(x_{i}-\overline{x})^{2}}\sqrt{\sum_{i=1}^{n}(y_{i}-\overline{y})^{2}}}
+				\end{eqnarray*}
+				
+				Une corrélation forte sera proche des bornes $1$ et $-1$. Une corrélation faible sera proche de $0$. 
+			
 				\begin{figure}[H]
 					\includegraphics[width=\linewidth]{img/p2corr.png}
 					\caption{Matrice de corrélation des métriques}
+					\label{fig:corr}
 				\end{figure}	
+				
+				On peut remarquer que les nombre de mots, de caractères en minuscule, de points et de virgules sont fortement corrélés.
+				On voit également que certaines métriques sont quasiment indépendante de la plus part des autres variables:
+				\begin{itemize}
+					\item nombre de caractères en majuscules
+					\item nombre de mots en majuscules
+					\item nombre de point d'exclamation
+					\item nombre de point d'interrogation
+					\item nombre de tabulation
+					\item coefficient Zipf déterminé
+					\item ratio d'hapax dans le vocabulaire
+					\item ratio d'hapax dans tout le texte
+				\end{itemize}
+				
+				Les variables dénombrant les espaces et les lignes (vides ou non) sont faiblement liées aux signes de ponctuations.
 			
 			
 			\paragraph{Conclusion}
