@@ -813,12 +813,129 @@ Données stats de l'étape: mise en base:
 \newpage
 \section{Phase 2: Traitement des données}
 	Les opérations de cette phase ont pour but d'extraire les caractéristiques des textes collectés à la phase précédente. 
-	Nous allons premièrement rechercher des informations numériques sur la forme des messages (nombre de mots, de ponctuations,...).  
-	Dans un second temps, nous appliqueront des techniques de traitement du langage naturel pour travailler sur le fond des corps de mail. 
+	Puis, Nous allons rechercher des informations numériques sur la forme des messages (nombre de mots, de ponctuations,...).  
+	Enfin, nous appliqueront des techniques de traitement du langage naturel pour travailler sur le fond des corps de mail. 
 	
+	\subsection{Génération des données}
+		Nous verrons ici le code utilisé pour récupérer ou générer les données des caractéristiques pour chaque message ainsi que la distribution de Zipf de manière globale.
+		\begin{figure}[H]
+			\includegraphics[width=\linewidth]{img/SchemaPhase2.jpg}
+			\caption{Schéma des étapes de récupération des données}
+		\end{figure}
+		
+		Les mails sont récupérés dans la base ElasticSearch. Les Ham et les Spam sont séparés dans deux listes distinctes.
+		\begin{lstlisting}[title=Récupération des messages dans la base ES]
+def recup_mails(es_index):
+    es_cli = elastic_cmd.es_connect(es_secrets.serveur, (es_secrets.apiid, es_secrets.apikey), es_secrets.ca_cert)
+    data = {}
+    for cat in ['spam', 'ham']:
+        print("-- Recuperation des {}...".format(cat), end=' ')
+        data[cat] = {entry.get('_source').get('hash'): entry.get('_source').get('message') for entry in elastic_cmd.es_get_all(es_cli, es_index, sort={'hash': 'asc'},query={'match': {'categorie': cat}})}
+        print('OK')
+    return data		
+		\end{lstlisting}
+		
+		Chaque message va ensuite passer par une série de traitement pour générer les données des caractéristiques avant d'être mise en base dans Postgresql. 
+		
+		\begin{lstlisting}[title=Pipeline pour chaque message]
+def stats_pipe_message(hash_message, message, psql_cli):
+    resp = psql_cmd.get_data(psql_cli, 'messages', ['id_message'], f"hash LIKE '{hash_message}'")
+    if not resp:
+        print(f"No id_message found for {hash_message}", file=sys.stderr)
+        return
+    id_mess = resp[0].get('id_message')
+
+    for table, stat_func in {'stat_ponct': stats_ponct,
+                             'stats_mots': stats_mot,
+                             'zipf': stats_zipf,
+                             'hapax': stats_hapax}.items():
+        resp = psql_cmd.get_data(psql_cli, table, ['id_message'], f"id_message={id_mess}")
+        if resp:
+            continue
+        psql_cmd.insert_data(psql_cli, table, stat_func(id_mess, message)
+        
+def stats_ponct(id_text, texte):
+    return {
+        "id_message": id_text,
+        "point": texte.count('.'),
+        "virgule": texte.count(','),
+        "exclamation": texte.count('!'),
+        "interrogation": texte.count('?'),
+        "tabulation": texte.count('\t'),
+        "espace": texte.count(' '),
+        "ligne": texte.count('\n') + 1,
+        "ligne_vide": len(re.findall(r'^\s*$', texte, re.MULTILINE))
+    }
+
+
+def stats_mot(id_text, texte):
+    tokens = re.findall(r'\w+', texte, re.MULTILINE).
+    return {
+        'id_message': id_text,
+        'char_min': len(re.findall(r'[a-z]', texte, re.MULTILINE)),
+        'char_maj': len(re.findall(r'[A-Z]', texte, re.MULTILINE)),
+        'mots': len(tokens),
+        'mots_uniques': len(set(tokens)),
+        'mot_maj': sum(mot.isupper() for mot in tokens),
+        'mot_cap': sum(bool(re.match(r'[A-Z][a-z]+', mot)) for mot in tokens)
+    }
+
+
+def stats_zipf(id_text, texte):
+    tokens = re.findall(r'\w+', texte, re.MULTILINE)
+    data = stats.zipf_process(tokens)
+    data['id_message'] = id_text
+    data['constante'] = data.pop('const_moy')
+    data['coefficient'] = data.pop('coef_min')
+    data['tx_erreur'] = data.pop('cout_min')
+    return data
+
+
+def stats_hapax(id_text, texte):
+    tokens = re.findall(r'\w+', texte, re.MULTILINE)
+    data = stats.hapax(tokens)
+    data['id_message'] = id_text
+    data['nombre'] = data.pop('nombres')
+    data['ratio_unique'] = data.pop('ratio_mots_uniques')
+    return data
+		\end{lstlisting}
+		
+	J'ai également réaliser les calculs de la distribution de Zipf sur l'ensemble du corpus ainsi que sur le regroupement des Ham et des Spam pour voir si des différences majeures pouvaient être mises en lumière. Les résultats de cette recherche sont affiché directement dans la console.
+		
+	\begin{lstlisting}[title=Pipeline pour les données globales]
+def stats_pipe_globale(data):
+    ls_ham = [mess for mess in data['ham'].values()]
+    ls_spam = [mess for mess in data['spam'].values()]
+    tokens = []
+    for mess in ls_ham + ls_spam:
+        tokens += re.findall(r'\w+', mess, re.MULTILINE)
+    data = stats.zipf_process(tokens, True)
+    print("Donnees Zipf ham+spam:", data)
+    data = stats.hapax(tokens)
+    print("Donnees Hapax ham+spam:", data)
+
+    tokens = []
+    for mess in ls_ham:
+        tokens += re.findall(r'\w+', mess, re.MULTILINE)
+    data = stats.zipf_process(tokens, True)
+    print("Donnees Zipf ham:", data)
+    data = stats.hapax(tokens)
+    print("Donnees Hapax ham:", data)
+
+    tokens = []
+    for mess in ls_spam:
+        tokens += re.findall(r'\w+', mess, re.MULTILINE)
+    data = stats.zipf_process(tokens, True)
+    print("Donnees Zipf spam:", data)
+    data = stats.hapax(tokens)
+    print("Donnees Hapax spam:", data
+	\end{lstlisting}
+	
+	Les fonctions pour les instructions pour la distribution de Zipf sont donnés dans l'annexe \ref{sec:devZipf}.
 	
 	\subsection{Analyses statistiques}
-		Dans un premier temps, nous verrons si globalement les mails respectent la distribution de Zipf. Puis nous nous intéresserons aux données statistiques suivantes message par message:
+		Dans cette partie nous nous intéressons aux données statistiques des caractéristiques récupérées lors de la phase précédente. 
+		Nous verrons dans un premier temps les données des mots:
 		\begin{itemize}
 			\item nombre de mots
 			\item nombre de mots uniques
@@ -873,7 +990,7 @@ Données stats de l'étape: mise en base:
 					\hline
 				\end{tabular}}
 			\end{table}
-			Le tableau \ref{tab:smots}, sur les données des mots, montre que les Spam ont généralement plus de mots, 343 contre 205 en moyenne pour les Hams. Cela est également vrai pour les mots uniques par messages, les spams en contiennent globalement plus. Concernant la forme des mots, on voit que les mots avec majuscules sont plus souvent utilisés. Enfin, il est important de noter la forte dispersion des données de toutes ces métriques quelque soit la catégorie. 					
+			Le tableau \ref{tab:smots}, sur les données des mots, montre que les Spam ont généralement plus de mots, 343 contre 205 en moyenne pour les Hams. Cela est également vrai pour les mots uniques par messages, les spams en contiennent globalement plus. Concernant la forme des mots, on voit que les mots avec majuscules sont plus souvent utilisés dans les Spam. Enfin, il est important de noter la forte dispersion des données de toutes ces métriques quelque soit la catégorie. 					
 			
 				\begin{table}[H]
 					\centering
@@ -1082,7 +1199,7 @@ Données stats de l'étape: mise en base:
 				Il s'agit ici de calculer le ratio ($r$) de la covariance entre 2 variables par le produit de leurs écart-types.
 				
 				\begin{eqnarray*}
-					r_{X,Y} &=& \frac{cov(X,Y)}{\sigma_{X}\sigma_{y}}\\
+					r_{X,Y} &=& \frac{cov(X,Y)}{\sigma_{X}\sigma_{Y}}\\
 					r_{X,Y} &=& \frac{\sum_{i=1}^{n}(x_{i}-\overline{x})(y_{i}-\overline{y})}{\sqrt{\sum_{i=1}^{n}(x_{i}-\overline{x})^{2}}\sqrt{\sum_{i=1}^{n}(y_{i}-\overline{y})^{2}}}
 				\end{eqnarray*}
 				
@@ -1110,8 +1227,29 @@ Données stats de l'étape: mise en base:
 				Les variables dénombrant les espaces et les lignes (vides ou non) sont faiblement liées aux signes de ponctuations.
 			
 			
-			\paragraph{Conclusion}
+			\paragraph{Résumé} L'analyse de l'utilisation des données des mots permet me mettre en lumière les points suivants :
+			\begin{itemize}
+				\item Les Spam sont généralement plus long que les Ham
+				\item On retrouve plus de caractères en majuscules dans les Spam que dans les Ham
+				\item Les nombres de mots et de mots uniques sont fortement corrélés
+			\end{itemize}
 			
+			Les données sur l'utilisation des ponctuations ne montre pas d'écart majeur entre les Ham et les Spam sur l'utilisation des points et des virgule. Cependant l'utilisation des points d'exclamation est nettement plus forte dans les Spam. \\
+			L'utilisation de point d'exclamation et de majuscule est susceptible d'induire une notion d'urgence chez le lecteur.\\
+			
+			Les données des lignes et des espaces ne permettent de faire une différence franche entre les Ham et les Spams au regards des autres données.\\ 
+			
+			Globalement, les Ham et les Spam respectent les principes de la distribution de Zipf. Le coefficient est identique pour chacun des deux corpus. La constante et le nombre d'Hapax plus importantes pour les Ham s'expliquent par un nombre de document largement supérieur.
+			 
+			En regardant les données de la distribution de Zipf appliquée à chaque mail on remarque un coefficient moyen plus élevé et qui semble plus précis pour les Ham. Il est également notable que les mots se répètent moins dans les messages Ham.\\
+			
+			
+			En conclusion, on peut supposer les faits suivants : 
+			\begin{itemize}
+				\item Le vocabulaire d'un Ham est plus fourni que celui d'un Spam.
+				\item Il y a plus de mots dans un Spam.
+				\item Un Spam aura probablement une construction induisant une notion d'urgence.
+			\end{itemize}
 			
 		
 	\subsection{Traitement du langage}
