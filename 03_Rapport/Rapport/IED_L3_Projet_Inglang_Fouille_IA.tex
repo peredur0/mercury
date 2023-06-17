@@ -1253,10 +1253,45 @@ def stats_pipe_globale(data):
 			
 		
 	\subsection{Traitement du langage}
-		% Module de lemmatization 
+		 Dans cette section nous aborderons des traitements du langage naturel qui vont être employés afin de tenter de détecter des similitudes dans les thèmes aborder dans les mails de chaque catégorie. 
+		 
+		 % Schéma du traitement
+	
+		\subsubsection{Lemmatisation}
+			La lemmatisation d'un texte vise à réduire la taille d'un texte en ramenant chaque mot à la forme du mot présente dans le dictionnaire. Ce traitement permet donc de compter le nombre d'occurence d'un mot sans se soucier de sa forme ou des modifications grammaticales appliquées lors de la rédaction du texte. A l'issue de ce traitement nous serons en mesure de connaître les mots les plus utilisés dans les corps des mails et tenter de déterminer les thèmes les plus récurrents.  
+			Dans ce projet, nous allons utiliser le moteur de lemmatisation de \emph{StandfordNLP}\cite{manning-EtAl:2014:P14-5}\cite{qi2020stanza}
+			Les traitements nécessaire pour arriver à une lemmatisation sont :
+			\begin{enumerate}
+				\item Tokenisation : Séparer les phrases en token. Ici chaque token correspond à un mot ou à une ponctuation.
+				\item Multi-Word Token Expansion : Ce traitement n'est pas nécessaire en anglais selon la documentation \emph{Stanza}. Ce traitement permet d'étendre un token s'il correspond à une contraction de plusieurs terme. Par exemple en français le terme \emph{du} sera transformé en \emph{de le}.
+				\item Part of Speech Tagging: Cette opération vise à marquer chaque mot du texte avec sa position grammaticale dans la phrase qui le contient et va permettre d'effectuer le transfert vers le lexème correspondant.
+			\end{enumerate}
+			
+			% Code d'un exemple
+			
+			% Utilisation dans le programme
+			
+			% X mots les plus fréquents dans les HAM et dans les SPAM
+			
+			% Création de la table des mots et préparation
 		
-		% Vectorisation TF-IDF
+		\subsubsection{Vectorisation TF-IDF}
+			La vectorisation d'un texte doit permettre de transposer les données textuelles en données numériques afin de pouvoir les utiliser dans des calculs statistiques ou dans les modèles d'apprentissage automatiques.\\
+			J'ai choisi d'utiliser une vectorisation TF-IDF\cite{ml-python} (Term Frequency-Inverse Document Frequency). Cette méthode se rapproche de la distribution de Zipf détaillée précédemment. En effet le score d'un terme est dépendant de la fréquence dans le document et de la fréquence de ce terme dans l'ensemble du corpus. La formule utilisée est la suivante:
+			\begin{align*}
+				W_{i,j} = tf_{i,j}*log(\frac{N}{df_{i}})
+			\end{align*}
+		
+			Avec $tf_{i,j}$ la fréquence d'apparition du mot $i$ dans le document $j$, $N$ le nombre de document dans le corpus et $df_{i}$ le nombre de document dans le corpus contenant le terme $i$. \\
+			Cette méthode permet d'attribuer des score plus élevé aux mots apparaissant plus dans un document que dans les autres documents du corpus. Nous pouvons ainsi conserver une forme de contexte d'utilisation. 
 
+			% Développement de la fonction TF-IDF
+			
+			% Exemple après 	traitement pour les HAMS et les SPAMs
+			
+			% Remplissage de la table des mots
+			
+			% Visualisation des vecteurs 
 
 	\newpage
 	\subsection{Sortie de la partie 2}
@@ -2167,17 +2202,12 @@ plt.show()\end{lstlisting}
 				Le modèle Naïve Bayes est un modèle simple et rapide qui ne nécessite pas de grande capacités de calcul. De ce fait il permet de traiter une grande quantité de données.\\
 				
 				Cependant, les données qui lui sont fournies ne doivent pas être corrélées ce qui est rarement le cas dans les problèmes du monde réel. Ce type de modèle est limité à des problèmes de classification supervisée. Si on se fie à l'équation (\ref{NBeq}) la probabilité d'apparition de l’évènement B : P(B) ne peut pas être nulle. 
-						
-		\subsection{Réseau de neurones}		
-		
-		\subsection{TensorFlow}
-		
-		
-		
+				
 										
 	\section{Bibliographie}
 		\bibliographystyle{plain}
 		\bibliography{IED_L3_Projet_Inglang_Fouille_IA}
+		
 
 
 		

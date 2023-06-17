@@ -16,7 +16,6 @@ Outils:
         * tokenisation
         * POS tagging
         * lemmas
-        * name entity
 
     - nltk
         * stopwords
@@ -29,3 +28,11 @@ Features annexes:
 ####################################################################################################
 #             NLP processing                                                                       #
 ####################################################################################################
+
+import stanza
+
+if __name__ == '__main__':
+    nlp = stanza.Pipeline(lang='en', processors='tokenize,mwt,pos,lemma')
+    doc = nlp("Barack Obama was born in Hawaii. I'm living in France.\nYou are near me")
+    print(*[f'word: {word.text+" "}\tlemma: {word.lemma}' for sent in doc.sentences for word in sent.words], sep='\n')
+
