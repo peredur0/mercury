@@ -156,6 +156,7 @@ def es_get_all(es_cli, index, sort, query):
     return documents
 
 
+
 if __name__ == '__main__':
     import json
     from databases.elastic import secrets

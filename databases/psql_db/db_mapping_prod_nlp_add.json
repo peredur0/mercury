@@ -1,0 +1,16 @@
+{
+  "mail_features_prod": {
+    "mots": {
+      "id_mot": ["SERIAL", "PRIMARY KEY"],
+      "mot": ["VARCHAR", "UNIQUE", "NOT NULL"],
+      "frequency": ["INT"],
+      "in_docs": ["INT"]
+    },
+    "messages": {
+      "id_message": ["INT", "PRIMARY KEY"],
+      "id_mot": ["INT", "PRIMARY KEY"],
+      "occurrence": ["INT", "NOT NULL"],
+      "fk": ["fk_message", "id_cat", "categories(id_cat)", "SET NULL"]
+    }
+  }
+} # NOT FINISHED

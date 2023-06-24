@@ -816,7 +816,7 @@ Données stats de l'étape: mise en base:
 	Puis, Nous allons rechercher des informations numériques sur la forme des messages (nombre de mots, de ponctuations,...).  
 	Enfin, nous appliqueront des techniques de traitement du langage naturel pour travailler sur le fond des corps de mail. 
 	
-	\subsection{Génération des données}
+	\subsection{Génération des données statistiques}
 		Nous verrons ici le code utilisé pour récupérer ou générer les données des caractéristiques pour chaque message ainsi que la distribution de Zipf de manière globale.
 		\begin{figure}[H]
 			\includegraphics[width=\linewidth]{img/SchemaPhase2.jpg}
@@ -902,7 +902,7 @@ def stats_hapax(id_text, texte):
 		
 	J'ai également réaliser les calculs de la distribution de Zipf sur l'ensemble du corpus ainsi que sur le regroupement des Ham et des Spam pour voir si des différences majeures pouvaient être mises en lumière. Les résultats de cette recherche sont affiché directement dans la console.
 		
-	\begin{lstlisting}[title=Pipeline pour les données globales]
+		\begin{lstlisting}[title=Pipeline pour les données globales]
 def stats_pipe_globale(data):
     ls_ham = [mess for mess in data['ham'].values()]
     ls_spam = [mess for mess in data['spam'].values()]
@@ -929,9 +929,32 @@ def stats_pipe_globale(data):
     print("Donnees Zipf spam:", data)
     data = stats.hapax(tokens)
     print("Donnees Hapax spam:", data
-	\end{lstlisting}
+		\end{lstlisting}
 	
 	Les fonctions pour les instructions pour la distribution de Zipf sont donnés dans l'annexe \ref{sec:devZipf}.
+		
+	\subsection{Sortie de la partie 2: Stats d'exploitation}
+		\begin{verbatim}
+=== Phase 2 : Stats Exploitation ===
+-- Récupération des spam... OK
+-- Récupération des ham... OK
+-- Récupération des statistiques par message
+Stats Spam... OK
+Stats Ham... OK
+-- Récupérations des statistiques globales
+Données Zipf ham+spam: {'const_moy': 73746.97464716957, 'cout_min': 6.37798252533617, 
+	'coef_min': 0.93}
+Données Hapax ham+spam: {'nombres': 33666, 'ratio_mots_uniques': 0.47656526478207323, 
+	'ratio_texte': 0.024792183385275213}
+Données Zipf ham: {'const_moy': 52712.404742906976, 'cout_min': 4.193202011347324, 
+	'coef_min': 0.93}
+Données Hapax ham: {'nombres': 26231, 'ratio_mots_uniques': 0.48674175650850793, 
+	'ratio_texte': 0.03150367568904908}
+Données Zipf spam: {'const_moy': 35485.13912209956, 'cout_min': 4.848725944493132, 
+	'coef_min': 0.93}
+Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736, 
+	'ratio_texte': 0.023598168648092978}
+		\end{verbatim}
 	
 	\subsection{Analyses statistiques}
 		Dans cette partie nous nous intéressons aux données statistiques des caractéristiques récupérées lors de la phase précédente. 
@@ -1287,35 +1310,13 @@ def stats_pipe_globale(data):
 
 			% Développement de la fonction TF-IDF
 			
-			% Exemple après 	traitement pour les HAMS et les SPAMs
+			% Exemple après 	traitement pour les HAM et les SPAM
 			
 			% Remplissage de la table des mots
 			
 			% Visualisation des vecteurs 
 
-	\newpage
-	\subsection{Sortie de la partie 2}
-		\begin{verbatim}
-=== Phase 2 : Stats Exploitation ===
--- Récupération des spam... OK
--- Récupération des ham... OK
--- Récupération des statistiques par message
-Stats Spam... OK
-Stats Ham... OK
--- Récupérations des statistiques globales
-Données Zipf ham+spam: {'const_moy': 73746.97464716957, 'cout_min': 6.37798252533617, 
-	'coef_min': 0.93}
-Données Hapax ham+spam: {'nombres': 33666, 'ratio_mots_uniques': 0.47656526478207323, 
-	'ratio_texte': 0.024792183385275213}
-Données Zipf ham: {'const_moy': 52712.404742906976, 'cout_min': 4.193202011347324, 
-	'coef_min': 0.93}
-Données Hapax ham: {'nombres': 26231, 'ratio_mots_uniques': 0.48674175650850793, 
-	'ratio_texte': 0.03150367568904908}
-Données Zipf spam: {'const_moy': 35485.13912209956, 'cout_min': 4.848725944493132, 
-	'coef_min': 0.93}
-Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736, 
-	'ratio_texte': 0.023598168648092978}
-		\end{verbatim}
+
 
 \newpage
 \section{Phase 3}

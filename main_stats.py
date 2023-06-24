@@ -202,19 +202,6 @@ if __name__ == '__main__':
     print('-- Récupérations des statistiques globales')
     stats_pipe_globale(p_data)
 
-
-    # 2. données Hapax
-
-    # 3. nombre de mots uniques
-
-    # print('-- NLP _ HAHAHA')
-    # NLP - LEMMATISATION ?
-    # 4. comptage des 50 mots les plus présents
-
-    # 5. Création des tables de vectorisations
-
-    # 6. vectorisation des messages
-
     psql_cli.close()
 
 
