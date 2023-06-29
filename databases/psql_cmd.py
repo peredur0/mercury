@@ -31,18 +31,18 @@ def create_db(nom, owner, user, passwd, host, port):
     client_psql.close()
 
 
-def connect_db(database, user, passwd, host, port):
+def connect_db(user, passwd, host, port, dbname=""):
     """ Connexion a la base de donnees Postgres.
     Penser a fermer la connexion
-    :param database: <str> nom de la base de donnees
     :param user: <str> utilisateur autoriser a push les donnees
     :param passwd: <str> mot de passe
     :param host: <str> localisation reseau de la bdd
     :param port: <str> port de connexion
+    :param dbname: <str> nom de la base de donnees
     :return: <psycopg2.extension.connection> objet connexion à la bdd
     """
     try:
-        client_psql = psycopg2.connect(database=database, user=user, password=passwd, host=host, port=port)
+        client_psql = psycopg2.connect(dbname=dbname, user=user, password=passwd, host=host, port=port)
     except psycopg2.Error as e:
         print("Erreur de connexion : \n{}".format(e), file=sys.stderr)
         return None
@@ -59,25 +59,32 @@ def create_table(client_psql, nom, champs):
     :param champs: <dict> nom : [type, options]
     :return:
     """
-    fk = ""
     fields = []
-
-    curseur = client_psql.cursor()
-    curseur.execute(f"DROP TABLE IF EXISTS {nom}")
-
-    if 'fk' in champs.keys():
-        ls = champs.pop('fk')
-        fk = f"CONSTRAINT {ls.pop(0)} FOREIGN KEY({ls.pop(0)}) REFERENCES {ls.pop(0)}"
-        if ls:
-            fk += f" ON DELETE {ls.pop(0)}"
+    cursor = client_psql.cursor()
 
     for key, value in champs.items():
+        if key in ['pk', 'fk']:
+            continue
         fields.append(f"{key} {' '.join(value)}")
 
+    if 'pk' in champs.keys():
+        fields.append(f"PRIMARY KEY ({','.join(champs.pop('pk'))})")
+
+    if 'fk' in champs.keys():
+        for name, val in champs['fk'].items():
+            constr = f"CONSTRAINT {name} FOREIGN KEY({val.pop(0)}) REFERENCES {val.pop(0)}"
+            if val:
+                constr += f" ON DELETE {val.pop(0)}"
+            fields.append(constr)
+
     query = f"CREATE TABLE {nom} ({', '.join(fields)})"
-    if fk:
-        query = query[:-1] + f", {fk})"
-    curseur.execute(query)
+
+    try:
+        cursor.execute(query)
+    except psycopg2.Error as f_err:
+        print(f_err, file=sys.stderr)
+    else:
+        print(f"Table '{nom}' created")
 
 
 def create_index(client_psql, nom, table, colonne):
