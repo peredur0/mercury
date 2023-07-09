@@ -73,7 +73,7 @@ join spam as s on g.etape like s.etape]]></console>
           <deprecated-pwd value="" />
         </database>
         <properties>
-          <auto-commit value="false" />
+          <auto-commit value="true" />
         </properties>
         <ssh-settings>
           <active value="false" />

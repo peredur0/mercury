@@ -26,7 +26,7 @@ def frequence_mot(bag, freq=None):
     """
     Calcule la fréquence de chaque mot dans un sac de mot
     :param bag: <list> - liste de tous les mots d'un texte
-    :param freq: <dict> - dictionnaire avec {<str> mot: <int> frequence}
+    :param freq: <dict> - dict de fréquence avec {<str> mot: <int> frequence} a augmenter
     :return: <dict> - dictionnaire avec la fréquence par mot {mot: frequence}
     """
     if freq is None:

@@ -221,7 +221,7 @@ if __name__ == '__main__':
                        port=psql_secrets.port)
 
     print("-- Création des tables PostgreSQL...", end=' ')
-    psql_conn = psql_cmd.connect_db(database=psql_db,
+    psql_conn = psql_cmd.connect_db(dbname=psql_db,
                                     user=psql_secrets.owner,
                                     passwd=psql_secrets.owner_pw,
                                     host=psql_secrets.host,
