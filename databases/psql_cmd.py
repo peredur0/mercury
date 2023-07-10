@@ -33,7 +33,7 @@ def create_db(nom, owner, user, passwd, host, port):
 
 def connect_db(user, passwd, host, port, dbname=""):
     """ Connexion a la base de donnees Postgres.
-    Penser a fermer la connexion
+    Penser à fermer la connexion
     :param user: <str> utilisateur autoriser a push les donnees
     :param passwd: <str> mot de passe
     :param host: <str> localisation reseau de la bdd
