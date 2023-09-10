@@ -48,3 +48,4 @@
 /databases/sqlite_db/stats_prod.db
 /.idea
 /README.md.back
+/databases/mongodb/docker/data/

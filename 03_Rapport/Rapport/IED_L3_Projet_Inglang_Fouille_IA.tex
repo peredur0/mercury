@@ -1276,10 +1276,78 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 			
 		
 	\subsection{Traitement du langage}
-		 Dans cette section nous aborderons des traitements du langage naturel qui vont être employés afin de tenter de détecter des similitudes dans les thèmes aborder dans les mails de chaque catégorie. 
+		 Dans cette section nous aborderons des traitements du langage naturel qui vont être employés afin de tenter de détecter des similitudes dans les thèmes abordés dans les mails de chaque catégorie. Pour cela nous allons transformer les messages en un ensemble de clé/valeur avec le mot ainsi que sa fréquence dans le document. Les données récoltées seront utilisées pour vectoriser les document avec la méthode TF-IDF. 
 		 
-		 % Schéma du traitement
-	
+			
+		 \paragraph{Schéma du traitement}
+		 
+		 
+		 \paragraph{Modification de la base de données}
+		 
+		 	Afin de stocker les informations générées pendant cette phase 3 nouvelles tables vont être ajoutée à la base de données PSQL existante:
+		 	\begin{enumerate}
+		 		\item \textbf{mot\_corpus} - Cette table regroupe les mots du corpus
+		 			\begin{itemize}
+		 				\item id\_mot - clé primaire du mot dans la base
+		 				\item mot - valeur du mot
+		 				\item freq\_corpus - fréquence du mot dans le corpus
+		 				\item freq\_documents - Nombre de document contenant le mot
+		 			\end{itemize}
+		 		\item \textbf{mots\_document} - Table faisant la liaison entre les mot et les messages
+		 			\begin{itemize}
+		 				\item id\_message - identifiant unique du message dans la base
+		 				\item id\_mot - identifiant unique du mot dans la base
+		 				\item occurence - nombre d'occurence de mot dans le message
+		 			\end{itemize}
+		 		\item \textbf{nlp\_status} - enregistrement de résultat du statut du traitement NLP
+		 			\begin{itemize}
+		 				\item id\_message - identifiant unique du message dans la base
+		 				\item success - réussite ou échec
+		 				\item raison - raison de l'échec
+		 			\end{itemize}
+		 	\end{enumerate}
+		 	
+		 	La table \textbf{nlp\_status} va permettre de ne pas traiter plusieurs fois le même message. Le module de traitement NLP standford est susceptible de généré des erreurs lors du traitement de certains messages. Ces messages seront exclus du traitement. 
+		 	
+			\begin{figure}[H]
+				\includegraphics[width=\linewidth]{img/p2Bdd.png}
+				\caption{Schéma des bases de données pour accueillir les données NLP}
+			\end{figure}
+			
+			
+			Les nouvelles tables ont été ajoutées en utilisant les fonctions présentées dans l'annexe \ref{PSQL} avec le mapping suivant:
+			\begin{lstlisting}[title=Mapping nouvelles tables]
+{
+  "mail_features_prod": {
+    "mot_corpus": {
+      "id_mot": ["SERIAL", "PRIMARY KEY"],
+      "mot": ["VARCHAR", "UNIQUE", "NOT NULL"],
+      "freq_corpus": ["INT"],
+      "freq_documents": ["INT"]
+    },
+    "mots_document": {
+      "id_message": ["INT"],
+      "id_mot": ["INT"],
+      "occurrence": ["INT"],
+      "pk": ["id_message", "id_mot"],
+      "fk": {
+        "fk_message": ["id_message", "messages(id_message)", "SET NULL"],
+        "fk_mot": ["id_mot", "mot_corpus(id_mot)", "SET NULL"]
+      }
+    },
+    "nlp_status": {
+      "id_message": ["INT"],
+      "success": ["BOOL"],
+      "raison": ["VARCHAR"],
+      "pk": ["id_message"],
+      "fk": {
+        "fk_message": ["id_message", "messages(id_message)", "SET NULL"]
+      }
+    }
+  }
+}
+			\end{lstlisting}
+			
 		\subsubsection{Lemmatisation}
 			La lemmatisation d'un texte vise à réduire la taille d'un texte en ramenant chaque mot à la forme du mot présente dans le dictionnaire. Ce traitement permet donc de compter le nombre d'occurence d'un mot sans se soucier de sa forme ou des modifications grammaticales appliquées lors de la rédaction du texte. A l'issue de ce traitement nous serons en mesure de connaître les mots les plus utilisés dans les corps des mails et tenter de déterminer les thèmes les plus récurrents.  
 			Dans ce projet, nous allons utiliser le moteur de lemmatisation de \emph{StandfordNLP}\cite{manning-EtAl:2014:P14-5}\cite{qi2020stanza}
