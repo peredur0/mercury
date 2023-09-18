@@ -4,7 +4,9 @@
       "id_mot": ["SERIAL", "PRIMARY KEY"],
       "mot": ["VARCHAR", "UNIQUE", "NOT NULL"],
       "freq_corpus": ["INT"],
-      "freq_documents": ["INT"]
+      "freq_doc_all": ["INT"],
+      "freq_doc_spam": ["INT"],
+      "freq_doc_ham": ["INT"]
     },
     "mots_document": {
       "id_message": ["INT"],

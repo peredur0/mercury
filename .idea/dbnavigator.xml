@@ -12,16 +12,6 @@
     <loaded-nodes />
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
-    <connection id="6b4be17c-e1b8-436e-8c57-dd1fec809fe1">
-      <console name="Mecury_etapes" type="STANDARD" schema="main" session="Main"><![CDATA[select * from globales
-select * from spam
-select * from ham
-
-select g.etape, g.mails as global, h.mails as ham, s.mails as spam
-from globales as g 
-join ham as h on g.etape like h.etape
-join spam as s on g.etape like s.etape]]></console>
-    </connection>
     <connection id="d2642e74-d971-4fd1-a60b-86e58c2a6ea6">
       <console name="Mercury PSQL" type="STANDARD" schema="mail_features" session="Main" />
     </connection>
@@ -32,8 +22,14 @@ join spam as s on g.etape like s.etape]]></console>
   <component name="DBNavigator.Project.DatabaseFileManager">
     <open-files />
   </component>
+  <component name="DBNavigator.Project.DatabaseSessionManager">
+    <connection id="d2642e74-d971-4fd1-a60b-86e58c2a6ea6" />
+  </component>
   <component name="DBNavigator.Project.ExecutionManager">
     <retain-sticky-names value="false" />
+  </component>
+  <component name="DBNavigator.Project.FileConnectionMappingManager">
+    <mapping file-url="file://$PROJECT_DIR$/analyse/sql_request.sql" connection-id="d2642e74-d971-4fd1-a60b-86e58c2a6ea6" session-id="MAIN" current-schema="mail_features_prod" />
   </component>
   <component name="DBNavigator.Project.MethodExecutionManager">
     <method-browser />
@@ -49,95 +45,6 @@ join spam as s on g.etape like s.etape]]></console>
   </component>
   <component name="DBNavigator.Project.Settings">
     <connections>
-      <connection id="6b4be17c-e1b8-436e-8c57-dd1fec809fe1" active="true" signed="true">
-        <database>
-          <name value="Mecury_etapes" />
-          <description value="" />
-          <database-type value="SQLITE" />
-          <config-type value="BASIC" />
-          <database-version value="3.41" />
-          <driver-source value="BUNDLED" />
-          <driver-library value="" />
-          <driver value="" />
-          <url-type value="FILE" />
-          <host value="" />
-          <port value="" />
-          <database value="" />
-          <tns-folder value="" />
-          <tns-profile value="" />
-          <files>
-            <file path="$PROJECT_DIR$/databases/sqlite_db/stats_dev.db" schema="main" />
-          </files>
-          <type value="NONE" />
-          <user value="" />
-          <deprecated-pwd value="" />
-        </database>
-        <properties>
-          <auto-commit value="true" />
-        </properties>
-        <ssh-settings>
-          <active value="false" />
-          <proxy-host value="" />
-          <proxy-port value="22" />
-          <proxy-user value="" />
-          <deprecated-proxy-pwd value="" />
-          <auth-type value="PASSWORD" />
-          <key-file value="" />
-          <key-passphrase value="" />
-        </ssh-settings>
-        <ssl-settings>
-          <active value="false" />
-          <certificate-authority-file value="" />
-          <client-certificate-file value="" />
-          <client-key-file value="" />
-        </ssl-settings>
-        <details>
-          <charset value="UTF-8" />
-          <session-management value="true" />
-          <ddl-file-binding value="true" />
-          <database-logging value="true" />
-          <connect-automatically value="true" />
-          <restore-workspace value="true" />
-          <restore-workspace-deep value="false" />
-          <environment-type value="default" />
-          <connectivity-timeout value="10" />
-          <idle-time-to-disconnect value="30" />
-          <idle-time-to-disconnect-pool value="5" />
-          <credential-expiry-time value="10" />
-          <max-connection-pool-size value="7" />
-          <alternative-statement-delimiter value="" />
-        </details>
-        <object-filters hide-empty-schemas="false" hide-pseudo-columns="false">
-          <object-type-filter>
-            <object-type name="SCHEMA" enabled="true" />
-            <object-type name="USER" enabled="true" />
-            <object-type name="ROLE" enabled="true" />
-            <object-type name="PRIVILEGE" enabled="true" />
-            <object-type name="CHARSET" enabled="true" />
-            <object-type name="TABLE" enabled="true" />
-            <object-type name="VIEW" enabled="true" />
-            <object-type name="MATERIALIZED_VIEW" enabled="true" />
-            <object-type name="NESTED_TABLE" enabled="true" />
-            <object-type name="COLUMN" enabled="true" />
-            <object-type name="INDEX" enabled="true" />
-            <object-type name="CONSTRAINT" enabled="true" />
-            <object-type name="DATASET_TRIGGER" enabled="true" />
-            <object-type name="DATABASE_TRIGGER" enabled="true" />
-            <object-type name="SYNONYM" enabled="true" />
-            <object-type name="SEQUENCE" enabled="true" />
-            <object-type name="PROCEDURE" enabled="true" />
-            <object-type name="FUNCTION" enabled="true" />
-            <object-type name="PACKAGE" enabled="true" />
-            <object-type name="TYPE" enabled="true" />
-            <object-type name="TYPE_ATTRIBUTE" enabled="true" />
-            <object-type name="ARGUMENT" enabled="true" />
-            <object-type name="DIMENSION" enabled="true" />
-            <object-type name="CLUSTER" enabled="true" />
-            <object-type name="DBLINK" enabled="true" />
-          </object-type-filter>
-          <object-name-filters />
-        </object-filters>
-      </connection>
       <connection id="d2642e74-d971-4fd1-a60b-86e58c2a6ea6" active="true" signed="true">
         <database>
           <name value="Mercury PSQL" />
@@ -151,7 +58,7 @@ join spam as s on g.etape like s.etape]]></console>
           <url-type value="DATABASE" />
           <host value="localhost" />
           <port value="5433" />
-          <database value="mail_features" />
+          <database value="mail_features_prod" />
           <tns-folder value="" />
           <tns-profile value="" />
           <type value="USER_PASSWORD" />

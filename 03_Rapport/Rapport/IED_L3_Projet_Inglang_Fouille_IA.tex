@@ -1276,14 +1276,23 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 			
 		
 	\subsection{Traitement du langage}
-		 Dans cette section nous aborderons des traitements du langage naturel qui vont être employés afin de tenter de détecter des similitudes dans les thèmes abordés dans les mails de chaque catégorie. Pour cela nous allons transformer les messages en un ensemble de clé/valeur avec le mot ainsi que sa fréquence dans le document. Les données récoltées seront utilisées pour vectoriser les document avec la méthode TF-IDF. 
+		 Dans cette section nous aborderons des traitements du langage naturel qui vont être employés afin de tenter de détecter des similitudes dans les thèmes abordés dans les mails de chaque catégorie. Pour cela nous allons transformer les messages en un ensemble de clé/valeur avec le mot ainsi que sa fréquence dans le document. Les données récoltées seront utilisées pour vectoriser les document avec la méthode TF-IDF.
 		 
 			
-		 \paragraph{Schéma du traitement}
+		 \paragraph{Schéma d’exécution}
+		 	Les corps de mail brut vont être récupérés dans la base de données ElasticSearch.\\ 
+		 	La première étape vise à vérifier que le message est déjà passé par l'étape de traitement de la phase 1 et qu'il est présent dans la base de données PSQL. Pour le moment, l'absence du message dans la base PSQL termine le traitement NLP du message. Une évolution possible serait de déclencher automatiquement les traitements précédents. \\
+		 	La deuxième étape permet d'éviter que le traitement d'un même message s'effectue plusieurs fois. cela est possible en vérifiant la présence de l'identifiant de message dans la table \emph{nlp\_status}.
+		 	Dans L'étape de lemmatisation nous allons utiliser le moteur de \emph{StandfordNLP}\cite{manning-EtAl:2014:P14-5}lcite{qi2020stanza}. Les processus utilisés sont décrits plus bas.\\
+		 	Le calcul de la fréquence des mots utilise le code développé lors la recherche de la distribution de Zipf. A l'issue de cette phase les données de fréquence pour chaque mots et messages sont mis en base.
+		 
+		 \begin{figure}[H]
+				\includegraphics[width=\linewidth]{img/p2schema.png}
+				\caption{Schéma du déroulement des instructions}
+		\end{figure}
 		 
 		 
 		 \paragraph{Modification de la base de données}
-		 
 		 	Afin de stocker les informations générées pendant cette phase 3 nouvelles tables vont être ajoutée à la base de données PSQL existante:
 		 	\begin{enumerate}
 		 		\item \textbf{mot\_corpus} - Cette table regroupe les mots du corpus
@@ -1291,7 +1300,9 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 		 				\item id\_mot - clé primaire du mot dans la base
 		 				\item mot - valeur du mot
 		 				\item freq\_corpus - fréquence du mot dans le corpus
-		 				\item freq\_documents - Nombre de document contenant le mot
+		 				\item freq\_doc\_all - nombre total de document avec le mot
+		 				\item freq\_doc\_spam - nombre de spam avec le mot
+		 				\item freq\_doc\_ham - nombre de ham avec le mot
 		 			\end{itemize}
 		 		\item \textbf{mots\_document} - Table faisant la liaison entre les mot et les messages
 		 			\begin{itemize}
@@ -1307,7 +1318,13 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 		 			\end{itemize}
 		 	\end{enumerate}
 		 	
-		 	La table \textbf{nlp\_status} va permettre de ne pas traiter plusieurs fois le même message. Le module de traitement NLP standford est susceptible de généré des erreurs lors du traitement de certains messages. Ces messages seront exclus du traitement. 
+		 	La table \textbf{nlp\_status} va permettre de ne pas traiter plusieurs fois le même message. Le module de traitement NLP standford est susceptible de généré des erreurs lors du traitement de certains messages. Ces messages seront exclus du traitement. \\
+		 	
+		 	Les erreurs rencontrées pour la fonction lemmatise sont:
+		 	\begin{itemize}
+		 		\item TypeError - POURQUOI ?????????????
+		 		\item OutOfMemoryError - POURQUOI ?????????????
+		 	\end{itemize}
 		 	
 			\begin{figure}[H]
 				\includegraphics[width=\linewidth]{img/p2Bdd.png}
@@ -1323,7 +1340,9 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
       "id_mot": ["SERIAL", "PRIMARY KEY"],
       "mot": ["VARCHAR", "UNIQUE", "NOT NULL"],
       "freq_corpus": ["INT"],
-      "freq_documents": ["INT"]
+      "freq_doc_all": ["INT"],
+      "freq_doc_spam": ["INT"],
+      "freq_doc_ham": ["INT"]
     },
     "mots_document": {
       "id_message": ["INT"],
@@ -1348,6 +1367,7 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 }
 			\end{lstlisting}
 			
+			
 		\subsubsection{Lemmatisation}
 			La lemmatisation d'un texte vise à réduire la taille d'un texte en ramenant chaque mot à la forme du mot présente dans le dictionnaire. Ce traitement permet donc de compter le nombre d'occurence d'un mot sans se soucier de sa forme ou des modifications grammaticales appliquées lors de la rédaction du texte. A l'issue de ce traitement nous serons en mesure de connaître les mots les plus utilisés dans les corps des mails et tenter de déterminer les thèmes les plus récurrents.  
 			Dans ce projet, nous allons utiliser le moteur de lemmatisation de \emph{StandfordNLP}\cite{manning-EtAl:2014:P14-5}\cite{qi2020stanza}
@@ -1363,6 +1383,8 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 			% Utilisation dans le programme
 			
 			% X mots les plus fréquents dans les HAM et dans les SPAM
+			
+			% Nombre de mails exclus
 			
 			% Création de la table des mots et préparation
 		

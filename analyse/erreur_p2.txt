@@ -1,0 +1,10 @@
+Erreur d'execution de la requete : unterminated quoted string at or near "'adviseadf"
+LINE 1: ...ISTS(SELECT id_mot FROM mot_corpus WHERE mot LIKE 'adviseadf
+                                                             ^
+
+requete : SELECT EXISTS(SELECT id_mot FROM mot_corpus WHERE mot LIKE 'adviseadf ')
+Erreur d'execution de la requete : unterminated quoted string at or near "'adviseadf"
+LINE 1: SELECT id_mot FROM mot_corpus WHERE mot LIKE 'adviseadf
+                                                     ^
+
+requete : SELECT id_mot FROM mot_corpus WHERE mot LIKE 'adviseadf '

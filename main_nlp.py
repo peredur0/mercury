@@ -66,7 +66,9 @@ def insert_mot(client_psql, id_mes, word, occurrence):
     if (False,) in psql_cmd.exec_query(client_psql, m_query):
         psql_cmd.insert_data(client_psql, 'mot_corpus', {'mot': word,
                                                          'freq_corpus': 0,
-                                                         'freq_documents': 0})
+                                                         'freq_doc_all': 0,
+                                                         'freq_doc_spam': 0,
+                                                         'freq_doc_ham': 0})
 
     try:
         id_mot = psql_cmd.get_data(client_psql, 'mot_corpus', ['id_mot'],
@@ -75,12 +77,20 @@ def insert_mot(client_psql, id_mes, word, occurrence):
         print(f"Index error avec '{mot}'")
         return
 
-    mc_data = psql_cmd.get_data(client_psql, 'mot_corpus', ['freq_corpus', 'freq_documents'],
+    t_query = (f"SELECT c.type "
+               f"FROM messages as m "
+               f"JOIN categories as c "
+               f"ON m.id_cat = c.id_cat AND m.id_message = {id_mes}")
+    cat = psql_cmd.exec_query(client_psql, t_query)[0][0]
+
+    mc_data = psql_cmd.get_data(client_psql, 'mot_corpus', ['freq_corpus', f'freq_doc_{cat}',
+                                                            'freq_doc_all'],
                                 f"id_mot = {id_mot}")[0]
 
     m_query = f"UPDATE mot_corpus SET " \
-              f"freq_corpus = {mc_data.get('freq_corpus', 0) + occurrence}," \
-              f"freq_documents = {mc_data.get('freq_documents', 0) + 1}" \
+              f"freq_corpus = {mc_data.get('freq_corpus', 0) + occurrence}, " \
+              f"freq_doc_{cat} = {mc_data.get(f'freq_doc_{cat}', 0) + 1}, " \
+              f"freq_doc_all = {mc_data.get(f'freq_doc_all', 0) + 1} " \
               f"WHERE id_mot = {id_mot}"
     psql_cmd.exec_query(client_psql, m_query)
 
