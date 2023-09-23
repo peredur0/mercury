@@ -105,6 +105,7 @@ if __name__ == '__main__':
     pipe = stanza.Pipeline(lang='en', processors='tokenize,mwt,pos,lemma')
     print("=== Phase 2 : Traitement du langage ===")
 
+    """
     psql_conf = json.load(open("./databases/psql_db/db_mapping_prod_nlp_add.json"))
     psql_db = list(psql_conf.keys())[0]
     psql_cli = psql_cmd.connect_db(dbname=psql_db,
@@ -116,11 +117,10 @@ if __name__ == '__main__':
     print("Ajout des nouvelles tables pour la vectorisation...")
     for table in psql_conf[psql_db].keys():
         psql_cmd.create_table(psql_cli, table, psql_conf[psql_db][table])
-
+    """
     p_data = recup_mails('import_prod')
-
     pat = re.compile(r'\w+')
-
+    """    
     for key, value in tqdm.tqdm(p_data.items(),
                                 desc='-- NLP process',
                                 leave=False,
@@ -154,3 +154,4 @@ if __name__ == '__main__':
     print("END")
 
     psql_cli.close()
+    """

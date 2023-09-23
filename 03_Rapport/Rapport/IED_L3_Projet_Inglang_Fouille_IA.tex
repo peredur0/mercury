@@ -50,7 +50,7 @@
 }
 
 % Packages Verbatim
-%\usepackage{moreverb}
+\usepackage{moreverb}
 
 % nouvelle commande pour ~
 %\newcommand{\tidle}{\char`\~}
@@ -1378,13 +1378,75 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 				\item Part of Speech Tagging: Cette opération vise à marquer chaque mot du texte avec sa position grammaticale dans la phrase qui le contient et va permettre d'effectuer le transfert vers le lexème correspondant.
 			\end{enumerate}
 			
-			% Code d'un exemple
-			
-			% Utilisation dans le programme
+			L'initialisation de la pipeline de lemmatisation de Stanza se fait en appelant la classe \emph{Pipeline} avec les arguments de langage et de processus dans l'ordre d'utilisation. 
+			A cette étape j'ajoute 2 filtres. Le premier va me permettre de ne conserver que les mots avec des lettres.
+			La deuxième étape permet de retirer les stopwords en anglais qui ne permettent pas d'analyser le sens du message.\\
+			La dernière étape avant la mise en base permet de compter la fréquence de chaque mot dans le texte
+			\begin{lstlisting}[title=Pipeline de lemmatisation, language=python]
+import nltk
+import stanza
+import stats
+
+nltk.download("stopwords")
+en_stopwd = set(stopwords.words('english'))
+pipe = stanza.Pipeline(lang='en', processors='tokenize,mwt,pos,lemma')
+pat = re.compile(r'\w+')
+
+def lemmatise(message, stopwds, pipeline, pattern):
+    doc = pipeline(message)
+    lemma = [mot.lemma for phrase in doc.sentences for mot in phrase.words]
+    return [lem.lower() for lem in lemma if re.match(pattern, lem) and lem.lower() not in stopwds]
+  
+stats.frequence_mot(lemmatise(value, en_stopwd, pipe, pat))
+			\end{lstlisting}
+
+			Ci dessous un exemple des étapes du traitement sur un message de la base
+			\begin{verbatim}
+>>> print(value)
+Heres the hottest thing in DVDs. Now you can make a personal backup
+copy of a DVD right onto CDR.  Our Hot new software easily takes you through
+the steps to make a copy of your own DVDs.
+NOW INCLUDED FOR FREE! Copy PLAYSTATION, MUSICMPs and all Software.
+ Step by Step Interactive Instructions 
+ All Software Tools Included On CD 
+ No DVD Burner Required 
+ FREE Live Technical Support 
+  Day Risk Free Trial Available 
+ FREE Dvd Movie of your choice LIMITED TIME OFFER!
+We have All the software you need to COPY your own DVD Movies.
+This email has been screened and filtered by our in house OPTOUT system in 
+compliance with state laws. If you wish to OPTOUT from this mailing as well 
+as the lists of thousands  of other email providers please visit  
+ZKZmblanzxaDBmnTTIcorikgl
+
+>>> lemmatise(value, en_stopwd, pipe, pat)
+['hot', 'thing', 'dvd', 'make', 'personal', 'backup', 'copy', 'dvd', 'right', 'onto',
+ 'cdr', 'hot', 'new', 'software', 'easily', 'take', 'step', 'make', 'copy', 'dvd', 
+ 'include', 'free', 'copy', 'playstation', 'musicmps', 'software', 'step', 'step',
+ 'interactive', 'instruction', 'software', 'tool', 'include', 'cd', 'dvd', 'burner', 
+ 'require', 'free', 'live', 'technical', 'support', 'day', 'risk', 'free', 'trial',
+ 'available', 'free', 'dvd', 'movie', 'choice', 'limited', 'time', 'offer', 
+ 'software', 'need', 'copy', 'dvd', 'movie', 'email', 'screen', 'filter', 'house',
+ 'optout', 'system', 'compliance', 'state', 'law', 'wish', 'optout', 'mailing', 
+ 'well', 'list', 'thousand', 'email', 'provider', 'please', 'visit',
+ 'zkzmblanzxadbmntticorikgl']
+
+>>> stats.frequence_mot(lemmatise(value, en_stopwd, pipe, pat))
+{'hot': 2, 'thing': 1, 'dvd': 6, 'make': 2, 'personal': 1, 'backup': 1, 'copy': 4, 
+ 'right': 1, 'onto': 1, 'cdr': 1, 'new': 1, 'software': 4, 'easily': 1, 'take': 1, 
+ 'step': 3, 'include': 2, 'free': 4, 'playstation': 1, 'musicmps': 1, 
+ 'interactive': 1, 'instruction': 1, 'tool': 1, 'cd': 1, 'burner': 1, 
+ 'require': 1, 'live': 1, 'technical': 1, 'support': 1, 'day': 1, 'risk': 1, 
+ 'trial': 1, 'available': 1, 'movie': 2, 'choice': 1, 'limited': 1, 'time': 1, 
+ 'offer': 1, 'need': 1, 'email': 2, 'screen': 1, 'filter': 1, 'house': 1, 
+ 'optout': 2, 'system': 1, 'compliance': 1, 'state': 1, 'law': 1, 'wish': 1, 
+ 'mailing': 1, 'well': 1, 'list': 1, 'thousand': 1, 'provider': 1, 'please': 1, 
+ 'visit': 1, 'zkzmblanzxadbmntticorikgl': 1}
+			\end{verbatim}
 			
 			% X mots les plus fréquents dans les HAM et dans les SPAM
 			
-			% Nombre de mails exclus
+			% Nombre de mails exclus et nombre de mots uniques et nombre de mots au total
 			
 			% Création de la table des mots et préparation
 		
