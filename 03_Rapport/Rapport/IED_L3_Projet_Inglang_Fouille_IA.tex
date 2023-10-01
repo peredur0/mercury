@@ -1322,8 +1322,8 @@ Données Hapax spam: {'nombres': 12396, 'ratio_mots_uniques': 0.4097309446684736
 		 	
 		 	Les erreurs rencontrées pour la fonction lemmatise sont:
 		 	\begin{itemize}
-		 		\item TypeError - POURQUOI ?????????????
-		 		\item OutOfMemoryError - POURQUOI ?????????????
+		 		\item TypeError - Provient de la présence de données non textuelle dans le corps du mail (ex  MIME)
+		 		\item OutOfMemoryError - Présence de mot beaucoup trop long pour être parsé. 
 		 	\end{itemize}
 		 	
 			\begin{figure}[H]
@@ -1444,11 +1444,114 @@ ZKZmblanzxaDBmnTTIcorikgl
  'visit': 1, 'zkzmblanzxadbmntticorikgl': 1}
 			\end{verbatim}
 			
-			% X mots les plus fréquents dans les HAM et dans les SPAM
+			Après cette phase de traitement nous avons les données numériques suivantes:\\
 			
-			% Nombre de mails exclus et nombre de mots uniques et nombre de mots au total
+			Le nombre de mail par catégorie
+			\begin{verbatim}
+SELECT c.type, COUNT(*) FROM nlp_status as n
+JOIN messages as m ON n.id_message = m.id_message
+JOIN categories as c ON m.id_cat = c.id_cat
+WHERE n.success = true
+GROUP BY c.type;
+
+ type | count 
+------+-------
+ spam |  1453
+ ham  |  3918
+			\end{verbatim}
+			
+			Le nombre de mots uniques et total de mots dans le corpus
+			\begin{verbatim}
+SELECT COUNT(mot) as mots_uniques, SUM(freq_corpus) as mots FROM mot_corpus;
+
+ mots_uniques |  mots  
+--------------+--------
+        39392 | 687121
+			\end{verbatim}
+			
+			Le nombres de mots uniques et globalement par catégorie
+			\begin{verbatim}
+SELECT c.type, COUNT(m.id_mot) as mots_uniques, SUM(m.occurrence) as mots
+FROM mots_document as m
+JOIN messages as mess ON m.id_message = mess.id_message
+JOIN categories as c ON mess.id_cat = c.id_cat
+GROUP BY c.type;
+
+ type | mots_uniques |  mots   
+------+--------------+--------
+ ham  |       285831 | 424261
+ spam |       149430 | 262860
+			\end{verbatim}
+			
+			Afin de préparer l'étape suivante qui est celle de la vectorisation, nous allons récupérer une liste de mots répondant aux caractéristiques suivantes:
+			\begin{itemize}
+				\item X mots les plus présents dans le corpus
+				\item X mots les plus présents dans chaque catégorie
+				\item X mots moins présents dans une catégorie, mais très présent dans l'autre
+				\item X mots au moins deux fois plus présent dans une catégorie que dans l'autre
+				\item X mots avec un ratio d'apparition fort dans une catégorie par rapport à l'autre
+			\end{itemize}
+			Pour cela nous allons effectuer les requêtes suivantes dans la base PSQL.
+			\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_corpus DESC
+LIMIT 200;
+
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_doc_spam DESC
+LIMIT 200;
+
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_doc_ham DESC
+LIMIT 200;
+
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_doc_ham, freq_doc_spam DESC
+LIMIT 200;
+
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_doc_spam, freq_doc_ham DESC
+LIMIT 200;
+
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham
+FROM mot_corpus
+WHERE freq_doc_ham >= 2*freq_doc_spam
+ORDER BY freq_doc_ham DESC
+LIMIT 200;
+
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham
+FROM mot_corpus
+WHERE freq_doc_spam >= 2*freq_doc_ham
+ORDER BY freq_doc_spam DESC
+LIMIT 200;
+
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham, 
+freq_doc_ham/freq_doc_spam as "ratio ham/spam"
+FROM mot_corpus
+WHERE freq_doc_ham > 0 AND freq_doc_spam > 0
+ORDER BY "ratio ham/spam" DESC
+LIMIT 200;
+
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham, 
+freq_doc_spam/freq_doc_ham as "ratio spam/ham"
+FROM mot_corpus
+WHERE freq_doc_ham > 0 AND freq_doc_spam > 0
+ORDER BY "ratio spam/ham" DESC
+LIMIT 200;
+			\end{verbatim}
+			
+			Le résultat de ces commandes détaillé dans l'annexe \ref{sec:outPSQL}. \\
+			
+			En limitant les résultats à 200 lignes pour chaque requête, j'arrive à obtenir une liste de plus de $1000$ mots uniques. J'ai pris la liberté de retirer des mots très spécifiques au dataset (spamassassinsightings, deathtospamdeathtospamdeathtospam) ainsi que tous les mots des moins de 2 caractères. La liste complète des mots retenus est également disponible dans l'annexe \ref{sec:outPSQL}.
+			
 			
 			% Création de la table des mots et préparation
+			
 		
 		\subsubsection{Vectorisation TF-IDF}
 			La vectorisation d'un texte doit permettre de transposer les données textuelles en données numériques afin de pouvoir les utiliser dans des calculs statistiques ou dans les modèles d'apprentissage automatiques.\\
@@ -2098,6 +2201,673 @@ def create_index(client_psql, nom, table, colonne):
     exec_query(client_psql, query)
 			\end{lstlisting}
 				
+
+\newpage
+
+\section{Sorties PSQL et la liste de mots}
+	\label{sec:outPSQL}
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_corpus DESC
+LIMIT 50;
+     mot     | freq_corpus | freq_doc_spam | freq_doc_ham 
+-------------+-------------+---------------+--------------
+ email       |        5326 |           933 |         1009
+ get         |        3904 |           613 |         1266
+ use         |        3868 |           433 |         1347
+ list        |        3818 |           719 |         1797
+ one         |        3268 |           511 |         1028
+ make        |        3186 |           441 |          826
+ free        |        2803 |           644 |          450
+ new         |        2689 |           484 |          782
+ time        |        2550 |           487 |          783
+ send        |        2485 |           565 |          593
+ go          |        2338 |           407 |          845
+ say         |        2327 |           153 |          792
+ information |        2310 |           569 |          777
+ would       |        2288 |           332 |          851
+ good        |        2242 |           455 |          795
+ work        |        2226 |           348 |          779
+ receive     |        2216 |           653 |          312
+ people      |        2100 |           260 |          510
+ mailing     |        2077 |           535 |         1062
+ message     |        2057 |           363 |          727
+ like        |        2039 |           355 |          843
+ write       |        1969 |           116 |         1520
+ click       |        1963 |           815 |          148
+ please      |        1954 |           781 |          296
+ business    |        1915 |           400 |          234
+ address     |        1909 |           438 |          319
+ year        |        1761 |           363 |          427
+ company     |        1754 |           395 |          238
+ find        |        1745 |           285 |          663
+ report      |        1733 |           148 |          257
+ want        |        1732 |           438 |          538
+ money       |        1706 |           354 |          153
+ order       |        1697 |           283 |          162
+ see         |        1696 |           315 |          746
+ need        |        1671 |           402 |          559
+ also        |        1655 |           281 |          617
+ take        |        1649 |           370 |          574
+ name        |        1617 |           366 |          224
+ know        |        1568 |           277 |          697
+ user        |        1546 |           124 |          908
+ system      |        1544 |           194 |          527
+ group       |        1527 |           116 |          924
+ change      |        1494 |           160 |          507
+ file        |        1491 |            91 |          469
+ day         |        1454 |           360 |          376
+ program     |        1423 |           228 |          182
+ remove      |        1407 |           741 |          181
+ include     |        1406 |           395 |          361
+ may         |        1402 |           332 |          448
+ look        |        1357 |           240 |          584
+	\end{verbatim}
+
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_doc_spam DESC
+LIMIT 50;
+     mot     | freq_corpus | freq_doc_spam | freq_doc_ham 
+-------------+-------------+---------------+--------------
+ email       |        5326 |           933 |         1009
+ click       |        1963 |           815 |          148
+ please      |        1954 |           781 |          296
+ remove      |        1407 |           741 |          181
+ list        |        3818 |           719 |         1797
+ receive     |        2216 |           653 |          312
+ free        |        2803 |           644 |          450
+ get         |        3904 |           613 |         1266
+ information |        2310 |           569 |          777
+ send        |        2485 |           565 |          593
+ mailing     |        2077 |           535 |         1062
+ one         |        3268 |           511 |         1028
+ time        |        2550 |           487 |          783
+ new         |        2689 |           484 |          782
+ offer       |        1320 |           457 |          171
+ good        |        2242 |           455 |          795
+ make        |        3186 |           441 |          826
+ address     |        1909 |           438 |          319
+ want        |        1732 |           438 |          538
+ use         |        3868 |           433 |         1347
+ go          |        2338 |           407 |          845
+ need        |        1671 |           402 |          559
+ business    |        1915 |           400 |          234
+ include     |        1406 |           395 |          361
+ company     |        1754 |           395 |          238
+ wish        |         643 |           373 |           97
+ take        |        1649 |           370 |          574
+ name        |        1617 |           366 |          224
+ message     |        2057 |           363 |          727
+ year        |        1761 |           363 |          427
+ day         |        1454 |           360 |          376
+ like        |        2039 |           355 |          843
+ money       |        1706 |           354 |          153
+ today       |         826 |           352 |          207
+ work        |        2226 |           348 |          779
+ service     |        1344 |           345 |          285
+ state       |        1313 |           332 |          202
+ would       |        2288 |           332 |          851
+ may         |        1402 |           332 |          448
+ form        |         869 |           331 |          148
+ reply       |         625 |           323 |           98
+ future      |         679 |           321 |          179
+ call        |        1187 |           317 |          344
+ see         |        1696 |           315 |          746
+ help        |        1165 |           313 |          363
+ home        |        1229 |           303 |          304
+ contact     |         631 |           302 |          118
+ subject     |         883 |           294 |          403
+ phone       |         947 |           286 |          299
+ find        |        1745 |           285 |          663
+	\end{verbatim}
+
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_doc_ham DESC
+LIMIT 50;
+      mot       | freq_corpus | freq_doc_spam | freq_doc_ham 
+----------------+-------------+---------------+--------------
+ list           |        3818 |           719 |         1797
+ write          |        1969 |           116 |         1520
+ use            |        3868 |           433 |         1347
+ get            |        3904 |           613 |         1266
+ mailing        |        2077 |           535 |         1062
+ one            |        3268 |           511 |         1028
+ email          |        5326 |           933 |         1009
+ group          |        1527 |           116 |          924
+ user           |        1546 |           124 |          908
+ would          |        2288 |           332 |          851
+ go             |        2338 |           407 |          845
+ like           |        2039 |           355 |          843
+ make           |        3186 |           441 |          826
+ good           |        2242 |           455 |          795
+ say            |        2327 |           153 |          792
+ time           |        2550 |           487 |          783
+ new            |        2689 |           484 |          782
+ work           |        2226 |           348 |          779
+ information    |        2310 |           569 |          777
+ date           |         955 |            71 |          747
+ see            |        1696 |           315 |          746
+ linux          |        1302 |            71 |          738
+ message        |        2057 |           363 |          727
+ know           |        1568 |           277 |          697
+ think          |        1354 |           155 |          685
+ im             |        1133 |           105 |          667
+ find           |        1745 |           285 |          663
+ url            |         899 |            48 |          632
+ also           |        1655 |           281 |          617
+ send           |        2485 |           565 |          593
+ well           |        1236 |           225 |          587
+ look           |        1357 |           240 |          584
+ irish          |         732 |            68 |          581
+ take           |        1649 |           370 |          574
+ maintainer     |         655 |            65 |          571
+ way            |        1295 |           234 |          569
+ unsubscription |         650 |            66 |          566
+ need           |        1671 |           402 |          559
+ try            |        1076 |           135 |          551
+ want           |        1732 |           438 |          538
+ could          |        1205 |           175 |          535
+ system         |        1544 |           194 |          527
+ sponsor        |         717 |           131 |          518
+ give           |        1226 |           245 |          516
+ people         |        2100 |           260 |          510
+ change         |        1494 |           160 |          507
+ run            |         963 |            68 |          502
+ thing          |         900 |           112 |          498
+ even           |        1163 |           247 |          484
+ first          |        1261 |           222 |          472
+	\end{verbatim}
+
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_doc_spam, freq_doc_ham DESC
+LIMIT 50;
+        mot        | freq_corpus | freq_doc_spam | freq_doc_ham 
+-------------------+-------------+---------------+--------------
+ rpmlist           |         365 |             0 |          363
+ razoruser         |         242 |             0 |          191
+ cheer             |         187 |             0 |          184
+ matthias          |         264 |             0 |          182
+ lawrence          |         159 |             0 |          149
+ saou              |         133 |             0 |          131
+ razor             |         256 |             0 |          125
+ kernel            |         208 |             0 |          123
+ exmhuser          |         108 |             0 |           98
+ exmh              |         183 |             0 |           92
+ rpm               |         123 |             0 |           82
+ picasso           |          81 |             0 |           81
+ teledynamics      |          80 |             0 |           80
+ hettinga          |         104 |             0 |           74
+ pudge             |         107 |             0 |           73
+ beberg            |          74 |             0 |           70
+ garrigue          |          72 |             0 |           69
+ zdnet             |         167 |             0 |           68
+ redhat            |          97 |             0 |           67
+ gmt               |          71 |             0 |           64
+ hmm               |          68 |             0 |           64
+ vendor            |         106 |             0 |           62
+ spammer           |         122 |             0 |           62
+ barcelona         |          61 |             0 |           61
+ norte             |          61 |             0 |           61
+ planta            |          61 |             0 |           61
+ edificio          |          61 |             0 |           61
+ pablo             |          60 |             0 |           58
+ evildoer          |          58 |             0 |           58
+ exmhworker        |          59 |             0 |           57
+ mason             |          60 |             0 |           57
+ argue             |          74 |             0 |           57
+ bearer            |          66 |             0 |           56
+ wrongdoer         |          56 |             0 |           56
+ vircio            |          56 |             0 |           56
+ farquhar          |          58 |             0 |           55
+ blog              |          62 |             0 |           54
+ repository        |          63 |             0 |           54
+ pgp               |         154 |             0 |           54
+ gibbon            |          55 |             0 |           52
+ usefulness        |          54 |             0 |           51
+ agreeable         |          53 |             0 |           50
+ cvs               |          59 |             0 |           49
+ spamassassindevel |          48 |             0 |           48
+ cio               |          56 |             0 |           48
+ procmail          |          71 |             0 |           47
+ weird             |          51 |             0 |           47
+ owen              |          51 |             0 |           46
+ damn              |          47 |             0 |           45
+ img               |          57 |             0 |           44
+	\end{verbatim}
+
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham 
+FROM mot_corpus
+ORDER by freq_doc_ham, freq_doc_spam DESC
+LIMIT 50;
+       mot       | freq_corpus | freq_doc_spam | freq_doc_ham 
+-----------------+-------------+---------------+--------------
+ annuity         |         117 |            34 |            0
+ testimonial     |          56 |            28 |            0
+ multilevel      |          47 |            26 |            0
+ folloring       |          23 |            22 |            0
+ moneyback       |          26 |            22 |            0
+ faithfully      |          22 |            21 |            0
+ oprah           |          20 |            20 |            0
+ featurepack     |          36 |            20 |            0
+ assuming        |          18 |            18 |            0
+ okidata         |          17 |            17 |            0
+ tonersgo        |          34 |            17 |            0
+ ez              |          39 |            17 |            0
+ libido          |          17 |            17 |            0
+ hazardous       |          17 |            17 |            0
+ seen            |          21 |            17 |            0
+ paperwork       |          26 |            17 |            0
+ penile          |          18 |            17 |            0
+ replenishable   |          34 |            17 |            0
+ jody            |          67 |            17 |            0
+ emem            |          17 |            17 |            0
+ merciless       |          17 |            17 |            0
+ hgh             |          26 |            16 |            0
+ easytoremember  |          16 |            16 |            0
+ dieting         |          33 |            16 |            0
+ spout           |          16 |            16 |            0
+ smoker          |          39 |            16 |            0
+ otcbb           |          24 |            16 |            0
+ cam             |          23 |            15 |            0
+ craving         |          15 |            15 |            0
+ suza            |          15 |            15 |            0
+ diploma         |          35 |            15 |            0
+ deductible      |          21 |            15 |            0
+ sondstrom       |          15 |            15 |            0
+ professionally  |          16 |            15 |            0
+ lodge           |          19 |            15 |            0
+ hedland         |          15 |            15 |            0
+ friendsrelative |          15 |            15 |            0
+ wsuperior       |          15 |            15 |            0
+ downline        |          31 |            15 |            0
+ ravage          |          19 |            15 |            0
+ payable         |          18 |            15 |            0
+ states          |          18 |            15 |            0
+ refinancing     |          15 |            14 |            0
+ westport        |          14 |            14 |            0
+ dellaca         |          14 |            14 |            0
+ pharmacy        |          16 |            14 |            0
+ act.            |          13 |            13 |            0
+ propecia        |          15 |            13 |            0
+ rated           |          21 |            13 |            0
+ xenical         |          17 |            13 |            0
+	\end{verbatim}
+
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham
+FROM mot_corpus
+WHERE freq_doc_ham >= 2*freq_doc_spam
+ORDER BY freq_doc_ham DESC
+LIMIT 50;
+      mot       | freq_corpus | freq_doc_spam | freq_doc_ham 
+----------------+-------------+---------------+--------------
+ list           |        3818 |           719 |         1797
+ write          |        1969 |           116 |         1520
+ use            |        3868 |           433 |         1347
+ get            |        3904 |           613 |         1266
+ one            |        3268 |           511 |         1028
+ group          |        1527 |           116 |          924
+ user           |        1546 |           124 |          908
+ would          |        2288 |           332 |          851
+ go             |        2338 |           407 |          845
+ like           |        2039 |           355 |          843
+ say            |        2327 |           153 |          792
+ work           |        2226 |           348 |          779
+ date           |         955 |            71 |          747
+ see            |        1696 |           315 |          746
+ linux          |        1302 |            71 |          738
+ message        |        2057 |           363 |          727
+ know           |        1568 |           277 |          697
+ think          |        1354 |           155 |          685
+ im             |        1133 |           105 |          667
+ find           |        1745 |           285 |          663
+ url            |         899 |            48 |          632
+ also           |        1655 |           281 |          617
+ well           |        1236 |           225 |          587
+ look           |        1357 |           240 |          584
+ irish          |         732 |            68 |          581
+ maintainer     |         655 |            65 |          571
+ way            |        1295 |           234 |          569
+ unsubscription |         650 |            66 |          566
+ try            |        1076 |           135 |          551
+ could          |        1205 |           175 |          535
+ system         |        1544 |           194 |          527
+ sponsor        |         717 |           131 |          518
+ give           |        1226 |           245 |          516
+ change         |        1494 |           160 |          507
+ run            |         963 |            68 |          502
+ thing          |         900 |           112 |          498
+ first          |        1261 |           222 |          472
+ problem        |         925 |           130 |          470
+ file           |        1491 |            91 |          469
+ world          |        1133 |           185 |          461
+ ive            |         640 |            42 |          421
+ seem           |         588 |            30 |          420
+ still          |         726 |           120 |          416
+ add            |         847 |           121 |          410
+ many           |        1079 |           189 |          387
+ something      |         588 |            59 |          386
+ really         |         627 |            78 |          382
+ thanks         |         571 |            99 |          380
+ set            |         758 |            85 |          379
+ pm             |         502 |            26 |          376
+	\end{verbatim}
+	
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham
+FROM mot_corpus
+WHERE freq_doc_spam >= 2*freq_doc_ham 
+ORDER BY freq_doc_spam DESC
+LIMIT 50;
+     mot     | freq_corpus | freq_doc_spam | freq_doc_ham 
+-------------+-------------+---------------+--------------
+ click       |        1963 |           815 |          148
+ please      |        1954 |           781 |          296
+ remove      |        1407 |           741 |          181
+ receive     |        2216 |           653 |          312
+ offer       |        1320 |           457 |          171
+ wish        |         643 |           373 |           97
+ money       |        1706 |           354 |          153
+ form        |         869 |           331 |          148
+ reply       |         625 |           323 |           98
+ contact     |         631 |           302 |          118
+ hour        |         597 |           279 |          124
+ visit       |         551 |           274 |          121
+ special     |         553 |           246 |          109
+ low         |         580 |           241 |          109
+ within      |         644 |           238 |          106
+ request     |         452 |           234 |           85
+ credit      |         659 |           234 |           44
+ fill        |         392 |           225 |           50
+ guarantee   |         463 |           224 |           36
+ marketing   |         551 |           219 |           34
+ rate        |         676 |           215 |          103
+ dollar      |         497 |           207 |           41
+ simply      |         411 |           205 |          102
+ purchase    |         419 |           203 |           50
+ opportunity |         502 |           194 |           74
+ interest    |         533 |           193 |           92
+ website     |         431 |           193 |           87
+ thousand    |         419 |           189 |           80
+ hundred     |         329 |           189 |           59
+ minute      |         383 |           187 |           92
+ dear        |         250 |           179 |           55
+ thank       |         284 |           179 |           53
+ legal       |         535 |           174 |           77
+ family      |         409 |           161 |           75
+ sale        |         467 |           161 |           75
+ financial   |         392 |           159 |           47
+ cash        |         484 |           155 |           33
+ income      |         391 |           150 |           24
+ risk        |         350 |           148 |           65
+ removal     |         213 |           145 |           12
+ investment  |         421 |           145 |           28
+ insurance   |         512 |           142 |           19
+ instruction |         381 |           136 |           58
+ secret      |         312 |           126 |           39
+ absolutely  |         230 |           125 |           30
+ ad          |         304 |           121 |           49
+ mortgage    |         247 |           117 |            4
+ prove       |         193 |           114 |           54
+ payment     |         219 |           112 |           21
+ obligation  |         164 |           112 |           13
+	\end{verbatim}
+	
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham, 
+freq_doc_spam/freq_doc_ham as "ratio spam/ham"
+FROM mot_corpus
+WHERE freq_doc_ham > 0 AND freq_doc_spam > 0
+ORDER BY "ratio spam/ham" DESC
+LIMIT 50;
+                mot                | freq_corpus | freq_doc_spam | freq_doc_ham | ratio spam/ham 
+-----------------------------------+-------------+---------------+--------------+----------------
+ spamassassinsightings             |         108 |           107 |            1 |            107
+ deathtospamdeathtospamdeathtospam |         101 |           100 |            1 |            100
+ refinance                         |         106 |            72 |            1 |             72
+ lender                            |          85 |            62 |            1 |             62
+ optout                            |          57 |            49 |            1 |             49
+ attain                            |          52 |            42 |            1 |             42
+ guaranteed                        |          84 |            75 |            2 |             37
+ tollfree                          |          41 |            35 |            1 |             35
+ mortgage                          |         247 |           117 |            4 |             29
+ mastercard                        |          38 |            28 |            1 |             28
+ honesty                           |          32 |            27 |            1 |             27
+ inkjet                            |          54 |            26 |            1 |             26
+ medication                        |          44 |            25 |            1 |             25
+ herbal                            |          49 |            24 |            1 |             24
+ seeker                            |          31 |            22 |            1 |             22
+ erection                          |          25 |            21 |            1 |             21
+ postal                            |          57 |            42 |            2 |             21
+ susan                             |          24 |            21 |            1 |             21
+ reap                              |          22 |            21 |            1 |             21
+ confidentiality                   |          57 |            40 |            2 |             20
+ originator                        |          21 |            20 |            1 |             20
+ laserjet                          |          56 |            19 |            1 |             19
+ recruiting                        |          26 |            19 |            1 |             19
+ thermal                           |          23 |            19 |            1 |             19
+ utmost                            |          23 |            19 |            1 |             19
+ systemworks                       |          20 |            19 |            1 |             19
+ untitled                          |          21 |            19 |            1 |             19
+ mlm                               |          85 |            39 |            2 |             19
+ sincere                           |          21 |            18 |            1 |             18
+ pam                               |          18 |            17 |            1 |             17
+ icann                             |          18 |            17 |            1 |             17
+ furnish                           |          19 |            17 |            1 |             17
+ wi                                |          25 |            17 |            1 |             17
+ rela                              |          18 |            17 |            1 |             17
+ residual                          |          19 |            16 |            1 |             16
+ ofcourse                          |          17 |            16 |            1 |             16
+ grumble                           |          17 |            16 |            1 |             16
+ resell                            |          41 |            32 |            2 |             16
+ homeowner                         |          41 |            32 |            2 |             16
+ consolidate                       |          33 |            31 |            2 |             15
+ creditor                          |          26 |            15 |            1 |             15
+ attn                              |          17 |            15 |            1 |             15
+ astonishment                      |          16 |            15 |            1 |             15
+ mayle                             |          16 |            15 |            1 |             15
+ casino                            |          44 |            15 |            1 |             15
+ aging                             |          86 |            31 |            2 |             15
+ financially                       |          54 |            45 |            3 |             15
+ worst                             |          16 |            15 |            1 |             15
+ subjectremove                     |          15 |            14 |            1 |             14
+ unclaimed                         |          20 |            14 |            1 |             14
+	\end{verbatim}
+
+	\begin{verbatim}
+SELECT mot, freq_corpus, freq_doc_spam, freq_doc_ham, 
+freq_doc_ham/freq_doc_spam as "ratio ham/spam"
+FROM mot_corpus
+WHERE freq_doc_ham > 0 AND freq_doc_spam > 0
+ORDER BY "ratio ham/spam" DESC
+LIMIT 50;
+       mot        | freq_corpus | freq_doc_spam | freq_doc_ham | ratio ham/spam 
+------------------+-------------+---------------+--------------+----------------
+ gary             |         167 |             1 |          157 |            157
+ tue              |         157 |             1 |          153 |            153
+ aug              |         382 |             2 |          304 |            152
+ spamassassintalk |         156 |             1 |          147 |            147
+ murphy           |         137 |             1 |          130 |            130
+ perl             |         439 |             1 |          121 |            121
+ osdn             |         125 |             1 |          120 |            120
+ folder           |         235 |             1 |          104 |            104
+ jul              |         243 |             2 |          184 |             92
+ cnet             |         401 |             1 |           89 |             89
+ argument         |         110 |             1 |           78 |             78
+ bug              |         322 |             2 |          153 |             76
+ score            |         128 |             1 |           72 |             72
+ object           |         127 |             1 |           68 |             68
+ apt              |          96 |             1 |           61 |             61
+ yesterday        |          66 |             1 |           60 |             60
+ van              |          67 |             1 |           55 |             55
+ hack             |          72 |             1 |           55 |             55
+ character        |         100 |             1 |           53 |             53
+ sep              |         343 |             5 |          265 |             53
+ default          |         210 |             2 |          107 |             53
+ stupid           |          84 |             1 |           52 |             52
+ icq              |          58 |             1 |           52 |             52
+ useless          |         105 |             2 |          100 |             50
+ rebuild          |          74 |             1 |           50 |             50
+ thread           |          87 |             1 |           50 |             50
+ kevin            |         124 |             2 |          101 |             50
+ judge            |         107 |             1 |           50 |             50
+ bunch            |          55 |             1 |           48 |             48
+ ip               |          78 |             1 |           48 |             48
+ output           |          74 |             1 |           48 |             48
+ kate             |          49 |             1 |           48 |             48
+ spamassassin     |         155 |             2 |           97 |             48
+ adam             |         117 |             2 |           92 |             46
+ innovation       |          60 |             1 |           45 |             45
+ odd              |          52 |             1 |           45 |             45
+ fairly           |          50 |             1 |           44 |             44
+ chris            |         198 |             3 |          130 |             43
+ spec             |          54 |             1 |           43 |             43
+ gnome            |          84 |             1 |           43 |             43
+ beta             |          90 |             1 |           43 |             43
+ binary           |          71 |             1 |           42 |             42
+ warn             |          45 |             1 |           42 |             42
+ scientist        |          78 |             1 |           42 |             42
+ ilug             |          48 |             1 |           41 |             41
+ complain         |          48 |             1 |           41 |             41
+ universe         |         130 |             1 |           41 |             41
+ speech           |          87 |             1 |           41 |             41
+ evil             |          59 |             1 |           41 |             41
+ alan             |          42 |             1 |           40 |             40
+	\end{verbatim}
+	
+	Liste des mots retenus
+	\begin{verbatim}
+email, get, use, list, one, make, free, new, time, send, 
+say, information, would, good, work, receive, people, mailing, message, like, 
+write, click, please, business, address, year, company, find, report, want, 
+money, order, see, need, also, take, name, know, user, system, 
+group, change, file, day, program, remove, include, may, look, think, 
+service, offer, state, linux, way, internet, first, software, well, home, 
+give, could, site, call, web, help, product, even, mail, come, 
+world, much, many, try, check, link, price, start, government, read, 
+number, run, date, million, phone, week, problem, server, computer, month, 
+thing, follow, url, subject, form, back, available, grant, long, add, 
+line, every, life, network, right, today, spam, provide, security, online, 
+easy, window, pay, support, two, set, news, unsubscribe, irish, late, 
+code, still, keep, since, sponsor, last, great, show, version, without, 
+future, rate, case, market, page, end, credit, issue, maintainer, technology, 
+unsubscription, let, tell, within, wish, ive, never, contact, old, next, 
+save, place, really, reply, sell, point, another, card, sure, release, 
+base, search, anyone, part, full, build, hour, access, per, put, 
+something, seem, professional, low, cost, result, thanks, question, communication, 
+lot, country, special, fast, marketing, visit, buy, open, high, application, might, 
+package, source, must, legal, person, allow, customer, request, fill, guarantee, 
+dollar, simply, purchase, require, opportunity, website, interest, thousand, hundred, 
+minute, simple, dear, thank, ever, family, sale, account, financial, increase, cash, 
+income, friend, risk, less, lose, personal, investment, top, removal, error, 
+deal, complete, insurance, type, fax, notice, easily, learn, instruction, plan, 
+accept, experience, city, real, benefit, large, current, secret, fact, rpmlist, 
+cant, aug, post, though, actually, wednesday, sep, around, rights, mean, 
+monday, copyright, probably, different, big, install, bit, however, welcome, supply, 
+original, idea, geek, ill, thursday, didnt, create, august, bad, someone, 
+example, stop, update, reason, enough, yahoo, little, job, ask, yes, 
+friday, discuss, heaven, isnt, yet, reserve, anything, hard, annuity, testimonial, 
+multilevel, folloring, moneyback, faithfully, oprah, featurepack, assuming, tonersgo, 
+libido, hazardous, replenishable, merciless, emem, okidata, jody, paperwork, penile, 
+seen, otcbb, easytoremember, spout, hgh, smoker, dieting, friendsrelative, ravage, 
+states, downline, suza, hedland, craving, sondstrom, diploma, cam, payable, 
+professionally, deductible, lodge, wsuperior, dellaca, westport, refinancing, 
+pharmacy, propecia, rated, climax, act., xenical, mega, mailto?subjectremove, 
+classified, sent, hrefclick, metabolism, turnkey, lagos, congo, cosigner, abacha, 
+phentermine, enlarge, walaa, sirmadam, nursery, hormones, zyban, mailto?, fastest, 
+disclaimerwe, horny, repose, erotic, alimony, customized, leasing, homebased, ltc, 
+cordial, diete, nationally, lowest, lien, cloak, kabila, worksheet, prizemama, 
+energetic, committment, erectile, homeownership, extracurricular, forwardlooking, 
+utilitiesall, towing, tables, roadside, optedin, grantwriting, remittance, mustdo, 
+nofrills, grantswriting, feasibility, redtape, payer, lowinter, mustknow, onehalf, 
+usmillion, taxable, nonsmoker, onestopmoneyshop, emailing, indulgence, abidjan, 
+massand, divinorum, rd., salvia, valtrex, hrefclickherea, advisement, highrisk, sani, 
+recewveng, recruiter, mitsubishi, pleasureincreased, reg., staminaincreased, 
+nospam, deliverable, sensationincreased, marvelously, supplemental, tonereverse, 
+chavana, ferocity, commencement, growthwrinkle, weightbuild, fige, untraceable, leone, 
+herba, prosaka, afree, enlargement, skinnew, prostate, vjestika, payperview, 
+viripotent, calea, herpes, highratio, resale, seizure, angelica, dagga, 
+hookah, anheuserbusch, aphrodisia, cellulite, capillaris, ffa, employement, 
+pcinternet, refining, cbyi, geenergy, contemplativeness, inexpensively, nc,, services, 
+nonephedrine, calbay, sativa, chevron, mrsa, dreaming, nonmahuang, ok,oh,
+noncaffeine, flowertop, amalgamation, uplifting, dosage, carton, crocus, 
+prash, drops, aligncenterfont, signify, 
+alkaloid, razoruser, cheer, matthias, lawrence, saou, razor, kernel, exmhuser, exmh, 
+rpm, picasso, teledynamics, hettinga, pudge, beberg, garrigue, zdnet, redhat, gmt, 
+hmm, spammer, vendor, planta, barcelona, edificio, norte, pablo, 
+evildoer, mason, argue, exmhworker, vircio, bearer, wrongdoer, farquhar, pgp, 
+repository, blog, gibbon, usefulness, agreeable, cvs, cio, weird, procmail, owen,
+damn, img, config, niall, duncan, rohit, guido, btw, ham, funny, context, hash, 
+valhalla, unseen, angle, geege, suse, functionality, debate, corpus, 
+meatspace, brent, aptget, debian, 
+disable, partition, vipul, drunken, warming, skeptic, bitbitch, architecture, sober, 
+whitelist, matthew, rah, looney, credulity, mathematics, mailtoon, powershot, ssh, 
+rival, welch, hal, somewhat, sha, gibson, expression, python, 
+geometry, scalable, compiler, crucial, alsa, buffer, loop, fiction, experiment, 
+gpl, compromise, freebsd, crap, ved, 
+fault, spamd, prakash, gcc, distro, router, megapixel, sendmail, peoplesoft, elias, 
+voyage, zealot, vice, dispatch, trivial, vulnerability, eugen, apache, barrera, byte,
+exploit, lyda, razorcheck, kre, technomad, rossum, fahrlnder, moen, gnupg, revision, 
+evansville, wifi, ziggy, huckleberry, iirc, finn, bounce, aprils, constantly, bullet, 
+behaviour, debug, harley, pioneering, dimension, phil, agile, collapse, activist, 
+gregory, presumably, neary, compatibility, diff, logic, pointer, bbc, syntax, turpin, 
+panasas, merge, spokesman, cnets, vulnerable, forwardedby, assignee, jesse, digest, 
+pdraig, leitl, classifier, configurator, invoke, notion, zdnets, ought, andrew, 
+filesystem, attacker, tokenizer, interaction, sysadmin, accuse, widespread, 
+stuff, leave, course, happen, far, datum, bythinkgeek, least, test, feature, 
+either, inc, turn, john, talk, answer, thats, man, story, maybe, 
+else, mailto, jul, september, rather, fix, log, center, quite, cause, 
+move, design, play, lead, cell, manage, comment, early, hope, hand, 
+july, ago, gary, key, anyway, break, understand, exist, public, bug, 
+tue, fall, kind, begin, pretty, content, often, subscribe, appear, drive, 
+several, mark, newsletter, absolutely, mortgage, prove, payment, obligation, 
+immediately, shipping, bank, earn, loan, fund, sincerely, independent, debt, 
+commission, loss, optin, limited, fee, contract, promotion, assistance, advertisement, 
+successful, invest, health, retail, approve, telephone, expense, subscriber, 
+guaranteed, weight, transaction, fortune, 
+obtain, refinance, compliance, bonus, monthly, confidential, affiliate, unsolicited, 
+valuable, improvement, assist, sum, immediate, savings, lender, profitable, discount, 
+exciting, deposit, bulk, adult, strongly, qualify, blank, brand, sir, apologize, drug, 
+assure, optout, opt, medical, venture, forever, correspondence, proposal, unlimited, 
+resident, incredible, financially, membership, employment, 
+zip, boss, estate, qualified, auto, attain, minimum, legally, postal, urgent, 
+exercise, premium, exclude, cooperation, confidentiality, supplies, prescription, 
+affordable, prohibit, consultation, broker, equity, convenience, guideline, 
+presentation, utilize, mlm, carefully, tremendous, nigeria, handling, paragraph, 
+inconvenience, visa, anytime, consolidation, classify, unwanted, living, approval, 
+repair, instantly, tollfree, sexual, outstanding, son, specialist, currency, strictly, 
+lifetime, shall, comprehensive, africa, kindly, buyer, insider, substantial, homeowner, 
+safely, maximum, resell, sleep, consolidate, extract, warranty, aging, cartridge, 
+receipt, ebook, exceed, refund, trading, inform, mastercard, honesty, inkjet,
+medication, herbal, seeker, susan, erection, reap, originator, utmost, thermal, 
+untitled, laserjet, systemworks, recruiting, sincere, 
+rela, furnish, icann, pam, grumble, ofcourse, residual, worst, attn, mayle, 
+astonishment, creditor, casino, subjectremove, toner, unclaimed, lowcost, procurement, 
+strenuous, intimidate, 
+kin, modality, wrinkle, tenant, searcher, vault, idaho, ads, madam, foreigner, 
+unlisted, debtor, hidden, resources, beneficiary, athlete, montana, stringent, hewlett, 
+lottery, reconnect, housekeeper, mammoth, stepbystep, investigative, urgently, factual, 
+dysfunction, gasoline, reclaim, 
+laurent, cram, wiretap, enhancer, hispanic, missouri, dreams, tobacco, arkansas, nbc, 
+daycare, otc, tutoring, childcare, skyrocket, productsservice, cock, dental, intensify, 
+solicite, botanical, ext., repaid, multibillion, mitchell, profession, glossary, repay, 
+counseling, ministry, hardcore, lauderdale, physician, epson, noninvasive, cbs, ent, 
+exceedingly, alberta, gen, serenity, growing, mrs, children, thanx, facearial, 
+christian, banker, topoftheline, ave., formulate, lust, resin, rates, omaha, 
+amalgamate, barrister, sold, comprise, cholesterol, rewarding, downsizing, cordially, 
+bud, booster, remit, ingredient, reputable, potency, quotation, 
+consumable, costeffective, ordering, getter, hobby, promotional, mentor, nevada, 
+recieve, fedex, diagnostics, illegality, legality, doctorate, herb, cote, communion
+	\end{verbatim}
+
 
 \newpage
 \section{Tableau des choix technologiques}
