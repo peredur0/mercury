@@ -122,7 +122,7 @@ def get_data(client_psql, table, champs, clause=None):
     :param table: <str> table a scroller.
     :param champs: <list> champs à récupérer.
     :param clause: <str> Clause WHERE
-    :return: <dict>
+    :return: <list> dict par ligne
     """
     query = f"SELECT {','.join(champs)} FROM {table}"
     if clause:
