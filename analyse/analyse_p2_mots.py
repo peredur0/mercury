@@ -25,7 +25,7 @@ def tfidf_vectorise(client_psql, id_message, nb_documents):
     :param nb_documents: <int> nombre total de documents dans le corpus
     :return: <dict> données à insérer
     """
-    vector = {}
+    vector = {'id_message': id_message}
     associations = psql_cmd.get_data(client_psql, 'tfidf_assoc', ['id_mot', 'label'])
 
     for entry in associations:
@@ -84,13 +84,13 @@ if __name__ == '__main__':
                 mots.append(mot)
 
     # Préparation de la base
-    tfidf_assoc_field = {"id_mot": ['INT', 'UNIQUE'],
+    tfidf_assoc_field = {"id_mot": ['INT', 'UNIQUE', 'NOT NULL'],
                          "label": ['VARCHAR'],
-                         "fk": {"fk_mot": ['id_mot', 'mot_corpus(id_mot)', 'SET NULL']}}
+                         "fk": {"fk_mot": ['id_mot', 'mot_corpus(id_mot)', 'CASCADE']}}
     psql_cmd.create_table(psql_cli, 'tfidf_assoc', tfidf_assoc_field)
 
-    tfidf_vector_fields = {"id_message": ['INT', 'UNIQUE'],
-                           "fk": {'fk_message': ['id_message', 'messages(id_message)', 'SET NULL']}}
+    tfidf_vector_fields = {"id_message": ['INT', 'UNIQUE', 'NOT NULL'],
+                           "fk": {'fk_message': ['id_message', 'messages(id_message)', 'CASCADE']}}
     n_label = 0
     for mot in mots:
         result = psql_cmd.get_data(psql_cli, 'mot_corpus', ['id_mot'], f"mot LIKE '{mot}'")
