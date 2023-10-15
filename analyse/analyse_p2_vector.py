@@ -21,6 +21,7 @@ if __name__ == '__main__':
     query = "ALTER TABLE tfidf_vector ADD COLUMN IF NOT EXISTS somme DECIMAL"
     psql_cmd.exec_query(psql_cli, query)
 
+    print("Calcul de la somme des vecteurs...", end=' ')
     fields = [row['label'] for row in psql_cmd.get_data(psql_cli, 'tfidf_assoc', ['label'])]
     for row in psql_cmd.get_data(psql_cli, 'tfidf_vector', ['id_message']):
         id_message = row.get('id_message')
@@ -30,6 +31,7 @@ if __name__ == '__main__':
                  f"WHERE id_message = {id_message}")
         psql_cmd.exec_query(psql_cli, query)
 
+    print("OK")
     query = (f"SELECT t.id_message, t.somme, c.type "
              f"FROM tfidf_vector as t "
              f"JOIN messages as m ON m.id_message = t.id_message "
@@ -39,37 +41,27 @@ if __name__ == '__main__':
 
     tmp_data = []
     if data:
-        print(f"Nombre de mail avec une somme de vecteur nulle: {len(data)}")
+        print(f"Nombre de mail avec une somme de vecteur null: {len(data)}")
         for row in data:
-            row_data = {'id_message': row[0], 'vector_sum': row[1], 'type': row[2]}
-            r_fields = ['point', 'virgule', 'exclamation', 'interrogation', 'espace',
-                        'tabulation', 'ligne', 'ligne_vide']
+            row_data = {'id_message': row[0], 'type': row[2]}
+            r_fields = ['point', 'exclamation', 'espace', 'ligne']
             table = 'stat_ponct'
             result = psql_cmd.get_data(psql_cli, table, r_fields, f'id_message = {row[0]}')
             row_data.update(result[0])
 
-            r_fields = ['mots_uniques', 'mots', 'char_min', 'char_maj', 'mot_cap']
+            r_fields = ['mots', 'char_min', 'char_maj']
             table = 'stats_mots'
             result = psql_cmd.get_data(psql_cli, table, r_fields, f'id_message = {row[0]}')
             row_data.update(result[0])
 
-            r_fields = ['url', 'mail', 'tel', 'nombre', 'prix']
+            r_fields = ['nombre']
             table = 'liens'
-            result = psql_cmd.get_data(psql_cli, table, r_fields, f'id_message = {row[0]}')
-            row_data.update(result[0])
-
-            r_fields = ['constante', 'coefficient', 'tx_erreur']
-            table = 'zipf'
-            result = psql_cmd.get_data(psql_cli, table, r_fields, f'id_message = {row[0]}')
-            row_data.update(result[0])
-
-            r_fields = ['ratio_unique', 'ratio_texte', 'nombre']
-            table = 'hapax'
             result = psql_cmd.get_data(psql_cli, table, r_fields, f'id_message = {row[0]}')
             row_data.update(result[0])
 
             tmp_data.append(row_data)
             print(row_data)
+            print(' & '.join([str(elem) for elem in row_data.values()]))
 
             query = (f"SELECT id_message, mot, freq_corpus, freq_doc_all, freq_doc_spam, "
                      f"freq_doc_ham "

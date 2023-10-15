@@ -2,6 +2,7 @@
 # coding: utf-8
 
 """
+Vectorisation selon certains critères de mots.
 Phase d'analyse des mots utilisés dans les corpus
     X mots les plus présents dans le corpus
     X mots les plus présents dans chaque catégorie
@@ -47,6 +48,7 @@ def tfidf_vectorise(client_psql, id_message, nb_documents):
 
 
 if __name__ == '__main__':
+    print("=== Phase 2 : Vectorisation des messsages ===")
     unwanted = ['spamassassinsightings',
                 'deathtospamdeathtospamdeathtospam',
                 'spamassassindevel']
@@ -74,7 +76,8 @@ if __name__ == '__main__':
                                    passwd=ps_secrets.owner,
                                    host=ps_secrets.host,
                                    port=ps_secrets.port)
-    
+
+    print('Recherche des mots les plus marquants...', end=' ')
     mots = []
     for query in queries:
         result = psql_cmd.exec_query(psql_cli, query)
@@ -83,7 +86,9 @@ if __name__ == '__main__':
             if mot not in mots and mot not in unwanted and len(mot) > 2:
                 mots.append(mot)
 
-    # Préparation de la base
+    print('OK')
+
+    print('Préparation de la base vectorielle', end=' ')
     tfidf_assoc_field = {"id_mot": ['INT', 'UNIQUE', 'NOT NULL'],
                          "label": ['VARCHAR'],
                          "fk": {"fk_mot": ['id_mot', 'mot_corpus(id_mot)', 'CASCADE']}}
@@ -106,8 +111,9 @@ if __name__ == '__main__':
         n_label += 1
 
     psql_cmd.create_table(psql_cli, 'tfidf_vector', tfidf_vector_fields)
+    print("OK")
 
-    # Vectorisation des messages
+    print("Vectorisation...")
     result = psql_cmd.exec_query(psql_cli, "SELECT COUNT(id_message) FROM nlp_status WHERE "
                                            "success = true")
     n_docs = result[0][0]
@@ -119,3 +125,4 @@ if __name__ == '__main__':
         psql_cmd.insert_data(psql_cli, 'tfidf_vector', vecteur)
 
     psql_cli.close()
+    print('END')

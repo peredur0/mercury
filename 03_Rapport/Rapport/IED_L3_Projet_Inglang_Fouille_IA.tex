@@ -1561,20 +1561,103 @@ LIMIT 200;
 			\end{align*}
 		
 			Avec $tf_{i,j}$ la fréquence d'apparition du mot $i$ dans le document $j$, $N$ le nombre de document dans le corpus et $df_{i}$ le nombre de document dans le corpus contenant le terme $i$. \\
-			Cette méthode permet d'attribuer des score plus élevé aux mots apparaissant plus dans un document que dans les autres documents du corpus. Nous pouvons ainsi conserver une forme de contexte d'utilisation. 
+			Cette méthode permet d'attribuer des score plus élevé aux mots apparaissant plus dans un document que dans les autres documents du corpus. Nous pouvons ainsi conserver une forme de contexte d'utilisation.\\
 
-			% Développement de la fonction TF-IDF
+			Lors de la phase précédente de lemmatisation, nous avons commencé à préparer les données pour ce calcul. En effet dans la table \emph{mots\_document} nous avons stocké la fréquence de chaque mot dans chaque document et dans la table \emph{mot\_corpus} se trouve le nombre de document contenant chaque mot.\\
+			Le vecteur de chaque document sera conservé dans une table \emph{tfidf\_vector} créée à la volée avec un nombre de colonnes variable selon le nombre de mots retenus pour à l'étape précédente. Une table annexe (\emph{tfidf\_assoc} permet de conserver une trace de l'association entre les labels des colonnes des vecteur et les identifiants des mots dans la base.\\
 			
-			% Remplissage de la table des mots
+			Le code ci-dessous présente le code de création des ces tables:
+			\begin{lstlisting}[title=Préparation de la base vectorielle, language=python]
+tfidf_assoc_field = {"id_mot": ['INT', 'UNIQUE', 'NOT NULL'],
+                     "label": ['VARCHAR'],
+                     "fk": {"fk_mot": ['id_mot', 'mot_corpus(id_mot)', 'CASCADE']}}
+psql_cmd.create_table(psql_cli, 'tfidf_assoc', tfidf_assoc_field)
+
+tfidf_vector_fields = {"id_message": ['INT', 'UNIQUE', 'NOT NULL'],
+                       "fk": {'fk_message': ['id_message', 'messages(id_message)', 'CASCADE']}}
+                       
+n_label = 0
+for mot in mots:
+    result = psql_cmd.get_data(psql_cli, 'mot_corpus', ['id_mot'], f"mot LIKE '{mot}'")
+    if not result:
+        print(f"id_mot non recupere pour {mot}", file=sys.stderr)
+        continue
+
+    label = f"feat_mot_{n_label}"
+    data = {'id_mot': result[0]['id_mot'], 'label': label}
+    psql_cmd.insert_data(psql_cli, 'tfidf_assoc', data)
+
+    tfidf_vector_fields[label] = ['DECIMAL']
+    n_label += 1
+
+psql_cmd.create_table(psql_cli, 'tfidf_vector', tfidf_vector_fields
+			\end{lstlisting}
 			
-			% Visualisation des vecteurs 
+			
+		Le processus de vectorisation est réalisé avec le code ci-dessous
+			\begin{lstlisting}[title=Fonction de vectorisation et appel, language=python]
+def tfidf_vectorise(client_psql, id_message, nb_documents):
+    vector = {'id_message': id_message}
+    associations = psql_cmd.get_data(client_psql, 'tfidf_assoc', ['id_mot', 'label'])
 
+    for entry in associations:
+        id_mot = entry.get('id_mot')
+        col_label = entry.get('label')
 
+        res = psql_cmd.get_data(client_psql, 'mots_document', ['occurrence'],
+                                f' id_message = {id_message} AND id_mot = {id_mot}')
+        term_freq = res[0].get('occurrence', 0) if res else 0
+
+        res = psql_cmd.get_data(client_psql, 'mot_corpus', ['freq_doc_all'],
+                                f' id_mot = {id_mot}')
+        doc_freq = res[0].get('freq_doc_all', None) if res else None
+
+        cell_value = term_freq * math.log(nb_documents/doc_freq) if doc_freq else 0
+        vector[col_label] = cell_value
+
+    return vector	
+
+# -- IN MAIN --
+result = psql_cmd.exec_query(psql_cli, "SELECT COUNT(id_message) FROM nlp_status WHERE "
+                                       "success = true")
+n_docs = result[0][0]
+
+result = psql_cmd.get_data(psql_cli, 'nlp_status', ['id_message'], 'success = true')
+for row in tqdm.tqdm(result, desc='-- Vectorisation', leave=False, file=sys.stdout, ascii=True):
+    id_mess = row.get('id_message')
+    vecteur = tfidf_vectorise(psql_cli, id_mess, n_docs)
+    psql_cmd.insert_data(psql_cli, 'tfidf_vector', vecteur)		
+			\end{lstlisting}
+
+		\paragraph{Analyse de la vectorisation}
+			A l'issue de la vectorisation nous avons 7 messages (6 hams et 1 spam) qui ont un vecteur null, c'est à dire que la somme de toutes les colonnes est égale à zéro.
+			
+			Le tableau ci dessous présente les caractéristiques des messages avec un vecteur null.
+			
+			\begin{tabular}{|l|l|c|c|c|c|c|c|c|c|}
+				\hline
+				id & type & point & exclamation & espace & ligne & mots & char min & char maj & nombre \\
+				\hline
+				974 & spam & 0 & 70 & 10 & 73 & 108 & 1267 & 1346 & 46 \\
+				\hline
+				1594 & ham & 1 & 0 & 19 & 5 & 20 & 88 & 7 & 0 \\
+				\hline
+				3698 & ham & 1 & 0 & 6 & 6 & 7 & 39 & 1 & 0 \\
+				\hline
+				3779 & ham & 1 & 0 & 20 & 9 & 21 & 84 & 5 & 1 \\
+				\hline
+				4470 & ham & 4 & 0 & 19 & 9 & 18 & 87 & 2 & 0 \\
+				\hline
+				4592 & ham & 0 & 0 & 12 & 5 & 10 & 40 & 2 & 2 \\
+				\hline
+				1677 & ham & 2 & 0 & 7 & 21 & 9 & 27 & 2 & 0 \\
+				\hline
+			\end{tabular}
+			
+			Le nombre de message étant assez petits, ils ne seront pas sortis pour l’entraînement et l'évaluation du futur modèle. 
 
 \newpage
 \section{Phase 3}
-
-% Recherche des outliers
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2899,7 +2982,7 @@ recieve, fedex, diagnostics, illegality, legality, doctorate, herb, cote, commun
 		
 		\multicolumn{4}{|c|}{Bases de données} \\
 		\hline
-		ElasticSearch & Oui & Technologie utilisée dans mon entreprise. Présence d'une interface de visualisation des données Kibana. & Application dockerisée. \\
+		ElasticSearch & Oui & Technologie utilisée dans mon entreprise. Présence d'une interface de visualisation des données Kibana. & Application dockerisée. Basculement possible pour une base MongoDB plus souple et moins gourmande en ressource \\
 		\hline
 		PostgreSQL & Oui & Moteur de base de données relationnelle plus facilement scalable que ElasticSearch pour l'ajout de nouvelle catégorie de données. Il n'est pas nécessaire de ré-indexer toute la base pour ajouter des champs & Application dockerisée\\
 		\hline
