@@ -1654,7 +1654,104 @@ for row in tqdm.tqdm(result, desc='-- Vectorisation', leave=False, file=sys.stdo
 				\hline
 			\end{tabular}
 			
-			Le nombre de message étant assez petits, ils ne seront pas sortis pour l’entraînement et l'évaluation du futur modèle. 
+			Le nombre de message étant assez petits, ils ne seront pas sortis pour l’entraînement et l'évaluation du futur modèle. \\
+			
+			Les mots utilisés dans ces messages sont:\\
+			\begin{tabular}{|l|l|c|c|c|c|}
+				\hline
+				id message & mot & freq corpus & freq doc & freq spam & freq ham \\
+				\hline
+				1677 & sex & 162 & 91 & 44 & 47 \\
+				\hline
+				1677 & mr & 71 & 52 & 20 & 32 \\
+				\hline
+				1677 & woman & 298 & 150 & 62 & 88 \\
+				\hline
+				4592 & kill & 122 & 99 & 13 & 86 \\
+				\hline
+				4592 & pid & 6 & 5 & 0 & 5 \\
+				\hline
+				4592 & etchttpd & 2 & 1 & 0 & 1 \\
+				\hline
+				4470 & become & 461 & 293 & 109 & 184 \\
+				\hline
+				4470 & fuck & 18 & 12 & 4 & 8 \\
+				\hline
+				4470 & bush & 196 & 44 & 3 & 41 \\
+				\hline
+				4470 & rest & 159 & 139 & 49 & 90 \\
+				\hline
+				4470 & nation & 257 & 74 & 22 & 52 \\
+				\hline
+				4470 & cheney & 38 & 9 & 0 & 9 \\
+				\hline
+				4470 & suddenly & 30 & 27 & 6 & 21 \\
+				\hline
+				4470 & eventuality & 1 & 1 & 0 & 1 \\
+				\hline
+				4470 & unavailable & 11 & 10 & 3 & 7 \\
+				\hline
+				4470 & gg & 13 & 13 & 0 & 13 \\
+				\hline
+				3779 & c & 529 & 295 & 69 & 226 \\
+				\hline
+				3779 & matter & 336 & 225 & 105 & 120 \\
+				\hline
+				3779 & x & 452 & 235 & 59 & 176 \\
+				\hline
+				3779 & hardware & 222 & 149 & 10 & 139 \\
+				\hline
+				3779 & transform & 29 & 15 & 0 & 15 \\
+				\hline
+				3779 & java & 209 & 69 & 7 & 62 \\
+				\hline
+				3779 & xml & 176 & 34 & 1 & 33 \\
+				\hline
+				3779 & slow & 106 & 74 & 9 & 65 \\
+				\hline
+				3779 & parsing & 19 & 15 & 0 & 15 \\
+				\hline
+				3779 & outofthebox & 2 & 2 & 0 & 2 \\
+				\hline
+				3698 & artist & 80 & 59 & 9 & 50 \\
+				\hline
+				3698 & draw & 110 & 78 & 28 & 50 \\
+				\hline
+				3698 & numerous & 43 & 37 & 7 & 30 \\
+				\hline
+				3698 & character & 100 & 54 & 1 & 53 \\
+				\hline
+				3698 & cliff & 7 & 7 & 0 & 7 \\
+				\hline
+				1594 & national & 257 & 148 & 77 & 71 \\
+				\hline
+				1594 & similar & 235 & 185 & 49 & 136 \\
+				\hline
+				1594 & review & 382 & 189 & 43 & 146 \\
+				\hline
+				1594 & rag & 6 & 6 & 0 & 6 \\
+				\hline
+				1594 & usual & 56 & 48 & 4 & 44 \\
+				\hline
+				1594 & crud & 4 & 4 & 0 & 4 \\
+				\hline
+				1594 & moron & 8 & 7 & 0 & 7 \\
+				\hline
+				1594 & rant & 18 & 16 & 0 & 16 \\
+				\hline
+				1594 & beat & 86 & 72 & 31 & 41 \\
+				\hline
+				1594 & chest & 11 & 10 & 2 & 8 \\
+				\hline
+				1594 & merit & 24 & 13 & 5 & 8 \\
+				\hline
+				1594 & forking & 3 & 3 & 0 & 3 \\
+				\hline
+				974 & hrefshaved & 1 & 1 & 1 & 0 \\
+				\hline
+				974 & sweetiesa & 1 & 1 & 1 & 0 \\
+				\hline			
+			\end{tabular}			 
 
 \newpage
 \section{Phase 3}
@@ -2977,7 +3074,7 @@ recieve, fedex, diagnostics, illegality, legality, doctorate, herb, cote, commun
 		
 		\multicolumn{4}{|c|}{Virtualisation} \\
 		\hline
-		Docket & Oui & configuration et environnement dans les fichiers. Cela facilite le portage vers d'autre environnement & Lors du développement j'ai pu utilisé mon PC personnel sous Linux et un autre PC sous Windows. L'utilisation de Docker m'a évité de nombres configurations sur Windows\\
+		Docker & Oui & configuration et environnement dans les fichiers. Cela facilite le portage vers d'autre environnement & Lors du développement j'ai pu utilisé mon PC personnel sous Linux et un autre PC sous Windows. L'utilisation de Docker m'a évité de nombres configurations sur Windows\\
 		\hline
 		
 		\multicolumn{4}{|c|}{Bases de données} \\
@@ -3207,6 +3304,17 @@ plt.show()\end{lstlisting}
 				
 				Cependant, les données qui lui sont fournies ne doivent pas être corrélées ce qui est rarement le cas dans les problèmes du monde réel. Ce type de modèle est limité à des problèmes de classification supervisée. Si on se fie à l'équation (\ref{NBeq}) la probabilité d'apparition de l’évènement B : P(B) ne peut pas être nulle. 
 				
+				
+		\subsection{Random tree forest}
+			Cette section à pour but de détailler les principes généraux de la forêt d'arbres de décisions aléatoires utilisée pour faire la classification des mails. 
+			
+			\paragraph{Arbre de décision}
+			
+			
+			\paragraph{Random forest}
+	
+	
+	
 										
 	\section{Bibliographie}
 		\bibliographystyle{plain}
