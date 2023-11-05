@@ -113,7 +113,7 @@ def stats_hapax(id_text, texte):
     tokens = re.findall(r'\w+', texte, re.MULTILINE)
     data = stats.hapax(tokens)
     data['id_message'] = id_text
-    data['nombre'] = data.pop('nombres')
+    data['h_nombre'] = data.pop('nombres')
     data['ratio_unique'] = data.pop('ratio_mots_uniques')
 
     return data

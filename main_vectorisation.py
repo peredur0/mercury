@@ -73,7 +73,7 @@ if __name__ == '__main__':
     psql_db = "mail_features_prod"
     psql_cli = psql_cmd.connect_db(dbname=psql_db,
                                    user=ps_secrets.owner,
-                                   passwd=ps_secrets.owner,
+                                   passwd=ps_secrets.owner_pw,
                                    host=ps_secrets.host,
                                    port=ps_secrets.port)
 

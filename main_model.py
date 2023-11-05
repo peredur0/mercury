@@ -3,14 +3,18 @@
 
 """
 Entrainement et test du modèle
+
+Labels
+    - 1 = spam
+    - 2 = ham
 """
 
 import pandas as pd
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_recall_fscore_support as score
 from sklearn.model_selection import train_test_split
 from sklearn import svm
+import pickle
 import tqdm
 from databases import psql_cmd
 from databases.psql_db import secrets as ps_secrets
@@ -93,4 +97,7 @@ if __name__ == '__main__':
           f"Precision: {round(precision, 3)} // Recall: {round(recall, 3)} "
           f"// Accurancy: {round(accuracy, 3)}")
 
-
+    # Sauvegarder les modèles
+    pickle.dump(alg_decision_tree, open('./models/decision_tree_spam.sav', 'wb'))
+    pickle.dump(alg_svm, open('./models/svm_spam.sav', 'wb'))
+    print("Modèles sauvegardé")

@@ -50,3 +50,5 @@
 /README.md.back
 /databases/mongodb/docker/data/
 /dev_dataset/validation/spam.csv
+/models/decision_tree_spam.sav
+/models/svm_spam.sav
