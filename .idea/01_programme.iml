@@ -18,6 +18,7 @@
       <excludeFolder url="file://$MODULE_DIR$/out" />
       <excludeFolder url="file://$MODULE_DIR$/py3-env" />
       <excludeFolder url="file://$MODULE_DIR$/databases/mongodb/docker/data" />
+      <excludeFolder url="file://$MODULE_DIR$/dev_dataset/validation" />
     </content>
     <orderEntry type="jdk" jdkName="Python 3.8 (01_programme)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />

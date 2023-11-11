@@ -74,7 +74,7 @@ if __name__ == '__main__':
     print('Récupération des données... OK')
 
     mail_cat = mail_df['id_cat']
-    mail_df.drop(['id_cat'], axis=1, inplace=True)
+    mail_df.drop(['id_cat', 'id_message'], axis=1, inplace=True)
     x_train, x_test, y_train, y_test = train_test_split(mail_df, mail_cat, test_size=0.25)
 
     # Mono decision tree
