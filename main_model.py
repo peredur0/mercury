@@ -12,12 +12,13 @@ Labels
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import precision_recall_fscore_support as score
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn import svm
 import pickle
 import tqdm
 from databases import psql_cmd
 from databases.psql_db import secrets as ps_secrets
+from traitement import ml
 
 
 def get_all_data(id_message, psql_cli):
@@ -75,10 +76,12 @@ if __name__ == '__main__':
 
     mail_cat = mail_df['id_cat']
     mail_df.drop(['id_cat', 'id_message'], axis=1, inplace=True)
+
+    ml.std_normalise(mail_df)
     x_train, x_test, y_train, y_test = train_test_split(mail_df, mail_cat, test_size=0.25)
 
     # Mono decision tree
-    alg_decision_tree = RandomForestClassifier(n_estimators=1, max_depth=60, n_jobs=-1)
+    alg_decision_tree = RandomForestClassifier(n_estimators=3, max_depth=60, n_jobs=-1)
     model = alg_decision_tree.fit(x_train, y_train)
     predictions = model.predict(x_test)
     precision, recall, fscore, support = score(y_test, predictions, pos_label=1, average='binary')
@@ -88,9 +91,16 @@ if __name__ == '__main__':
           f"// Accurancy: {round((predictions==y_test).sum()/len(predictions), 3)}")
 
     # SVM
-    alg_svm = svm.SVC(kernel='linear')
-    alg_svm.fit(x_train, y_train)
-    predictions = alg_svm.predict(x_test)
+    alg_svm = svm.SVC()
+    svm_params = {'kernel': ['rbf'],
+                  'gamma': [0.0001, 0.001, 0.005, 0.01, 1, 10],
+                  'C': [0.1, 1, 5, 10, 50, 100]}
+    hyper_params_grid = GridSearchCV(alg_svm, svm_params, cv=2, scoring='accuracy', n_jobs=-1)
+    hyper_params_models = hyper_params_grid.fit(x_train, y_train)
+    print(f"Meilleurs hyper-paramètres: {hyper_params_models.best_params_}")
+    best_alg_svm = hyper_params_models.best_estimator_
+
+    predictions = best_alg_svm.predict(x_test)
     precision, recall, _, _ = score(y_test, predictions, pos_label=1, average='binary')
     accuracy = (predictions == y_test).sum()/len(predictions)
     print(f"--- Support Vector machine ---\n"
@@ -99,5 +109,6 @@ if __name__ == '__main__':
 
     # Sauvegarder les modèles
     pickle.dump(alg_decision_tree, open('./models/decision_tree_spam.sav', 'wb'))
-    pickle.dump(alg_svm, open('./models/svm_spam.sav', 'wb'))
-    print("Modèles sauvegardé")
+    pickle.dump(best_alg_svm, open('./models/svm_spam.sav', 'wb'))
+    pickle.dump(mail_df.columns.to_list(), open('./models/df_columns.sav', 'wb'))
+    print("Modèles sauvegardés")

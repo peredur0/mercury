@@ -53,3 +53,4 @@
 /models/decision_tree_spam.sav
 /models/svm_spam.sav
 /dev_dataset/validation/
+/models/df_columns.sav
