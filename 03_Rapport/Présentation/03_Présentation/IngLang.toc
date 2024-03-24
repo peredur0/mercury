@@ -1,0 +1,19 @@
+\boolfalse {citerequest}\boolfalse {citetracker}\boolfalse {pagetracker}\boolfalse {backtracker}\relax 
+\defcounter {refsection}{0}\relax 
+\selectlanguage *{french}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {1}{Objectif}{3}{0}{1}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {2}{Corpus}{4}{0}{2}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {3}{Difficultés}{5}{0}{3}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {4}{Aspiration}{6}{0}{4}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {5}{Nettoyage}{10}{0}{5}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {6}{Stockage}{17}{0}{6}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {7}{Caractéristiques}{20}{0}{7}
+\defcounter {refsection}{0}\relax 
+\beamer@sectionintoc {8}{Conclusion}{21}{0}{8}
